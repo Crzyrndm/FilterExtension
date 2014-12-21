@@ -11,10 +11,10 @@ namespace PartFilters.FilterTabs
     {
         internal void Filter()
         {
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon("R&D_node_icon_fieldscience"); // change this
+            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon("R&D_node_icon_survivability");
 
             PartCategorizer.Category filterByFunction = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
-            PartCategorizer.AddCustomSubcategoryFilter(filterByFunction, "Parachutes", icon, p => Filters.PartType.isParachute(p));
+            PartCategorizer.AddCustomSubcategoryFilter(filterByFunction, "Parachutes", icon, p => PartType.isParachute(p));
 
             RUIToggleButtonTyped button = filterByFunction.button.activeButton;
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);

@@ -7,197 +7,6 @@ namespace PartFilters.Categoriser
 {
     static class PartType
     {
-        public static bool isCompatible(AvailablePart part, List<string> filters)
-        {
-            bool compatible = false;
-            foreach (string str in filters)
-            {
-                switch (str)
-                {
-                    case "isEngine":
-                        compatible = isEngine(part);
-                        break;
-                    case "isResourceContainer":
-                        compatible = isResourceContainer(part);
-                        break;
-                    case "isResourceIntake":
-                        compatible = isResourceIntake(part);
-                        break;
-                    case "isMannedPod":
-                        compatible = isMannedPod(part);
-                        break;
-                    case "isProbeCore":
-                        compatible = isDrone(part);
-                        break;
-                    case "isRCSThruster":
-                        compatible = isRCSThruster(part);
-                        break;
-                    case "isReactionWheel":
-                        compatible = isReactionWheel(part);
-                        break;
-                    case "isFuselage":
-                        compatible = isFuselage(part);
-                        break;
-                    case "isMulticoupler":
-                        compatible = isMultiCoupler(part);
-                        break;
-                    case "isDecoupler":
-                        compatible = isDecoupler(part);
-                        break;
-                    case "isAdapter":
-                        compatible = isAdapter(part);
-                        break;
-                    case "isCargoBay":
-                        compatible = isCargoBay(part);
-                        break;
-                    case "isNosecone":
-                        compatible = isNoseCone(part);
-                        break;
-                    case "isControlSurface":
-                        compatible = isControlSurface(part);
-                        break;
-                    case "isResourceGenerator":
-                        compatible = isResourceGenerator(part);
-                        break;
-                    case "isRoverWheel":
-                        compatible = isRoverWheel(part);
-                        break;
-                    case "isLanding":
-                        compatible = isLanding(part);
-                        break;
-                    case "isLandingLeg":
-                        compatible = isLandingLeg(part);
-                        break;
-                    case "isLandingGear":
-                        compatible = isLandingGear(part);
-                        break;
-                    case "isParachute":
-                        compatible = isParachute(part);
-                        break;
-                    case "isDockingPort":
-                        compatible = isDockingPort(part);
-                        break;
-                    case "isExperiment":
-                        compatible = hasExperiment(part);
-                        break;
-                    case "isScienceLab":
-                        compatible = hasLab(part);
-                        break;
-                    case "isAntenna":
-                        compatible = hasAntenna(part);
-                        break;
-                    case "isLF+LOx":
-                        compatible = isLFLOxTank(part);
-                        break;
-                    case "isLF+LOxEngine":
-                        compatible = isLFLOxEngine(part);
-                        break;
-                    case "isJetFuel":
-                        compatible = isJetTank(part);
-                        break;
-                    case "isJetEngine":
-                        compatible = isLFEngine(part);
-                        break;
-                    case "isSRB":
-                        compatible = isSRB(part);
-                        break;
-                    case "isIonEngine":
-                        compatible = isIonEngine(part);
-                        break;
-                    case "isMonopropellant":
-                        compatible = isMonoPropTank(part);
-                        break;
-                    case "isXenon":
-                        compatible = isXenonTank(part);
-                        break;
-                    case "isBattery":
-                        compatible = isBattery(part);
-                        break;
-                    case "isAero":
-                        compatible = isAero(part);
-                        break;
-                    case "isLight":
-                        compatible = isLight(part);
-                        break;
-                    case "isLadder":
-                        compatible = isLadder(part);
-                        break;
-                    case "isScience":
-                        compatible = isScience(part);
-                        break;
-                    case "isControl":
-                        compatible = isControl(part);
-                        break;
-                    case "isCabin":
-                        compatible = isCabin(part);
-                        break;
-                    case "isWing":
-                        compatible = isWing(part);
-                        break;
-                    case "TabCommand":
-                        compatible = CommandTab(part);
-                        break;
-                    case "TabPropulsion":
-                        compatible = PropulsionTab(part);
-                        break;
-                    case "TabControl":
-                        compatible = ControlTab(part);
-                        break;
-                    case "TabUtility":
-                        compatible = UtilityTab(part);
-                        break;
-                    case "TabAero":
-                        compatible = AeroTab(part);
-                        break;
-                    case "TabScience":
-                        compatible = ScienceTab(part);
-                        break;
-                    case "TabStructural":
-                        compatible = StructuralTab(part);
-                        break;
-                    // Near future module checks begin
-                    case "NFECapacitor":
-                        compatible = isNFECapacitor(part);
-                        break;
-                    case "NFEFuelDrum":
-                        compatible = isNFEFuelDrum(part);
-                        break;
-                    case "NFEFuelReprocessor":
-                        compatible = isNFEFuelReprocessor(part);
-                        break;
-                    case "NFERadiator":
-                        compatible = isNFERadiator(part);
-                        break;
-                    case "NFEReactor":
-                        compatible = isNFERadiator(part);
-                        break;
-                    case "NFEArgonTank":
-                        compatible = hasNFEResArgon(part);
-                        break;
-                    case "NFEHydrogenTank":
-                        compatible = hasNFEResHydrogen(part);
-                        break;
-                    case "NFEArgonEngine":
-                        compatible = isNFEArgonEngine(part);
-                        break;
-                    case "NFEVariableThrust":
-                        compatible = isNFEVariableEngine(part);
-                        break;
-                    case "NFEVariableISP":
-                        compatible = isNFEVasmirEngine(part);
-                        break;
-                    case "NFECurvedPanel":
-                        compatible = isNFECurvedPanel(part);
-                        break;
-                    // Near future module checks end
-                }
-                if (compatible)
-                    return true;
-            }
-
-            return false;
-        }
-
         public static bool PropulsionTab(AvailablePart part)
         {
             return (part.category == PartCategories.Propulsion);
@@ -459,7 +268,7 @@ namespace PartFilters.Categoriser
         {
             if (part.partPrefab.Modules.OfType<ModuleCargoBay>().Any())
                 return true;
-            if (part.name.Contains("Cargo Bay") || part.name.Contains("Cargobay"))
+            if (part.title.Contains("Cargo Bay"))
                 return true;
             return false;
         }
@@ -514,7 +323,7 @@ namespace PartFilters.Categoriser
 
         public static bool isLandingGear(AvailablePart part)
         {
-            if (part.partPrefab.Modules.OfType<ModuleWheel>().Any())
+            if (part.partPrefab.Modules.OfType<ModuleLandingGear>().Any())
                 return true;
             return false;
         }
@@ -581,15 +390,15 @@ namespace PartFilters.Categoriser
             return false;
         }
 
-        public static bool isLFLOxTank(AvailablePart part)
-        {
-            if (isCommand(part))
-                return false;
+        //public static bool isLFLOxTank(AvailablePart part)
+        //{
+        //    if (isCommand(part))
+        //        return false;
 
-            if (hasLF(part) && hasLOx(part))
-                return true;
-            return false;
-        }
+        //    if (hasLF(part) && hasLOx(part))
+        //        return true;
+        //    return false;
+        //}
 
         public static bool isLFLOxEngine(AvailablePart part)
         {
@@ -600,9 +409,9 @@ namespace PartFilters.Categoriser
             {
                 propellants = part.partPrefab.GetModuleEngines().propellants;
             }
-            else if (part.partPrefab.GetModuleEnginesFX() != null)
+            else if (part.partPrefab.GetModuleEnginesFx() != null)
             {
-                propellants = part.partPrefab.GetModuleEnginesFX().propellants;
+                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
             }
 
             foreach (Propellant p in propellants)
@@ -615,75 +424,75 @@ namespace PartFilters.Categoriser
             return LF && LOx;
         }
 
-        public static bool isLFEngine(AvailablePart part)
-        {
-            bool LF = false, LOx = false;
-            List<Propellant> propellants = new List<Propellant>();
+        //public static bool isLFEngine(AvailablePart part)
+        //{
+        //    bool LF = false, LOx = false;
+        //    List<Propellant> propellants = new List<Propellant>();
 
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFX() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFX().propellants;
-            }
+        //    if (part.partPrefab.GetModuleEngines() != null)
+        //    {
+        //        propellants = part.partPrefab.GetModuleEngines().propellants;
+        //    }
+        //    else if (part.partPrefab.GetModuleEnginesFX() != null)
+        //    {
+        //        propellants = part.partPrefab.GetModuleEnginesFX().propellants;
+        //    }
 
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "LiquidFuel")
-                    LF = true;
-                else if (p.name == "Oxidizer")
-                    LOx = true;
-            }
-            return LF && !LOx;
-        }
+        //    foreach (Propellant p in propellants)
+        //    {
+        //        if (p.name == "LiquidFuel")
+        //            LF = true;
+        //        else if (p.name == "Oxidizer")
+        //            LOx = true;
+        //    }
+        //    return LF && !LOx;
+        //}
 
-        public static bool isSRB(AvailablePart part)
-        {
-            bool Solid = false;
-            List<Propellant> propellants = new List<Propellant>();
+        //public static bool isSRB(AvailablePart part)
+        //{
+        //    bool Solid = false;
+        //    List<Propellant> propellants = new List<Propellant>();
             
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFX() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFX().propellants;
-            }
+        //    if (part.partPrefab.GetModuleEngines() != null)
+        //    {
+        //        propellants = part.partPrefab.GetModuleEngines().propellants;
+        //    }
+        //    else if (part.partPrefab.GetModuleEnginesFX() != null)
+        //    {
+        //        propellants = part.partPrefab.GetModuleEnginesFX().propellants;
+        //    }
 
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "SolidFuel")
-                    Solid = true;
-            }
-            return Solid;
-        }
+        //    foreach (Propellant p in propellants)
+        //    {
+        //        if (p.name == "SolidFuel")
+        //            Solid = true;
+        //    }
+        //    return Solid;
+        //}
 
-        public static bool isIonEngine(AvailablePart part)
-        {
-            bool Ec = false, Xe = false;
-            List<Propellant> propellants = new List<Propellant>();
-            //Engine modules
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFX() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFX().propellants;
-            }
-            // get type
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "XenonGas")
-                    Xe = true;
-                else if (p.name == "ElectricCharge")
-                    Ec = true;
-            }
-            return Xe && Ec;
-        }
+        //public static bool isIonEngine(AvailablePart part)
+        //{
+        //    bool Ec = false, Xe = false;
+        //    List<Propellant> propellants = new List<Propellant>();
+        //    //Engine modules
+        //    if (part.partPrefab.GetModuleEngines() != null)
+        //    {
+        //        propellants = part.partPrefab.GetModuleEngines().propellants;
+        //    }
+        //    else if (part.partPrefab.GetModuleEnginesFX() != null)
+        //    {
+        //        propellants = part.partPrefab.GetModuleEnginesFX().propellants;
+        //    }
+        //    // get type
+        //    foreach (Propellant p in propellants)
+        //    {
+        //        if (p.name == "XenonGas")
+        //            Xe = true;
+        //        else if (p.name == "ElectricCharge")
+        //            Ec = true;
+        //    }
+        //    return Xe && Ec;
+        //}
 
         public static bool isJetTank(AvailablePart part)
         {
@@ -717,7 +526,7 @@ namespace PartFilters.Categoriser
 
         public static bool isBattery(AvailablePart part)
         {
-            if (isCommand(part))
+            if (isCommand(part) || isEngine(part))
                 return false;
 
             if (hasEc(part))
@@ -854,58 +663,58 @@ namespace PartFilters.Categoriser
 
         public static bool isNFEArgonEngine(AvailablePart part) // Near future argon EC engine
         {
-            if (part.partPrefab.Modules.Contains("VariablePowerEngine"))
-                return false;
+            //if (part.partPrefab.Modules.Contains("VariablePowerEngine"))
+            //    return false;
 
-            bool Ec = false, Arg = false;
-            List<Propellant> propellants = new List<Propellant>();
-            //Engine modules
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFX() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFX().propellants;
-            }
-            // get type
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "ArgonGas")
-                    Arg = true;
-                else if (p.name == "ElectricCharge")
-                    Ec = true;
-            }
+            //bool Ec = false, Arg = false;
+            //List<Propellant> propellants = new List<Propellant>();
+            ////Engine modules
+            //if (part.partPrefab.GetModuleEngines() != null)
+            //{
+            //    propellants = part.partPrefab.GetModuleEngines().propellants;
+            //}
+            //else if (part.partPrefab.GetModuleEnginesFX() != null)
+            //{
+            //    propellants = part.partPrefab.GetModuleEnginesFX().propellants;
+            //}
+            //// get type
+            //foreach (Propellant p in propellants)
+            //{
+            //    if (p.name == "ArgonGas")
+            //        Arg = true;
+            //    else if (p.name == "ElectricCharge")
+            //        Ec = true;
+            //}
 
-            return Arg && Ec;
+            return false;
         }
 
         public static bool isNFEVariableEngine(AvailablePart part) // Near future variable thrust argon EC engine
         {
-            if (!part.partPrefab.Modules.Contains("VariablePowerEngine"))
-                return false;
+            //if (!part.partPrefab.Modules.Contains("VariablePowerEngine"))
+            //    return false;
             
-            bool Ec = false, Arg = false;
-            List<Propellant> propellants = new List<Propellant>();
-            //Engine modules
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFX() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFX().propellants;
-            }
-            // get type
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "ArgonGas")
-                    Arg = true;
-                else if (p.name == "ElectricCharge")
-                    Ec = true;
-            }
+            //bool Ec = false, Arg = false;
+            //List<Propellant> propellants = new List<Propellant>();
+            ////Engine modules
+            //if (part.partPrefab.GetModuleEngines() != null)
+            //{
+            //    propellants = part.partPrefab.GetModuleEngines().propellants;
+            //}
+            //else if (part.partPrefab.GetModuleEnginesFX() != null)
+            //{
+            //    propellants = part.partPrefab.GetModuleEnginesFX().propellants;
+            //}
+            //// get type
+            //foreach (Propellant p in propellants)
+            //{
+            //    if (p.name == "ArgonGas")
+            //        Arg = true;
+            //    else if (p.name == "ElectricCharge")
+            //        Ec = true;
+            //}
 
-            return Arg && Ec;
+            return false;
         }
 
         public static bool isNFEVasmirEngine(AvailablePart part) // Near future vasmir engine. Runs off hydrogen or argon (variable ISP module seems to be unique)
@@ -920,6 +729,21 @@ namespace PartFilters.Categoriser
             if (part.partPrefab.Modules.Contains("ModuleCurvedSolarPanel"))
                 return true;
             return false;
+        }
+
+        public static T GetModule<T>(this Part part) where T : PartModule
+        {
+            return part.Modules.OfType<T>().FirstOrDefault();
+        }
+
+        public static ModuleEngines GetModuleEngines(this Part part)
+        {
+            return part.GetModule<ModuleEngines>();
+        }
+
+        public static ModuleEnginesFX GetModuleEnginesFx(this Part part)
+        {
+            return part.GetModule<ModuleEnginesFX>();
         }
     }
 }

@@ -14,7 +14,7 @@ namespace PartFilters.FilterTabs
             PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon("R&D_node_icon_fieldscience");
 
             PartCategorizer.Category filterByFunction = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
-            PartCategorizer.AddCustomSubcategoryFilter(filterByFunction, "Wheels", icon, p => Filters.PartType.isRoverWheel(p) || Filters.PartType.isLandingGear(p));
+            PartCategorizer.AddCustomSubcategoryFilter(filterByFunction, "Wheels", icon, p => PartType.isRoverWheel(p) || PartType.isLandingGear(p));
 
             RUIToggleButtonTyped button = filterByFunction.button.activeButton;
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
