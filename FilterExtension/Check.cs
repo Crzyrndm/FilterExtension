@@ -78,6 +78,9 @@ namespace FilterExtensions
                 case "isCommand":
                     val = PartType.isCommand(part);
                     break;
+                case "LFLOx Engine":
+                    val = PartType.isLFLOxEngine(part);
+                    break;
                 default:
                     val = false;
                     break;
