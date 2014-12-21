@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace PartFilters.Categoriser
+namespace FilterExtensions.Categoriser
 {
     static class PartType
     {

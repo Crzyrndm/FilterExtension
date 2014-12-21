@@ -1,49 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace PartFilters
+namespace FilterExtensions
 {
     using UnityEngine;
-    using PartFilters.Categoriser;
-    using PartFilters.FilterTabs;
+    using FilterExtensions.Categoriser;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
-        CargoBay cargoBayFilt;
-        ControlSurface contrSurfaceFilt;
-        Intake intakeFilt;
-        LandingLeg legFilt;
-        LFLOxEngines rocketFilt;
-        Parachute paraFilt;
-        StorageEc batFilt;
-        Wheel wheelFilt;
+        List<subCategory> subCategories = new List<subCategory>();
 
         void Awake()
         {
-            GameEvents.onGUIEditorToolbarReady.Add(Filters);
+            GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
 
-            cargoBayFilt = new CargoBay();
-            contrSurfaceFilt = new ControlSurface();
-            intakeFilt = new Intake();
-            legFilt = new LandingLeg();
-            rocketFilt = new LFLOxEngines();
-            paraFilt = new Parachute();
-            batFilt = new StorageEc();
-            wheelFilt = new Wheel();
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
+            {
+                subCategories.Add(new subCategory(node));
+            }
         }
 
-        private void Filters()
+        private void SubCategories()
         {
-            cargoBayFilt.Filter();
-            contrSurfaceFilt.Filter();
-            intakeFilt.Filter();
-            legFilt.Filter();
-            rocketFilt.Filter();
-            paraFilt.Filter();
-            batFilt.Filter();
-            wheelFilt.Filter();
+            foreach (subCategory sC in subCategories)
+            {
+                sC.initialise();
+            }
         }
     }
 }
