@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace FilterExtensions
@@ -17,7 +18,9 @@ namespace FilterExtensions
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                subCategories.Add(new subCategory(node));
+                subCategory sC = new subCategory(node);
+                if (checkForConflicts(sC))
+                    subCategories.Add(sC);
             }
         }
 
@@ -25,8 +28,88 @@ namespace FilterExtensions
         {
             foreach (subCategory sC in subCategories)
             {
-                sC.initialise();
+                try
+                {
+                    sC.initialise();
+                }
+                catch {
+                    Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " failed to initialise");
+                }
             }
+
+            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
+            RUIToggleButtonTyped button = Filter.button.activeButton;
+            button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
+            button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
+        }
+
+        private bool checkForConflicts(subCategory sCToCheck)
+        {
+            foreach (subCategory sC in subCategories) // iterate through the already added sC's
+            {
+                if (sCToCheck.category == sC.category)
+                {
+                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                    {
+                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
+                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
+                    }
+                    else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
+                    {
+                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                        sCToCheck.filters.AddRange(sC.filters);
+                        return false; // all other elements of this list have already been check for this condition. Don't need to continue
+                    }
+                }
+            }
+            return true;
+        }
+
+        private bool compareFilterLists(List<Filter> filterListA, List<Filter> filterListB) //can't just compare directly because order could be different
+        {
+            if (filterListA.Count == 0 || filterListB.Count == 0)
+                return false;
+
+            if (filterListA.Count != filterListB.Count)
+                return false;
+
+            foreach(Filter fA in filterListA)
+            {
+                bool match = false;
+                foreach (Filter fB in filterListB)
+                {
+                    match = compareCheckLists(fA.checks, fB.checks, new CheckEqualityComparer());
+                    if (match)
+                        break;
+                }
+
+                if (!match)
+                    return false;
+            }
+            return true;
+        }
+
+        private bool compareCheckLists<T>(List<T> listA, List<T> listB, IEqualityComparer<T> comparer)
+        {
+            if (listA.Count != listB.Count)
+                return false;
+
+            Dictionary<T, int> cntDict = new Dictionary<T, int>(comparer);
+            foreach (T t in listA)
+            {
+                if (cntDict.ContainsKey(t))
+                    cntDict[t]++;
+                else
+                    cntDict.Add(t, 1);
+            }
+            foreach (T s in listB)
+            {
+                if (cntDict.ContainsKey(s))
+                    cntDict[s]--;
+                else
+                    return false;
+            }
+            return cntDict.Values.All(c => c == 0);
         }
     }
 }

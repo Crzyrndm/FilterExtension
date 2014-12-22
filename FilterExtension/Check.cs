@@ -32,9 +32,9 @@ namespace FilterExtensions
                     return checkTitle(partToCheck);
                 case "resource": // check for a resource
                     return checkResource(partToCheck);
-                case "tech":
+                case "tech": // check by tech
                     return checkTech(partToCheck);
-                case "manufacturer":
+                case "manufacturer": // check by manufacturer
                     return checkManufacturer(partToCheck);
                 case "custom": // filters using PartType class
                     return checkCustom(partToCheck);
@@ -113,6 +113,22 @@ namespace FilterExtensions
                     break;
             }
             return (val && pass) || (!val && !pass);
+        }
+    }
+
+    internal class CheckEqualityComparer : IEqualityComparer<Check>
+    {
+        public bool Equals(Check c1, Check c2)
+        {
+            if (c1.type == c2.type && c1.value == c2.value && c1.pass == c2.pass)
+                return true;
+            else
+                return false;
+        }
+
+        public int GetHashCode(Check c)
+        {
+            return c.type.GetHashCode() + c.value.GetHashCode() + c.pass.GetHashCode();
         }
     }
 }

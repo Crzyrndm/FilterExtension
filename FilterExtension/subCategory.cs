@@ -17,25 +17,9 @@ namespace FilterExtensions
         public subCategory(ConfigNode node)
         {
             category = node.GetValue("category");
-            try
-            {
-                subCategoryTitle = node.GetValue("title");
-            }
-            catch {}
-            if (subCategoryTitle == null)
-                subCategoryTitle = "abc";
-            try
-            {
-                iconName = node.GetValue("icon");
-            }
-            catch {}
-            if (iconName == null)
-                iconName = "number1";
-            try
-            {
-                defaultTitle = node.GetValue("oldTitle");
-            }
-            catch { }
+            subCategoryTitle = node.GetValue("title");
+            iconName = node.GetValue("icon");
+            defaultTitle = node.GetValue("oldTitle");
 
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
@@ -52,28 +36,28 @@ namespace FilterExtensions
                 if (val)
                     return true;
             }
-            return false; // part passed no filter, not compatible with this subcategory
+            return false; // part passed no filter(s), not compatible with this subcategory
         }
 
         internal void initialise()
         {
+            if (iconName == null && (subCategoryTitle != null || subCategoryTitle != ""))
+            {
+                Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
+                return;
+            }
             PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconName);
 
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
                 PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
-
-                RUIToggleButtonTyped button = Filter.button.activeButton;
-                button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-                button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
             }
             else if (defaultTitle != "")
             {
                 List<PartCategorizer.Category> modules = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
                 if (subCategoryTitle == null || subCategoryTitle == "")
                 {
-                    Debug.Log("Removing item");
                     modules.Remove(modules.Find(m => m.button.categoryName == defaultTitle));
                 }
                 else
