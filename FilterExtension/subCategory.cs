@@ -7,10 +7,10 @@ namespace FilterExtensions
 {
     class subCategory
     {
-        internal string category = ""; // parent category
-        internal string subCategoryTitle = ""; // title of this subcategory
-        internal string defaultTitle = ""; // title generated for the auto extending categories to search by
-        internal string iconName = ""; // icon to use
+        internal string category; // parent category
+        internal string subCategoryTitle; // title of this subcategory
+        internal string defaultTitle; // title generated for the auto extending categories to search by
+        internal string iconName; // default icon to use
         internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
         internal bool filter;
 
@@ -21,12 +21,16 @@ namespace FilterExtensions
             {
                 subCategoryTitle = node.GetValue("title");
             }
-            catch { }
+            catch {}
+            if (subCategoryTitle == null)
+                subCategoryTitle = "abc";
             try
             {
                 iconName = node.GetValue("icon");
             }
-            catch { }
+            catch {}
+            if (iconName == null)
+                iconName = "number1";
             try
             {
                 defaultTitle = node.GetValue("oldTitle");
@@ -55,8 +59,6 @@ namespace FilterExtensions
         {
             PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconName);
 
-            
-
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
@@ -66,10 +68,10 @@ namespace FilterExtensions
                 button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
                 button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
             }
-            else
+            else if (defaultTitle != "")
             {
                 List<PartCategorizer.Category> modules = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
-                if (subCategoryTitle == "")
+                if (subCategoryTitle == null || subCategoryTitle == "")
                 {
                     Debug.Log("Removing item");
                     modules.Remove(modules.Find(m => m.button.categoryName == defaultTitle));

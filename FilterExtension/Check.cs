@@ -32,6 +32,10 @@ namespace FilterExtensions
                     return checkTitle(partToCheck);
                 case "resource": // check for a resource
                     return checkResource(partToCheck);
+                case "tech":
+                    return checkTech(partToCheck);
+                case "manufacturer":
+                    return checkManufacturer(partToCheck);
                 case "custom": // filters using PartType class
                     return checkCustom(partToCheck);
                 default:
@@ -43,28 +47,42 @@ namespace FilterExtensions
         {
             bool moduleCheck = part.moduleInfos.Any(m => m.moduleName == value);
 
-            return (moduleCheck && pass) || (!moduleCheck && !pass);
+            return (moduleCheck && pass) || !(moduleCheck || pass);
         }
 
         private bool checkName(AvailablePart part)
         {
             bool nameCheck = part.name == value;
 
-            return (nameCheck && pass) || (!nameCheck && !pass);
+            return (nameCheck && pass) || !(nameCheck || pass);
         }
 
         private bool checkTitle(AvailablePart part)
         {
             bool titleCheck = part.title.Contains(value);
 
-            return (titleCheck && pass) || (!titleCheck && !pass);
+            return (titleCheck && pass) || !(titleCheck || pass);
         }
 
         private bool checkResource(AvailablePart part)
         {
             bool resourceCheck = part.resourceInfos.Any(r => r.resourceName == value);
 
-            return (resourceCheck && pass) || (!resourceCheck && !pass);
+            return (resourceCheck && pass) || !(resourceCheck || pass);
+        }
+
+        private bool checkTech(AvailablePart part)
+        {
+            bool techCheck = part.TechRequired == value;
+
+            return (techCheck && pass) || !(techCheck || pass);
+        }
+
+        private bool checkManufacturer(AvailablePart part)
+        {
+            bool manuCheck = part.manufacturer == value;
+
+            return (manuCheck && pass) || !(manuCheck || pass);
         }
 
         private bool checkCustom(AvailablePart part)
@@ -80,6 +98,15 @@ namespace FilterExtensions
                     break;
                 case "LFLOx Engine":
                     val = PartType.isLFLOxEngine(part);
+                    break;
+                case "LF Engine":
+                    val = PartType.isLFEngine(part);
+                    break;
+                case "adapter":
+                    val = PartType.isAdapter(part);
+                    break;
+                case "Xenon Engine":
+                    val = PartType.isIonEngine(part);
                     break;
                 default:
                     val = false;

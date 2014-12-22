@@ -7,7 +7,8 @@ namespace FilterExtensions
 {
     class Filter
     {
-        internal List<Check> checks = new List<Check>(); // checks are processed in serial (simulating boolean AND operation)
+        internal List<Check> checks = new List<Check>(); // checks are processed in serial (a && b), inversion gives (!a || !b) logic
+        internal bool invert = false;
 
         public Filter(ConfigNode node)
         {
@@ -15,6 +16,13 @@ namespace FilterExtensions
             {
                 checks.Add(new Check(subNode));
             }
+            try
+            {
+                invert = bool.Parse(node.GetValue("invert"));
+            }
+            catch { }
+            if (invert == null)
+                invert = false;
         }
 
         internal bool checkFilter(AvailablePart part)
@@ -24,10 +32,16 @@ namespace FilterExtensions
                 bool val = c.checkPart(part);
                 if (!val)
                 {
-                    return false;
+                    if (invert)
+                        return true; // part failed a check, result inverted
+                    else
+                        return false; // part failed a check
                 }
             }
-            return true; // part passed all checks, thus meets the filter requirements
+            if (invert)
+                return false; // part passed all checks, result inverted
+            else
+                return true; // part passed all checks, thus meets the filter requirements
         }
     }
 }
