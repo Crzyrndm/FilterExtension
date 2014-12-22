@@ -26,6 +26,14 @@ namespace FilterExtensions
 
         private void SubCategories()
         {
+            loadIcons();
+
+            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
+            {
+                print(c.button.categoryName);
+                checkIcons(c);
+            }
+
             foreach (subCategory sC in subCategories)
             {
                 try
@@ -36,7 +44,11 @@ namespace FilterExtensions
                     Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " failed to initialise");
                 }
             }
+            refreshList();
+        }
 
+        private void refreshList()
+        {
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
             RUIToggleButtonTyped button = Filter.button.activeButton;
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
@@ -110,6 +122,47 @@ namespace FilterExtensions
                     return false;
             }
             return cntDict.Values.All(c => c == 0);
+        }
+
+        private void checkIcons(PartCategorizer.Category category)
+        {
+            print("check category for icon matches");
+            foreach(PartCategorizer.Category c in category.subcategories)
+            {
+                print(string.Format("trying to find icon for {0}", c.button.categoryName));
+
+                if (PartCategorizer.Instance.iconDictionary.ContainsKey(c.button.categoryName))
+                {
+                    c.button.SetIcon(PartCategorizer.Instance.iconDictionary[c.button.categoryName]);
+                }
+            }
+        }
+
+        private void loadIcons()
+        {
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
+            foreach (GameDatabase.TextureInfo t in texList)
+            {
+                bool simple = false;
+                Texture2D selectedTex = null;
+                foreach (GameDatabase.TextureInfo t2 in texList)
+                {
+                    if (t.name + "_selected" == t2.name)
+                    {
+                        selectedTex = t2.texture;
+                        print("found selected");
+                    }
+                }
+                if (selectedTex == null)
+                {
+                    selectedTex = t.texture;
+                    simple = true;
+                }
+
+                string[] name = t.name.Split('/');
+                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, false);
+                PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
+            }
         }
     }
 }
