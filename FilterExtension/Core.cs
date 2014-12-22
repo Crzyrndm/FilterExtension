@@ -30,7 +30,6 @@ namespace FilterExtensions
 
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
-                print(c.button.categoryName);
                 checkIcons(c);
             }
 
@@ -126,11 +125,8 @@ namespace FilterExtensions
 
         private void checkIcons(PartCategorizer.Category category)
         {
-            print("check category for icon matches");
             foreach(PartCategorizer.Category c in category.subcategories)
             {
-                print(string.Format("trying to find icon for {0}", c.button.categoryName));
-
                 if (PartCategorizer.Instance.iconDictionary.ContainsKey(c.button.categoryName))
                 {
                     c.button.SetIcon(PartCategorizer.Instance.iconDictionary[c.button.categoryName]);
@@ -150,7 +146,6 @@ namespace FilterExtensions
                     if (t.name + "_selected" == t2.name)
                     {
                         selectedTex = t2.texture;
-                        print("found selected");
                     }
                 }
                 if (selectedTex == null)
@@ -160,7 +155,7 @@ namespace FilterExtensions
                 }
 
                 string[] name = t.name.Split('/');
-                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, false);
+                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
                 PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
             }
         }
