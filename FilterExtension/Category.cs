@@ -11,6 +11,8 @@ namespace FilterExtensions
         internal string iconName;
         internal Color colour;
 
+        internal static AvailablePart roid = PartLoader.Instance.parts.First(ap => ap.name == "PotatoRoid");
+
         public Category(ConfigNode node)
         {
             categoryTitle = node.GetValue("title");
@@ -23,11 +25,24 @@ namespace FilterExtensions
             if (categoryTitle == null)
                 return;
 
-            PartCategorizer.Icon icon = Core.getIcon(iconName);
-            PartCategorizer.AddCustomFilter(categoryTitle, icon, colour);
+            PartCategorizer.AddCustomFilter(categoryTitle, Core.getIcon(iconName), colour);
 
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
             category.displayType = EditorPartList.State.PartsList;
+            category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
+
+            //else
+            //{
+
+            //    // buttonType Filter => add subcategories
+            //    // buttonType Category => auto adds filter by function to it
+
+            //    PartCategorizer.Category cat = new PartCategorizer.Category(
+            //        PartCategorizer.ButtonType.FILTER, EditorPartList.State.PartsList, categoryTitle, Core.getIcon(iconName),
+            //        colour, colour, PartCategorizer.Instance.filters[0].exclusionFilter);
+
+            //    PartCategorizer.Instance.filters.Add(cat);
+            //}
         }
 
         private void convertToColor(string hex_ARGB)

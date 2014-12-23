@@ -87,6 +87,7 @@ namespace FilterExtensions
             {
                 c.initialise();
             }
+            PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Mod").button.SetIcon(PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Manufacturer").button.icon);
             
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
@@ -104,13 +105,17 @@ namespace FilterExtensions
                 }
             }
             refreshList();
+
+            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
+            {
+                if (c.subcategories.Count == 0)
+                    PartCategorizer.Instance.filters.Remove(c);
+            }
         }
 
         private void refreshList()
         {
-            PartCategorizer.Instance.UpdateCategoryNameLabel();
-
-            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");            
+            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
             RUIToggleButtonTyped button = Filter.button.activeButton;
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
             button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
@@ -187,6 +192,11 @@ namespace FilterExtensions
 
         private void checkIcons(PartCategorizer.Category category)
         {
+            if (PartCategorizer.Instance.iconDictionary.ContainsKey(category.button.categoryName))
+            {
+                category.button.SetIcon(PartCategorizer.Instance.iconDictionary[category.button.categoryName]);
+            }
+
             foreach(PartCategorizer.Category c in category.subcategories)
             {
                 if (PartCategorizer.Instance.iconDictionary.ContainsKey(c.button.categoryName))
