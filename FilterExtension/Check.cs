@@ -11,13 +11,15 @@ namespace FilterExtensions
     {
         internal string type = ""; // type of check to perform (module, title/name, resource,...)
         internal string value = "";
-        internal bool pass = true;
+        internal bool pass;
 
         internal Check(ConfigNode node)
         {
             type = node.GetValue("type");
             value = node.GetValue("value");
             pass = bool.Parse(node.GetValue("pass"));
+            if (pass == null)
+                pass = true;
         }
 
         internal bool checkPart(AvailablePart partToCheck)
@@ -36,6 +38,8 @@ namespace FilterExtensions
                     return checkTech(partToCheck);
                 case "manufacturer": // check by manufacturer
                     return checkManufacturer(partToCheck);
+                case "folder": // check by mod root folder
+                    return checkFolder(partToCheck);
                 case "custom": // filters using PartType class
                     return checkCustom(partToCheck);
                 default:
@@ -83,6 +87,14 @@ namespace FilterExtensions
             bool manuCheck = part.manufacturer == value;
 
             return (manuCheck && pass) || !(manuCheck || pass);
+        }
+
+        private bool checkFolder(AvailablePart part)
+        {
+            string folder = part.partPath;
+            Debug.Log("path to " + part.title + " " + part.partUrl);
+            Debug.Log(PartLoader.Instance.parts[0].partPath);
+            return false;
         }
 
         private bool checkCustom(AvailablePart part)

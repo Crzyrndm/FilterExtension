@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 
+
 namespace FilterExtensions
 {
     using UnityEngine;
@@ -12,7 +13,7 @@ namespace FilterExtensions
     {
         List<Category> Categories = new List<Category>();
         List<subCategory> subCategories = new List<subCategory>();
-        internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
+        internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>(); // all the icons inside folders named filterIcon
 
         void Awake()
         {
@@ -150,8 +151,15 @@ namespace FilterExtensions
 
         private void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
-            // use a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture (operation reduced to O(n))
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolder("");
+            foreach (GameDatabase.TextureInfo t in texList) // remove all textures from the list that have a dimension > 40 pixels
+            {
+                if (t.texture.height > 40 || t.texture.width > 40)
+                {
+                    texList.Remove(t);
+                }
+            }
+            // use a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             texDict = texList.ToDictionary(k => k.name);
             foreach (GameDatabase.TextureInfo t in texList)
             {
