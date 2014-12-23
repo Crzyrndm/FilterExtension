@@ -49,6 +49,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Category.cs" />
     <Compile Include="Check.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="Categoriser\PartType.cs" />

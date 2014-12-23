@@ -10,11 +10,20 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
+        List<Category> Categories = new List<Category>();
         List<subCategory> subCategories = new List<subCategory>();
+        internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
 
         void Awake()
         {
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
+
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
+            {
+                Category C = new Category(node);
+                if (!Categories.Contains(C))
+                    Categories.Add(C);
+            }
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
@@ -27,6 +36,11 @@ namespace FilterExtensions
         private void SubCategories()
         {
             loadIcons();
+
+            foreach (Category c in Categories)
+            {
+                PartCategorizer.AddCustomFilter(c.categoryTitle, getIcon(c.iconName), c.colour);
+            }
 
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
@@ -137,18 +151,15 @@ namespace FilterExtensions
         private void loadIcons()
         {
             List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
+            // use a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture (operation reduced to O(n))
+            texDict = texList.ToDictionary(k => k.name);
             foreach (GameDatabase.TextureInfo t in texList)
             {
                 bool simple = false;
                 Texture2D selectedTex = null;
-                foreach (GameDatabase.TextureInfo t2 in texList)
-                {
-                    if (t.name + "_selected" == t2.name)
-                    {
-                        selectedTex = t2.texture;
-                    }
-                }
-                if (selectedTex == null)
+                if (texDict.ContainsKey(t.name + "_selected"))
+                    selectedTex = texDict[t.name + "_selected"].texture;
+                else
                 {
                     selectedTex = t.texture;
                     simple = true;
@@ -158,6 +169,19 @@ namespace FilterExtensions
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
                 PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
             }
+        }
+
+        internal static PartCategorizer.Icon getIcon(string name)
+        {
+            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(name);
+            if (icon.name == PartCategorizer.Instance.fallbackIcon.name)
+            {
+                if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
+                    return PartCategorizer.Instance.iconDictionary[name];
+                else
+                    return icon;
+            }
+            return icon;
         }
     }
 }

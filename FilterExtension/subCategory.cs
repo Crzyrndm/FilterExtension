@@ -46,7 +46,7 @@ namespace FilterExtensions
                 Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
                 return;
             }
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconName);
+            PartCategorizer.Icon icon = Core.getIcon(iconName);
 
             if (filter)
             {
