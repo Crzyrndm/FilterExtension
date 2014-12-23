@@ -91,10 +91,9 @@ namespace FilterExtensions
 
         private bool checkFolder(AvailablePart part)
         {
-            string folder = part.partPath;
-            Debug.Log("path to " + part.title + " " + part.partUrl);
-            Debug.Log(PartLoader.Instance.parts[0].partPath);
-            return false;
+            bool folderCheck = Core.partFolderDict[part.name] == value;
+
+            return (folderCheck && pass) || !(folderCheck || pass);
         }
 
         private bool checkCustom(AvailablePart part)

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions
 {
-    class Category : IEquatable<Category>
+    class Category
     {
         internal string categoryTitle;
         internal string iconName;
@@ -25,6 +25,9 @@ namespace FilterExtensions
 
             PartCategorizer.Icon icon = Core.getIcon(iconName);
             PartCategorizer.AddCustomFilter(categoryTitle, icon, colour);
+
+            PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
+            category.displayType = EditorPartList.State.PartsList;
         }
 
         private void convertToColor(string hex_ARGB)
@@ -49,44 +52,6 @@ namespace FilterExtensions
                 c.b = (int)byte.Parse(hex_ARGB.Substring(3, 2), System.Globalization.NumberStyles.HexNumber) / 255;
                 colour = c;
             }
-        }
-
-        public bool Equals(Category other)
-        {
-            if (other == null)
-                return false;
-
-            if (this.categoryTitle == other.categoryTitle)
-                return true;
-            else
-                return false;
-        }
-
-        public override bool Equals(System.Object obj)
-        {
-            if (obj == null)
-                return false;
-
-            Category CObj = obj as Category;
-            if (CObj == null)
-                return false;
-            else
-                return Equals(CObj);
-        } 
-
-        public override int GetHashCode()
-        {
-            return categoryTitle.GetHashCode();
-        }
-
-        public static bool operator ==(Category c1, Category c2)
-        {
-            return c1.Equals(c2);
-        }
-
-        public static bool operator !=(Category c1, Category c2)
-        {
-            return !c1.Equals(c2);
         }
     }
 }

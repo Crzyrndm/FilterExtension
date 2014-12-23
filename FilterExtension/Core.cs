@@ -14,15 +14,60 @@ namespace FilterExtensions
         List<Category> Categories = new List<Category>();
         List<subCategory> subCategories = new List<subCategory>();
         internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>(); // all the icons inside folders named filterIcon
+        internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>(); // mod folder for each part by internal name
 
         void Awake()
         {
-            GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
+            GameEvents.onGUIEditorToolbarReady.Add(editor);
+
+            ConfigNode FilterByMod = new ConfigNode("CATEGORY");
+            FilterByMod.AddValue("title", "Filter by Mod");
+            FilterByMod.AddValue("icon", "Filter by Mod");
+            FilterByMod.AddValue("colour", "#FFFF0000");
+
+            Categories.Add(new Category(FilterByMod));
+
+            List<string> modNames = new List<string>();
+            foreach (AvailablePart p in PartLoader.Instance.parts)
+            {
+                if (string.IsNullOrEmpty(p.partUrl))
+                    RepairAvailablePartUrl(p);
+
+                if (string.IsNullOrEmpty(p.partUrl))
+                    continue;
+
+                string name = p.partUrl.Split('/')[0];
+
+                if (!modNames.Contains(name))
+                    modNames.Add(name);
+
+                partFolderDict.Add(p.name, name);
+            }
+
+            foreach (string s in modNames)
+            {
+                ConfigNode nodeCheck = new ConfigNode("CHECK");
+                nodeCheck.AddValue("type", "folder");
+                nodeCheck.AddValue("value", s);
+                nodeCheck.AddValue("pass", "true");
+
+                ConfigNode nodeFilter = new ConfigNode("FILTER");
+                nodeFilter.AddValue("invert", "false");
+                nodeFilter.AddNode(nodeCheck);
+
+                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
+                nodeSub.AddValue("category", "Filter by Mod");
+                nodeSub.AddValue("title", s);
+                nodeSub.AddValue("icon", s);
+                nodeSub.AddNode(nodeFilter);
+
+                subCategories.Add(new subCategory(nodeSub));
+            }
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
                 Category C = new Category(node);
-                if (!Categories.Contains(C))
+                if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
                     Categories.Add(C);
             }
 
@@ -34,15 +79,15 @@ namespace FilterExtensions
             }
         }
 
-        private void SubCategories()
+        private void editor()
         {
             loadIcons();
-
+            
             foreach (Category c in Categories)
             {
-                PartCategorizer.AddCustomFilter(c.categoryTitle, getIcon(c.iconName), c.colour);
+                c.initialise();
             }
-
+            
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
                 checkIcons(c);
@@ -63,7 +108,9 @@ namespace FilterExtensions
 
         private void refreshList()
         {
-            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
+            PartCategorizer.Instance.UpdateCategoryNameLabel();
+
+            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");            
             RUIToggleButtonTyped button = Filter.button.activeButton;
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
             button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
@@ -159,7 +206,7 @@ namespace FilterExtensions
                     texList.Remove(t);
                 }
             }
-            // use a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
+            // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             texDict = texList.ToDictionary(k => k.name);
             foreach (GameDatabase.TextureInfo t in texList)
             {
@@ -181,15 +228,26 @@ namespace FilterExtensions
 
         internal static PartCategorizer.Icon getIcon(string name)
         {
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(name);
-            if (icon.name == PartCategorizer.Instance.fallbackIcon.name)
-            {
-                if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
-                    return PartCategorizer.Instance.iconDictionary[name];
-                else
-                    return icon;
-            }
-            return icon;
+            if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
+                return PartCategorizer.Instance.iconDictionary[name];
+            else
+                return PartCategorizer.Instance.fallbackIcon;
+        }
+
+        // credit to EvilReeperx for this lifesaving function
+        private void RepairAvailablePartUrl(AvailablePart ap)
+        {
+            var url = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(u => u.name == KSPUtil.SanitizeFilename(ap.name));
+
+            if (url == null)
+                return;
+            //    throw new System.IO.FileNotFoundException();
+
+            // repair missing name in config if desired
+            if (!url.config.HasValue("name"))
+                url.config.AddValue("name", url.name);
+
+            ap.partUrl = url.url;
         }
     }
 }
