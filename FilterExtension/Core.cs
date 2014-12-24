@@ -87,8 +87,11 @@ namespace FilterExtensions
             {
                 c.initialise();
             }
-            PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Mod").button.SetIcon(PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Manufacturer").button.icon);
-            
+            PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Mod").button.SetIcon(
+                PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Manufacturer").button.icon);
+
+            PartCategorizer.Instance.UpdateCategoryNameLabel();
+
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
                 checkIcons(c);
