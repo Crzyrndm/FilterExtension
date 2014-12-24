@@ -35,8 +35,8 @@ namespace FilterExtensions
 
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
-
-                string name = p.partUrl.Split('/')[0];
+                p.partUrl = KSPUtil.SanitizeFilename(p.partUrl);
+                string name = p.partUrl.Split('_')[0];
 
                 if (!modNames.Contains(name))
                     modNames.Add(name);
@@ -114,6 +114,8 @@ namespace FilterExtensions
                 if (c.subcategories.Count == 0)
                     PartCategorizer.Instance.filters.Remove(c);
             }
+
+            PartCategorizer.Instance.SetAdvancedMode();
         }
 
         private void refreshList()
