@@ -40,8 +40,8 @@ namespace FilterExtensions
 
                 if (!modNames.Contains(name))
                     modNames.Add(name);
-
-                partFolderDict.Add(p.name, name);
+                if (!partFolderDict.ContainsKey(p.name))
+                    partFolderDict.Add(p.name, name);
             }
 
             foreach (string s in modNames)
