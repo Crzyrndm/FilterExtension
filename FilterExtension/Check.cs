@@ -91,7 +91,14 @@ namespace FilterExtensions
 
         private bool checkFolder(AvailablePart part)
         {
-            bool folderCheck = Core.partFolderDict[part.name] == value;
+            if (part.name == "PotatoRoid")
+                return false;
+
+            bool folderCheck = false;
+            if (Core.partFolderDict.ContainsKey(part.name))
+                folderCheck = Core.partFolderDict[part.name] == value;
+            else
+                Debug.Log("[Filter Extensions] Unable to assign a mod to the part " + part.title);
 
             return (folderCheck && pass) || !(folderCheck || pass);
         }
