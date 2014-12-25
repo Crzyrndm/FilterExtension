@@ -1,12 +1,143 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using UnityEngine;
 
 namespace FilterExtensions.Categoriser
 {
     static class PartType
     {
+        internal static bool checkCustom(AvailablePart part, string value)
+        {
+            bool val;
+            switch (value)
+            {
+                case "isEngine":
+                    val = isEngine(part);
+                    break;
+                case "isCommand":
+                    val = isCommand(part);
+                    break;
+                case "LFLOx Engine":
+                    val = isLFLOxEngine(part);
+                    break;
+                case "LF Engine":
+                    val = isLFEngine(part);
+                    break;
+                case "adapter":
+                    val = isAdapter(part);
+                    break;
+                case "Xenon Engine":
+                    val = isIonEngine(part);
+                    break;
+                default:
+                    val = false;
+                    break;
+            }
+            return val;
+        }
+
+        internal static bool checkModule(AvailablePart part, string value)
+        {
+            bool moduleCheck = part.moduleInfos.Any(m => m.moduleName == value);
+
+            return moduleCheck;
+        }
+
+        internal static bool checkCategory(AvailablePart part, string value)
+        {
+            switch (value)
+            {
+                case "Pod":
+                    if (part.category == PartCategories.Pods)
+                        return true;
+                    break;
+                case "Engine":
+                    if (part.category == PartCategories.Engine)
+                        return true;
+                    else if (part.category == PartCategories.Propulsion && PartType.isEngine(part))
+                        return true;
+                    break;
+                case "Tank":
+                    if (part.category == PartCategories.FuelTank)
+                        return true;
+                    else if (part.category == PartCategories.Propulsion && !PartType.isEngine(part))
+                        return true;
+                    break;
+                case "Command":
+                    if (part.category == PartCategories.Control)
+                        return true;
+                    break;
+                case "Struct":
+                    if (part.category == PartCategories.Structural)
+                        return true;
+                    break;
+                case "Aero":
+                    if (part.category == PartCategories.Aero)
+                        return true;
+                    break;
+                case "Utility":
+                    if (part.category == PartCategories.Utility)
+                        return true;
+                    break;
+                case "Science":
+                    if (part.category == PartCategories.Science)
+                        return true;
+                    break;
+            }
+
+            return false;
+        }
+
+        internal static bool checkName(AvailablePart part, string value)
+        {
+            bool nameCheck = part.name == value;
+
+            return nameCheck;
+        }
+
+        internal static bool checkTitle(AvailablePart part, string value)
+        {
+            bool titleCheck = part.title.Contains(value);
+
+            return titleCheck;
+        }
+
+        internal static bool checkResource(AvailablePart part, string value)
+        {
+            bool resourceCheck = part.resourceInfos.Any(r => r.resourceName == value);
+
+            return resourceCheck;
+        }
+
+        internal static bool checkTech(AvailablePart part, string value)
+        {
+            bool techCheck = part.TechRequired == value;
+
+            return techCheck;
+        }
+
+        internal static bool checkManufacturer(AvailablePart part, string value)
+        {
+            bool manuCheck = part.manufacturer == value;
+
+            return manuCheck;
+        }
+
+        internal static bool checkFolder(AvailablePart part, string value)
+        {
+            if (part.name == "PotatoRoid")
+                return false;
+
+            bool folderCheck = false;
+            if (Core.partFolderDict.ContainsKey(part.name))
+                folderCheck = Core.partFolderDict[part.name] == value;
+            else
+                Debug.Log("[Filter Extensions] Unable to assign a mod to the part " + part.title);
+
+            return folderCheck;
+        }
+
         public static int partSize(AvailablePart part)
         {
             int size = -1;

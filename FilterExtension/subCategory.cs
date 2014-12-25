@@ -41,13 +41,17 @@ namespace FilterExtensions
 
         internal void initialise()
         {
-            if (iconName == null && (subCategoryTitle != null || subCategoryTitle != ""))
+            PartCategorizer.Icon icon;
+            if (iconName == null && !string.IsNullOrEmpty(subCategoryTitle))
             {
                 Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
-                return;
+                icon = PartCategorizer.Instance.fallbackIcon;
             }
-            PartCategorizer.Icon icon = Core.getIcon(iconName);
-
+            else
+            {
+                icon = Core.getIcon(iconName);
+            }
+            
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
@@ -56,13 +60,11 @@ namespace FilterExtensions
             else if (defaultTitle != "")
             {
                 List<PartCategorizer.Category> modules = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
-                if (subCategoryTitle == null || subCategoryTitle == "")
-                {
+                if (string.IsNullOrEmpty(subCategoryTitle))
                     modules.Remove(modules.Find(m => m.button.categoryName == defaultTitle));
-                }
                 else
                 {
-                    List<PartCategorizerButton> b = modules.Select(m => m.button).ToList();
+                    List<PartCategorizerButton> b = (List<PartCategorizerButton>)modules.Select(m => m.button);
                     PartCategorizerButton but = b.Find(c => c.categoryName == defaultTitle);
                     if (but != null)
                     {

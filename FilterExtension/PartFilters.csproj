@@ -54,6 +54,7 @@
     <Compile Include="Core.cs" />
     <Compile Include="Categoriser\PartType.cs" />
     <Compile Include="Filter.cs" />
+    <Compile Include="Monitor.cs" />
     <Compile Include="subCategory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

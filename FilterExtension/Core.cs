@@ -11,21 +11,14 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
-        List<Category> Categories = new List<Category>();
-        List<subCategory> subCategories = new List<subCategory>();
+        internal static List<customCategory> Categories = new List<customCategory>();
+        internal static List<subCategory> subCategories = new List<subCategory>();
         internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>(); // all the icons inside folders named filterIcon
         internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>(); // mod folder for each part by internal name
 
         void Awake()
         {
             GameEvents.onGUIEditorToolbarReady.Add(editor);
-
-            ConfigNode FilterByMod = new ConfigNode("CATEGORY");
-            FilterByMod.AddValue("title", "Filter by Mod");
-            FilterByMod.AddValue("icon", "Filter by Mod");
-            FilterByMod.AddValue("colour", "#FFFF0000");
-
-            Categories.Add(new Category(FilterByMod));
 
             List<string> modNames = new List<string>();
             foreach (AvailablePart p in PartLoader.Instance.parts)
@@ -42,6 +35,8 @@ namespace FilterExtensions
                     modNames.Add(name);
                 if (!partFolderDict.ContainsKey(p.name))
                     partFolderDict.Add(p.name, name);
+                else
+                    Debug.Log("[Filter Extensions] " + p.name + " duplicated part key in part-mod dictionary");
             }
 
             foreach (string s in modNames)
@@ -56,7 +51,7 @@ namespace FilterExtensions
                 nodeFilter.AddNode(nodeCheck);
 
                 ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
-                nodeSub.AddValue("category", "Filter by Mod");
+                nodeSub.AddValue("category", "Filter by Manufacturer");
                 nodeSub.AddValue("title", s);
                 nodeSub.AddValue("icon", s);
                 nodeSub.AddNode(nodeFilter);
@@ -66,7 +61,7 @@ namespace FilterExtensions
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
-                Category C = new Category(node);
+                customCategory C = new customCategory(node);
                 if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
                     Categories.Add(C);
             }
@@ -82,13 +77,14 @@ namespace FilterExtensions
         private void editor()
         {
             loadIcons();
-            
-            foreach (Category c in Categories)
+
+            PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Manufacturer").subcategories.Clear();
+            foreach (customCategory c in Categories)
             {
                 c.initialise();
             }
-            PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Mod").button.SetIcon(
-                PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Manufacturer").button.icon);
+            //PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Mod").button.SetIcon(
+            //    PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Manufacturer").button.icon);
 
             PartCategorizer.Instance.UpdateCategoryNameLabel();
 
@@ -104,15 +100,20 @@ namespace FilterExtensions
                     sC.initialise();
                 }
                 catch {
-                    Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " failed to initialise");
+                    Debug.Log("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
                 }
             }
             refreshList();
 
+            List<PartCategorizer.Category> toDelete = new List<PartCategorizer.Category>();
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
                 if (c.subcategories.Count == 0)
-                    PartCategorizer.Instance.filters.Remove(c);
+                    toDelete.Add(c);
+            }
+            foreach(PartCategorizer.Category c in toDelete)
+            {
+                PartCategorizer.Instance.filters.Remove(c);
             }
 
             PartCategorizer.Instance.SetAdvancedMode();
