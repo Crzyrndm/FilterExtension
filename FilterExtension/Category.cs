@@ -13,8 +13,8 @@ namespace FilterExtensions
         internal string iconName;
         internal Color colour;
         internal string type;
-        internal string value; // mod folder name for mod type categories
-        internal string location; // filter == top set, category = custom section
+        internal string[] value; // mod folder name for mod type categories
+        // internal string location; // filter == top set, category = custom section
 
         public customCategory(ConfigNode node)
         {
@@ -22,8 +22,9 @@ namespace FilterExtensions
             iconName = node.GetValue("icon");
             convertToColor(node.GetValue("colour"));
             type = node.GetValue("type");
-            value = node.GetValue("value");
-            location = node.GetValue("location");
+            string temp = node.GetValue("value");
+            if (!string.IsNullOrEmpty(temp))
+                value = temp.Split(',');
         }
 
         internal void initialise()

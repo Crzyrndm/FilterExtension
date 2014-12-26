@@ -131,7 +131,7 @@ namespace FilterExtensions
         {
             foreach (subCategory sC in subCategories) // iterate through the already added sC's
             {
-                if (sCToCheck.category == sC.category)
+                if (sCToCheck.categories == sC.categories)
                 {
                     if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
                     {
@@ -219,7 +219,6 @@ namespace FilterExtensions
                 if (!texDict.ContainsKey(t.name))
                     texDict.Add(t.name, t);
             }
-            Debug.Log("just a checkpoint");
             foreach (GameDatabase.TextureInfo t in texList)
             {
                 bool simple = false;
@@ -237,7 +236,6 @@ namespace FilterExtensions
                 if (!PartCategorizer.Instance.iconDictionary.ContainsKey(icon.name))
                     PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
             }
-            print(texList.Count);
         }
 
         internal static PartCategorizer.Icon getIcon(string name)

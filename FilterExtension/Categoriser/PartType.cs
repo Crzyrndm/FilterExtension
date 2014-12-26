@@ -138,6 +138,24 @@ namespace FilterExtensions.Categoriser
             return folderCheck;
         }
 
+        internal static bool checkFolder(AvailablePart part, string[] values)
+        {
+            if (part.name == "PotatoRoid")
+                return false;
+
+            if (Core.partFolderDict.ContainsKey(part.name))
+            {
+                foreach (string s in values)
+                {
+                    if (Core.partFolderDict[part.name] == s.Trim())
+                        return true;
+                }
+            }
+            Debug.Log("[Filter Extensions] Unable to assign a mod to the part " + part.title);
+
+            return false;
+        }
+
         public static int partSize(AvailablePart part)
         {
             int size = -1;

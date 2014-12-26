@@ -7,7 +7,7 @@ namespace FilterExtensions
 {
     class subCategory
     {
-        internal string category; // parent category
+        internal string[] categories; // parent category
         internal string subCategoryTitle; // title of this subcategory
         internal string oldTitle; // title generated for the auto extending categories to search by
         internal string iconName; // default icon to use
@@ -16,7 +16,7 @@ namespace FilterExtensions
 
         public subCategory(ConfigNode node)
         {
-            category = node.GetValue("category");
+            categories = node.GetValue("category").Split(',');
             subCategoryTitle = node.GetValue("title");
             iconName = node.GetValue("icon");
             oldTitle = node.GetValue("oldTitle");
@@ -41,33 +41,40 @@ namespace FilterExtensions
 
         internal void initialise()
         {
-            PartCategorizer.Icon icon;
-            if (string.IsNullOrEmpty(iconName))
+            foreach (string s in categories)
             {
-                Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
-                icon = PartCategorizer.Instance.fallbackIcon;
-            }
-            else
-            {
-                icon = Core.getIcon(iconName);
-            }
-            if (filter)
-            {
-                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
-                PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
-            }
-            else if (!string.IsNullOrEmpty(oldTitle))
-            {
-                List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
-                if (string.IsNullOrEmpty(subCategoryTitle))
-                    subCategories.Remove(subCategories.Find(m => m.button.categoryName == oldTitle));
+                Debug.Log(s);
+                PartCategorizer.Icon icon;
+                if (string.IsNullOrEmpty(iconName))
+                {
+                    Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
+                    icon = PartCategorizer.Instance.fallbackIcon;
+                }
                 else
                 {
-                    PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == oldTitle).button;
-                    if (but != null)
+                    icon = Core.getIcon(iconName);
+                }
+                Debug.Log("1");
+                if (filter)
+                {
+                    Debug.Log("2");
+                    PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == s.Trim());
+                    Debug.Log("3");
+                    PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
+                }
+                else if (!string.IsNullOrEmpty(oldTitle))
+                {
+                    List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == s.Trim()).subcategories;
+                    if (string.IsNullOrEmpty(subCategoryTitle))
+                        subCategories.Remove(subCategories.Find(m => m.button.categoryName == oldTitle));
+                    else
                     {
-                        but.categoryName = subCategoryTitle;
-                        but.SetIcon(icon);
+                        PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == oldTitle).button;
+                        if (but != null)
+                        {
+                            but.categoryName = subCategoryTitle;
+                            but.SetIcon(icon);
+                        }
                     }
                 }
             }
