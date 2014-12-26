@@ -14,8 +14,7 @@ namespace FilterExtensions
         internal Color colour;
         internal string type;
         internal string value; // mod folder name for mod type categories
-
-        internal static AvailablePart roid = PartLoader.Instance.parts.First(ap => ap.name == "PotatoRoid");
+        internal string location; // filter == top set, category = custom section
 
         public customCategory(ConfigNode node)
         {
@@ -24,18 +23,20 @@ namespace FilterExtensions
             convertToColor(node.GetValue("colour"));
             type = node.GetValue("type");
             value = node.GetValue("value");
+            location = node.GetValue("location");
         }
 
         internal void initialise()
         {
             if (categoryTitle == null)
                 return;
-
-            // PartCategorizer.Instance.filters.Add(new PartCategorizer.Category(
-            //    PartCategorizer.ButtonType.FILTER, EditorPartList.State.PartsList, categoryTitle, Core.getIcon(iconName), colour, colour, 
-
+            
             PartCategorizer.AddCustomFilter(categoryTitle, Core.getIcon(iconName), colour);
 
+            //PartCategorizer.Instance.filters.Add(new PartCategorizer.Category(
+            //                        PartCategorizer.ButtonType.FILTER, EditorPartList.State.PartsList, categoryTitle, Core.getIcon(iconName), colour, colour,
+            //                        new EditorPartListFilter<AvailablePart>(categoryTitle, (part => Exclude(part)))));
+            
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
             category.displayType = EditorPartList.State.PartsList;
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
@@ -60,6 +61,22 @@ namespace FilterExtensions
         private bool Filter(AvailablePart part, string category)
         {
             if (PartType.checkCategory(part, category) && PartType.checkFolder(part, value))
+                return true;
+            else
+                return false;
+        }
+
+        private bool Exclude(AvailablePart part)
+        {
+            if (PartType.checkFolder(part, value))
+                return true;
+            else
+                return false;
+        }
+
+        private bool genericExclude(AvailablePart part)
+        {
+            if (part.category != PartCategories.none)
                 return true;
             else
                 return false;
