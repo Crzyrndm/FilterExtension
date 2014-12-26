@@ -48,6 +48,9 @@ namespace FilterExtensions
                 case "folder": // check by mod root folder
                     result = PartType.checkFolder(partToCheck, value);
                     return (result && pass) || !(result || pass);
+                case "category":
+                    result = PartType.checkCategory(partToCheck, value);
+                    return (result && pass) || !(result || pass);
                 case "custom": // filters using PartType class
                     result = PartType.checkCustom(partToCheck, value);
                     return (result && pass) || !(result || pass);

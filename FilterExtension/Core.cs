@@ -199,22 +199,19 @@ namespace FilterExtensions
         private void checkIcons(PartCategorizer.Category category)
         {
             if (PartCategorizer.Instance.iconDictionary.ContainsKey(category.button.categoryName))
-            {
                 category.button.SetIcon(PartCategorizer.Instance.iconDictionary[category.button.categoryName]);
-            }
 
             foreach(PartCategorizer.Category c in category.subcategories)
             {
                 if (PartCategorizer.Instance.iconDictionary.ContainsKey(c.button.categoryName))
-                {
                     c.button.SetIcon(PartCategorizer.Instance.iconDictionary[c.button.categoryName]);
-                }
             }
         }
 
         private void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolder("");
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
+            print(texList.Count);
             foreach (GameDatabase.TextureInfo t in texList) // remove all textures from the list that have a dimension > 40 pixels
             {
                 if (t.texture.height > 40 || t.texture.width > 40)
@@ -240,6 +237,7 @@ namespace FilterExtensions
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
                 PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
             }
+            print(texList.Count);
         }
 
         internal static PartCategorizer.Icon getIcon(string name)
@@ -257,11 +255,6 @@ namespace FilterExtensions
 
             if (url == null)
                 return;
-            //    throw new System.IO.FileNotFoundException();
-
-            // repair missing name in config if desired
-            if (!url.config.HasValue("name"))
-                url.config.AddValue("name", url.name);
 
             ap.partUrl = url.url;
         }

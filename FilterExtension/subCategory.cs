@@ -9,7 +9,7 @@ namespace FilterExtensions
     {
         internal string category; // parent category
         internal string subCategoryTitle; // title of this subcategory
-        internal string defaultTitle; // title generated for the auto extending categories to search by
+        internal string oldTitle; // title generated for the auto extending categories to search by
         internal string iconName; // default icon to use
         internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
         internal bool filter;
@@ -19,7 +19,7 @@ namespace FilterExtensions
             category = node.GetValue("category");
             subCategoryTitle = node.GetValue("title");
             iconName = node.GetValue("icon");
-            defaultTitle = node.GetValue("oldTitle");
+            oldTitle = node.GetValue("oldTitle");
 
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
@@ -42,7 +42,7 @@ namespace FilterExtensions
         internal void initialise()
         {
             PartCategorizer.Icon icon;
-            if (iconName == null && !string.IsNullOrEmpty(subCategoryTitle))
+            if (string.IsNullOrEmpty(iconName))
             {
                 Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
                 icon = PartCategorizer.Instance.fallbackIcon;
@@ -51,21 +51,19 @@ namespace FilterExtensions
             {
                 icon = Core.getIcon(iconName);
             }
-            
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
                 PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
             }
-            else if (defaultTitle != "")
+            else if (!string.IsNullOrEmpty(oldTitle))
             {
-                List<PartCategorizer.Category> modules = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
+                List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
                 if (string.IsNullOrEmpty(subCategoryTitle))
-                    modules.Remove(modules.Find(m => m.button.categoryName == defaultTitle));
+                    subCategories.Remove(subCategories.Find(m => m.button.categoryName == oldTitle));
                 else
                 {
-                    List<PartCategorizerButton> b = (List<PartCategorizerButton>)modules.Select(m => m.button);
-                    PartCategorizerButton but = b.Find(c => c.categoryName == defaultTitle);
+                    PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == oldTitle).button;
                     if (but != null)
                     {
                         but.categoryName = subCategoryTitle;
