@@ -210,17 +210,16 @@ namespace FilterExtensions
 
         private void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
-            print(texList.Count);
-            foreach (GameDatabase.TextureInfo t in texList) // remove all textures from the list that have a dimension > 40 pixels
-            {
-                if (t.texture.height > 40 || t.texture.width > 40)
-                {
-                    texList.Remove(t);
-                }
-            }
+            List<GameDatabase.TextureInfo> texList = new List<GameDatabase.TextureInfo>(GameDatabase.Instance.databaseTexture);// GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
+            texList.RemoveAll(t => t.texture.width > 40 || t.texture.height > 40);
             // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
-            texDict = texList.ToDictionary(k => k.name);
+            
+            foreach(GameDatabase.TextureInfo t in texList)
+            {
+                if (!texDict.ContainsKey(t.name))
+                    texDict.Add(t.name, t);
+            }
+            Debug.Log("just a checkpoint");
             foreach (GameDatabase.TextureInfo t in texList)
             {
                 bool simple = false;
@@ -235,7 +234,8 @@ namespace FilterExtensions
 
                 string[] name = t.name.Split('/');
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
-                PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
+                if (!PartCategorizer.Instance.iconDictionary.ContainsKey(icon.name))
+                    PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
             }
             print(texList.Count);
         }
