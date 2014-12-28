@@ -9,6 +9,9 @@ namespace FilterExtensions.Categoriser
     {
         internal static bool checkCustom(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool val;
             switch (value)
             {
@@ -37,15 +40,31 @@ namespace FilterExtensions.Categoriser
             return val;
         }
 
-        internal static bool checkModule(AvailablePart part, string value)
+        internal static bool checkModuleTitle(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool moduleCheck = part.moduleInfos.Any(m => m.moduleName == value);
+
+            return moduleCheck;
+        }
+
+        internal static bool checkModuleName(AvailablePart part, string value)
+        {
+            if (part.category == PartCategories.none)
+                return false;
+
+            bool moduleCheck = part.partPrefab.Modules.Contains(value);
 
             return moduleCheck;
         }
 
         internal static bool checkCategory(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             switch (value)
             {
                 case "Pod":
@@ -91,6 +110,9 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkName(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool nameCheck = part.name == value;
 
             return nameCheck;
@@ -98,6 +120,9 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkTitle(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool titleCheck = part.title.Contains(value);
 
             return titleCheck;
@@ -105,6 +130,9 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkResource(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool resourceCheck = part.resourceInfos.Any(r => r.resourceName == value);
 
             return resourceCheck;
@@ -112,6 +140,9 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkTech(AvailablePart part, string value)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool techCheck = part.TechRequired == value;
 
             return techCheck;
@@ -119,28 +150,29 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkManufacturer(AvailablePart part, string value)
         {
-            bool manuCheck = part.manufacturer == value;
+            if (part.category == PartCategories.none)
+                return false;
+
+            bool manuCheck = (part.manufacturer == value);
 
             return manuCheck;
         }
 
         internal static bool checkFolder(AvailablePart part, string value)
         {
-            if (part.name == "PotatoRoid")
+            if (part.category == PartCategories.none)
                 return false;
 
             bool folderCheck = false;
             if (Core.partFolderDict.ContainsKey(part.name))
                 folderCheck = Core.partFolderDict[part.name] == value;
-            else
-                Debug.Log("[Filter Extensions] Unable to assign a mod to the part " + part.title);
 
             return folderCheck;
         }
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            if (part.name == "PotatoRoid")
+            if (part.category == PartCategories.none)
                 return false;
 
             if (Core.partFolderDict.ContainsKey(part.name))
@@ -151,7 +183,6 @@ namespace FilterExtensions.Categoriser
                         return true;
                 }
             }
-            Debug.Log("[Filter Extensions] Unable to assign a mod to the part " + part.title);
 
             return false;
         }

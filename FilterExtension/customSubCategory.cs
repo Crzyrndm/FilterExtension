@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions
 {
-    class subCategory
+    class customSubCategory
     {
         internal string[] categories; // parent category
         internal string subCategoryTitle; // title of this subcategory
@@ -14,7 +14,7 @@ namespace FilterExtensions
         internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
         internal bool filter;
 
-        public subCategory(ConfigNode node)
+        public customSubCategory(ConfigNode node)
         {
             categories = node.GetValue("category").Split(',');
             subCategoryTitle = node.GetValue("title");
@@ -43,7 +43,6 @@ namespace FilterExtensions
         {
             foreach (string s in categories)
             {
-                Debug.Log(s);
                 PartCategorizer.Icon icon;
                 if (string.IsNullOrEmpty(iconName))
                 {
@@ -54,12 +53,9 @@ namespace FilterExtensions
                 {
                     icon = Core.getIcon(iconName);
                 }
-                Debug.Log("1");
                 if (filter)
                 {
-                    Debug.Log("2");
                     PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == s.Trim());
-                    Debug.Log("3");
                     PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
                 }
                 else if (!string.IsNullOrEmpty(oldTitle))

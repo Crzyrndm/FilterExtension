@@ -12,7 +12,7 @@ namespace FilterExtensions
     public class Core : MonoBehaviour
     {
         internal static List<customCategory> Categories = new List<customCategory>();
-        internal static List<subCategory> subCategories = new List<subCategory>();
+        internal static List<customSubCategory> subCategories = new List<customSubCategory>();
         internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>(); // all the icons inside folders named filterIcon
         internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>(); // mod folder for each part by internal name
 
@@ -33,6 +33,7 @@ namespace FilterExtensions
 
                 if (!modNames.Contains(name))
                     modNames.Add(name);
+
                 if (!partFolderDict.ContainsKey(p.name))
                     partFolderDict.Add(p.name, name);
                 else
@@ -56,7 +57,7 @@ namespace FilterExtensions
                 nodeSub.AddValue("icon", s);
                 nodeSub.AddNode(nodeFilter);
 
-                subCategories.Add(new subCategory(nodeSub));
+                subCategories.Add(new customSubCategory(nodeSub));
             }
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
@@ -68,7 +69,7 @@ namespace FilterExtensions
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                subCategory sC = new subCategory(node);
+                customSubCategory sC = new customSubCategory(node);
                 if (checkForConflicts(sC))
                     subCategories.Add(sC);
             }
@@ -83,8 +84,6 @@ namespace FilterExtensions
             {
                 c.initialise();
             }
-            //PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Mod").button.SetIcon(
-            //    PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Manufacturer").button.icon);
 
             PartCategorizer.Instance.UpdateCategoryNameLabel();
 
@@ -93,7 +92,7 @@ namespace FilterExtensions
                 checkIcons(c);
             }
 
-            foreach (subCategory sC in subCategories)
+            foreach (customSubCategory sC in subCategories)
             {
                 try
                 {
@@ -105,17 +104,7 @@ namespace FilterExtensions
             }
             refreshList();
 
-            List<PartCategorizer.Category> toDelete = new List<PartCategorizer.Category>();
-            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
-            {
-                if (c.subcategories.Count == 0)
-                    toDelete.Add(c);
-            }
-            foreach(PartCategorizer.Category c in toDelete)
-            {
-                PartCategorizer.Instance.filters.Remove(c);
-            }
-
+            PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
             PartCategorizer.Instance.SetAdvancedMode();
         }
 
@@ -127,22 +116,25 @@ namespace FilterExtensions
             button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
 
-        private bool checkForConflicts(subCategory sCToCheck)
+        private bool checkForConflicts(customSubCategory sCToCheck)
         {
-            foreach (subCategory sC in subCategories) // iterate through the already added sC's
+            foreach (customSubCategory sC in subCategories) // iterate through the already added sC's
             {
-                if (sCToCheck.categories == sC.categories)
+                foreach (string s in sCToCheck.categories)
                 {
-                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                    if (sC.categories.Contains(s))
                     {
-                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
-                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
-                    }
-                    else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
-                    {
-                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
-                        sCToCheck.filters.AddRange(sC.filters);
-                        return false; // all other elements of this list have already been check for this condition. Don't need to continue
+                        if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                        {
+                            Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
+                            return false; // ignore this subCategory, only the first processed sC in a conflict will get through
+                        }
+                        else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
+                        {
+                            Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                            sCToCheck.filters.AddRange(sC.filters);
+                            return false; // all other elements of this list have already been check for this condition. Don't need to continue
+                        }
                     }
                 }
             }
@@ -249,7 +241,7 @@ namespace FilterExtensions
         // credit to EvilReeperx for this lifesaving function
         private void RepairAvailablePartUrl(AvailablePart ap)
         {
-            var url = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(u => u.name == KSPUtil.SanitizeFilename(ap.name));
+            var url = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(u => u.name.Replace('_', '.') == ap.name);
 
             if (url == null)
                 return;

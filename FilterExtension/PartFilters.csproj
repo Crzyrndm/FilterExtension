@@ -49,13 +49,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Category.cs" />
+    <Compile Include="customCategory.cs" />
     <Compile Include="Check.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="Categoriser\PartType.cs" />
     <Compile Include="Filter.cs" />
     <Compile Include="Monitor.cs" />
-    <Compile Include="subCategory.cs" />
+    <Compile Include="customSubCategory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

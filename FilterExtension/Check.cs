@@ -28,7 +28,10 @@ namespace FilterExtensions
             switch (type)
             {
                 case "moduleTitle": // check by module title
-                    result = PartType.checkModule(partToCheck, value);
+                    result = PartType.checkModuleTitle(partToCheck, value);
+                    return (result && pass) || !(result || pass);
+                case "moduleName":
+                    result = PartType.checkModuleName(partToCheck, value);
                     return (result && pass) || !(result || pass);
                 case "name": // check by part name (cfg name)
                     result = PartType.checkName(partToCheck, value);
