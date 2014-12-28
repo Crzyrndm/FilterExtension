@@ -20,6 +20,30 @@ namespace FilterExtensions
         {
             GameEvents.onGUIEditorToolbarReady.Add(editor);
 
+            assignModsToParts();
+
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
+            {
+                customCategory C = new customCategory(node);
+                if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
+                    Categories.Add(C);
+            }
+
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
+            {
+                string[] categories = node.GetValue("category").Split(',');
+                foreach (string s in categories)
+                {
+                    customSubCategory sC = new customSubCategory(node, s.Trim());
+                    if (checkForConflicts(sC))
+                        subCategories.Add(sC);
+                }
+            }
+        }
+
+        private void assignModsToParts()
+        {
+            // Build list of mod folder names and Dict associating parts with mods
             List<string> modNames = new List<string>();
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
@@ -29,7 +53,6 @@ namespace FilterExtensions
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
 
-                //p.partUrl = p.partUrl.Replace(" ", ".");
                 p.partUrl = KSPUtil.SanitizeFilename(p.partUrl);
                 string name = p.partUrl.Split('_')[0]; // mod folder name
 
@@ -41,7 +64,7 @@ namespace FilterExtensions
                 else
                     Debug.Log("[Filter Extensions] " + p.name + " duplicated part key in part-mod dictionary");
             }
-
+            // Create subcategories for Manufacturer category
             foreach (string s in modNames)
             {
                 ConfigNode nodeCheck = new ConfigNode("CHECK");
@@ -60,24 +83,6 @@ namespace FilterExtensions
                 nodeSub.AddNode(nodeFilter);
 
                 subCategories.Add(new customSubCategory(nodeSub, nodeSub.GetValue("category")));
-            }
-
-            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
-            {
-                customCategory C = new customCategory(node);
-                if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
-                    Categories.Add(C);
-            }
-
-            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
-            {
-                string[] categories = node.GetValue("category").Split(',');
-                foreach (string s in categories)
-                {
-                    customSubCategory sC = new customSubCategory(node, s.Trim());
-                    if (checkForConflicts(sC))
-                        subCategories.Add(sC);
-                }
             }
         }
 
@@ -206,7 +211,7 @@ namespace FilterExtensions
         private void loadIcons()
         {
             List<GameDatabase.TextureInfo> texList = new List<GameDatabase.TextureInfo>(GameDatabase.Instance.databaseTexture);// GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
-            texList.RemoveAll(t => t.texture.width > 40 || t.texture.height > 40);
+            texList.RemoveAll(t => t.texture.width > 40 || t.texture.width < 25 || t.texture.height > 40 || t.texture.height < 25);
             // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             
             foreach(GameDatabase.TextureInfo t in texList)

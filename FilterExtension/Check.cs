@@ -11,15 +11,13 @@ namespace FilterExtensions
     {
         internal string type = ""; // type of check to perform (module, title/name, resource,...)
         internal string value = "";
-        internal bool pass;
+        internal bool invert;
 
         internal Check(ConfigNode node)
         {
             type = node.GetValue("type");
             value = node.GetValue("value");
-            pass = bool.Parse(node.GetValue("pass"));
-            if (pass == null)
-                pass = true;
+            bool.TryParse(node.GetValue("invert"), out invert);
         }
 
         internal bool checkPart(AvailablePart partToCheck)
@@ -29,37 +27,41 @@ namespace FilterExtensions
             {
                 case "moduleTitle": // check by module title
                     result = PartType.checkModuleTitle(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "moduleName":
                     result = PartType.checkModuleName(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "name": // check by part name (cfg name)
                     result = PartType.checkName(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "title": // check by part title (in game name)
                     result = PartType.checkTitle(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "resource": // check for a resource
                     result = PartType.checkResource(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "tech": // check by tech
                     result = PartType.checkTech(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "manufacturer": // check by manufacturer
                     result = PartType.checkManufacturer(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "folder": // check by mod root folder
                     result = PartType.checkFolder(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "category":
                     result = PartType.checkCategory(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 case "custom": // filters using PartType class
                     result = PartType.checkCustom(partToCheck, value);
-                    return (result && pass) || !(result || pass);
+                    break;
                 default:
-                    return false;
+                    result = false;
+                    break;
             }
+            if (invert)
+                result = !result;
+            return result;
         }
     }
 

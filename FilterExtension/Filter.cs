@@ -16,13 +16,7 @@ namespace FilterExtensions
             {
                 checks.Add(new Check(subNode));
             }
-            try
-            {
-                invert = bool.Parse(node.GetValue("invert"));
-            }
-            catch { }
-            if (invert == null)
-                invert = false;
+            bool.TryParse(node.GetValue("invert"), out invert);
         }
 
         internal bool checkFilter(AvailablePart part)
