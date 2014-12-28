@@ -69,7 +69,7 @@ namespace FilterExtensions
     {
         public bool Equals(Check c1, Check c2)
         {
-            if (c1.type == c2.type && c1.value == c2.value && c1.pass == c2.pass)
+            if (c1.type == c2.type && c1.value == c2.value && c1.invert == c2.invert)
                 return true;
             else
                 return false;
@@ -77,7 +77,7 @@ namespace FilterExtensions
 
         public int GetHashCode(Check c)
         {
-            return c.type.GetHashCode() + c.value.GetHashCode() + c.pass.GetHashCode();
+            return c.type.GetHashCode() + c.value.GetHashCode() + c.invert.GetHashCode();
         }
     }
 }
