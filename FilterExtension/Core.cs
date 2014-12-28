@@ -28,8 +28,10 @@ namespace FilterExtensions
 
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
+
+                p.partUrl = p.partUrl.Replace(" ", ".");
                 p.partUrl = KSPUtil.SanitizeFilename(p.partUrl);
-                string name = p.partUrl.Split('_')[0];
+                string name = p.partUrl.Split('_')[0]; // mod folder name
 
                 if (!modNames.Contains(name))
                     modNames.Add(name);
