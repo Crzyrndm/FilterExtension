@@ -29,7 +29,7 @@ namespace FilterExtensions
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
 
-                p.partUrl = p.partUrl.Replace(" ", ".");
+                //p.partUrl = p.partUrl.Replace(" ", ".");
                 p.partUrl = KSPUtil.SanitizeFilename(p.partUrl);
                 string name = p.partUrl.Split('_')[0]; // mod folder name
 
@@ -59,7 +59,7 @@ namespace FilterExtensions
                 nodeSub.AddValue("icon", s);
                 nodeSub.AddNode(nodeFilter);
 
-                subCategories.Add(new customSubCategory(nodeSub));
+                subCategories.Add(new customSubCategory(nodeSub, nodeSub.GetValue("category")));
             }
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
@@ -71,9 +71,13 @@ namespace FilterExtensions
 
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                customSubCategory sC = new customSubCategory(node);
-                if (checkForConflicts(sC))
-                    subCategories.Add(sC);
+                string[] categories = node.GetValue("category").Split(',');
+                foreach (string s in categories)
+                {
+                    customSubCategory sC = new customSubCategory(node, s.Trim());
+                    if (checkForConflicts(sC))
+                        subCategories.Add(sC);
+                }
             }
         }
 
@@ -122,21 +126,18 @@ namespace FilterExtensions
         {
             foreach (customSubCategory sC in subCategories) // iterate through the already added sC's
             {
-                foreach (string s in sCToCheck.categories)
+                if (sC.category == sCToCheck.category)
                 {
-                    if (sC.categories.Contains(s))
+                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
                     {
-                        if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
-                        {
-                            Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
-                            return false; // ignore this subCategory, only the first processed sC in a conflict will get through
-                        }
-                        else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
-                        {
-                            Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
-                            sCToCheck.filters.AddRange(sC.filters);
-                            return false; // all other elements of this list have already been check for this condition. Don't need to continue
-                        }
+                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
+                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
+                    }
+                    else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
+                    {
+                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                        sCToCheck.filters.AddRange(sC.filters);
+                        return false; // all other elements of this list have already been check for this condition. Don't need to continue
                     }
                 }
             }
