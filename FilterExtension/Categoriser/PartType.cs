@@ -7,6 +7,15 @@ namespace FilterExtensions.Categoriser
 {
     static class PartType
     {
+        internal static List<string> whiteList = new List<string>();
+        private static bool categoryCheck(AvailablePart part)
+        {
+            if (part.category != PartCategories.none)
+                return false;
+            else
+                return true;
+        }
+
         internal static bool checkCustom(AvailablePart part, string value)
         {
             if (part.category == PartCategories.none)
@@ -42,7 +51,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkModuleTitle(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool moduleCheck = part.moduleInfos.Any(m => m.moduleName == value);
@@ -52,7 +61,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkModuleName(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool moduleCheck = part.partPrefab.Modules.Contains(value);
@@ -62,9 +71,6 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkCategory(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
-                return false;
-
             switch (value)
             {
                 case "Pod":
@@ -110,7 +116,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkName(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool nameCheck = part.name == value;
@@ -120,7 +126,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkTitle(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool titleCheck = part.title.Contains(value);
@@ -130,7 +136,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkResource(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool resourceCheck = part.resourceInfos.Any(r => r.resourceName == value);
@@ -140,7 +146,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkTech(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool techCheck = part.TechRequired == value;
@@ -150,7 +156,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkManufacturer(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool manuCheck = (part.manufacturer == value);
@@ -160,7 +166,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkFolder(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             bool folderCheck = false;
@@ -172,7 +178,7 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            if (part.category == PartCategories.none)
+            if (categoryCheck(part))
                 return false;
 
             if (Core.partFolderDict.ContainsKey(part.name))
