@@ -30,17 +30,11 @@ namespace FilterExtensions.Categoriser
                 case "isCommand":
                     val = isCommand(part);
                     break;
-                case "LFLOx Engine":
-                    val = isLFLOxEngine(part);
-                    break;
-                case "LF Engine":
-                    val = isLFEngine(part);
-                    break;
                 case "adapter":
                     val = isAdapter(part);
                     break;
-                case "Xenon Engine":
-                    val = isIonEngine(part);
+                case "crewCabin":
+                    val = isCabin(part);
                     break;
                 default:
                     val = false;
@@ -139,9 +133,36 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool resourceCheck = part.resourceInfos.Any(r => r.resourceName == value);
+            bool resourceCheck = part.partPrefab.Resources.Contains(value);
 
             return resourceCheck;
+        }
+
+        internal static bool checkPropellant(AvailablePart part, string value)
+        {
+            if (categoryCheck(part))
+                return false;
+
+            List<Propellant> propellants = new List<Propellant>();
+            if (part.partPrefab.GetModuleEngines() != null)
+            {
+                propellants = part.partPrefab.GetModuleEngines().propellants;
+            }
+            else if (part.partPrefab.GetModuleEnginesFx() != null)
+            {
+                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
+            }
+            else
+                return false;
+
+            string[] props = value.Split(',');
+            foreach (string s in props)
+            {
+                if (propellants.FirstOrDefault(p => p.name == s.Trim()) == null)
+                    return false;
+            }
+
+            return true;
         }
 
         internal static bool checkTech(AvailablePart part, string value)
@@ -193,7 +214,7 @@ namespace FilterExtensions.Categoriser
             return false;
         }
 
-        public static int partSize(AvailablePart part)
+        public static bool checkPartSize(AvailablePart part, string value)
         {
             int size = -1;
             foreach (AttachNode node in part.partPrefab.attachNodes)
@@ -201,7 +222,7 @@ namespace FilterExtensions.Categoriser
                 if (size < node.size)
                     size = node.size;
             }
-            return size;
+            return value.Split(',').Any(p => p.Trim() == size.ToString());
         }
 
         public static bool isCommand(AvailablePart part)
@@ -226,13 +247,6 @@ namespace FilterExtensions.Categoriser
             return false;
         }
 
-        public static bool isResourceIntake(AvailablePart part)
-        {
-            if (part.partPrefab.Modules.OfType<ModuleResourceIntake>().Any())
-                return true;
-            return false;
-        }
-
         public static bool isMannedPod(AvailablePart part)
         {
             if (part.partPrefab.Modules.OfType<ModuleCommand>().Any() && part.partPrefab.CrewCapacity > 0)
@@ -243,6 +257,13 @@ namespace FilterExtensions.Categoriser
         public static bool isDrone(AvailablePart part)
         {
             if (part.partPrefab.Modules.OfType<ModuleCommand>().Any() && part.partPrefab.CrewCapacity == 0)
+                return true;
+            return false;
+        }
+
+        public static bool isCabin(AvailablePart part)
+        {
+            if (!part.partPrefab.Modules.OfType<ModuleCommand>().Any() && part.partPrefab.CrewCapacity > 0)
                 return true;
             return false;
         }
@@ -282,188 +303,6 @@ namespace FilterExtensions.Categoriser
                 return true;
             
             return false;
-        }
-
-        public static bool isParachute(AvailablePart part)
-        {
-            if (part.partPrefab.Modules.OfType<ModuleParachute>().Any())
-                return true;
-            if (part.partPrefab.Modules.Contains("RealChuteModule"))
-                return true;
-            return false;
-        }
-
-        public static bool isDockingPort(AvailablePart part)
-        {
-            if (part.partPrefab.Modules.OfType<ModuleDockingNode>().Any())
-                return true;
-            return false;
-        }
-
-        public static bool isLight(AvailablePart part)
-        {
-            if (part.partPrefab.Modules.OfType<ModuleLight>().Any() && part.partPrefab.Modules.Count == 1)
-                return true;
-            return false;
-        }
-
-        public static bool isLadder(AvailablePart part)
-        {
-            if (part.partPrefab.Modules.OfType<RetractableLadder>().Any() && part.partPrefab.Modules.Count == 1)
-                return true;
-            if (part.name == "ladder1") // blasted radial ladder thing.
-                return true;
-            return false;
-        }
-
-        public static bool isLFLOxEngine(AvailablePart part)
-        {
-            bool LF = false, LOx = false;
-            List<Propellant> propellants = new List<Propellant>();
-
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "LiquidFuel")
-                    LF = true;
-                else if (p.name == "Oxidizer")
-                    LOx = true;
-            }
-            return LF && LOx;
-        }
-
-        public static bool isLFEngine(AvailablePart part)
-        {
-            bool LF = false, LOx = false;
-            List<Propellant> propellants = new List<Propellant>();
-
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "LiquidFuel")
-                    LF = true;
-                else if (p.name == "Oxidizer")
-                    LOx = true;
-            }
-            return LF && !LOx;
-        }
-
-        public static bool isSRB(AvailablePart part)
-        {
-            bool Solid = false;
-            List<Propellant> propellants = new List<Propellant>();
-
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "SolidFuel")
-                    Solid = true;
-            }
-            return Solid;
-        }
-
-        public static bool isIonEngine(AvailablePart part)
-        {
-            bool Ec = false, Xe = false;
-            List<Propellant> propellants = new List<Propellant>();
-            //Engine modules
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-            // get type
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "XenonGas")
-                    Xe = true;
-                else if (p.name == "ElectricCharge")
-                    Ec = true;
-            }
-            return Xe && Ec;
-        }
-
-        public static bool isNFEArgonEngine(AvailablePart part) // Near future argon EC engine
-        {
-            if (part.partPrefab.Modules.Contains("VariablePowerEngine"))
-                return false;
-
-            bool Ec = false, Arg = false;
-            List<Propellant> propellants = new List<Propellant>();
-            //Engine modules
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-            // get type
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "ArgonGas")
-                    Arg = true;
-                else if (p.name == "ElectricCharge")
-                    Ec = true;
-            }
-
-            return Arg && Ec;
-        }
-
-        public static bool isNFEVariableEngine(AvailablePart part) // Near future variable thrust argon EC engine
-        {
-            if (!part.partPrefab.Modules.Contains("VariablePowerEngine"))
-                return false;
-
-            bool Ec = false, Arg = false;
-            List<Propellant> propellants = new List<Propellant>();
-            //Engine modules
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-            // get type
-            foreach (Propellant p in propellants)
-            {
-                if (p.name == "ArgonGas")
-                    Arg = true;
-                else if (p.name == "ElectricCharge")
-                    Ec = true;
-            }
-
-            return Arg && Ec;
         }
 
         public static T GetModule<T>(this Part part) where T : PartModule

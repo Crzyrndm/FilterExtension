@@ -40,6 +40,9 @@ namespace FilterExtensions
                 case "resource": // check for a resource
                     result = PartType.checkResource(partToCheck, value);
                     break;
+                case "propellant": // check for engine propellant
+                    result = PartType.checkPropellant(partToCheck, value);
+                    break;
                 case "tech": // check by tech
                     result = PartType.checkTech(partToCheck, value);
                     break;
@@ -52,7 +55,10 @@ namespace FilterExtensions
                 case "category":
                     result = PartType.checkCategory(partToCheck, value);
                     break;
-                case "custom": // filters using PartType class
+                case "size": // check by largest stack node size
+                    result = PartType.checkPartSize(partToCheck, value);
+                    break;
+                case "custom": // for when things get tricky
                     result = PartType.checkCustom(partToCheck, value);
                     break;
                 default:

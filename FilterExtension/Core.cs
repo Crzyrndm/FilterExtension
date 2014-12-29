@@ -11,34 +11,68 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
+        // storing categories/subCategories loaded at Main Menu for creation when entering SPH/VAB
         internal static List<customCategory> Categories = new List<customCategory>();
         internal static List<customSubCategory> subCategories = new List<customSubCategory>();
-        internal static Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>(); // all the icons inside folders named filterIcon
-        internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>(); // mod folder for each part by internal name
+
+        // mod folder for each part by internal name
+        internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+
+        // Dictionary of icons created on entering the main menu
+        internal static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
 
         void Awake()
         {
+            // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
 
+            // generate the associations between parts and folders, and create all the mod categories
             assignModsToParts();
 
+            // mod categories key: title, value: folder
+            // used for adding the folder check to subCategories
+            Dictionary<string, string> folderToCategoryDict = new Dictionary<string, string>();
+            // load all category configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
                 customCategory C = new customCategory(node);
                 if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
+                {
                     Categories.Add(C);
+                    foreach (string s in C.value)
+                    {
+                        if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
+                            folderToCategoryDict.Add(C.categoryTitle, s);
+                    }
+                }
             }
 
+            // load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
+                // if multiple categories are specified, create multiple subCategories
                 string[] categories = node.GetValue("category").Split(',');
                 foreach (string s in categories)
                 {
                     customSubCategory sC = new customSubCategory(node, s.Trim());
+                    if (sC.filter && folderToCategoryDict.ContainsKey(sC.category))
+                    {
+                        foreach(Filter f in sC.filters)
+                        {
+                            ConfigNode nodeCheck = new ConfigNode("CHECK");
+                            nodeCheck.AddValue("type", "folder");
+                            nodeCheck.AddValue("value", folderToCategoryDict[sC.category]);
+
+                            f.checks.Add(new Check(nodeCheck));
+                        }
+                    }
+
                     if (checkForConflicts(sC))
                         subCategories.Add(sC);
                 }
             }
+
+            loadIcons();
         }
 
         private void assignModsToParts()
@@ -47,18 +81,24 @@ namespace FilterExtensions
             List<string> modNames = new List<string>();
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
+                // don't want dummy parts
+                if (p.category == PartCategories.none)
+                    continue;
+
                 if (string.IsNullOrEmpty(p.partUrl))
                     RepairAvailablePartUrl(p);
 
+                // if the url is still borked, can't assign a mod to it
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
 
-                p.partUrl = KSPUtil.SanitizeFilename(p.partUrl);
-                string name = p.partUrl.Split('_')[0]; // mod folder name
+                string name = p.partUrl.Split(new char[] { '/', '\\' })[0]; // mod folder name (\\ is escaping the \, read as  '\')
 
+                // if we haven't seen any from this mod before
                 if (!modNames.Contains(name))
                     modNames.Add(name);
 
+                // associate the mod to the part
                 if (!partFolderDict.ContainsKey(p.name))
                     partFolderDict.Add(p.name, name);
                 else
@@ -70,7 +110,6 @@ namespace FilterExtensions
                 ConfigNode nodeCheck = new ConfigNode("CHECK");
                 nodeCheck.AddValue("type", "folder");
                 nodeCheck.AddValue("value", s);
-                nodeCheck.AddValue("pass", "true");
 
                 ConfigNode nodeFilter = new ConfigNode("FILTER");
                 nodeFilter.AddValue("invert", "false");
@@ -88,21 +127,26 @@ namespace FilterExtensions
 
         private void editor()
         {
-            loadIcons();
-
+            // clear manufacturers from Filter by Manufacturer
+            // Don't rename incase other mods depend on finding it (and the name isn't half bad either...)
             PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Manufacturer").subcategories.Clear();
+
+            // Add all the categories
             foreach (customCategory c in Categories)
             {
                 c.initialise();
             }
 
+            // refresh icons?
             PartCategorizer.Instance.UpdateCategoryNameLabel();
 
+            // icon autoloader pass
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
                 checkIcons(c);
             }
 
+            // create all the new subCategories
             foreach (customSubCategory sC in subCategories)
             {
                 try
@@ -113,9 +157,14 @@ namespace FilterExtensions
                     Debug.Log("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
                 }
             }
+
+            // update icons
             refreshList();
 
+            // Remove any category with no subCategories (causes major breakages)
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
+
+            // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();
         }
 
@@ -131,6 +180,7 @@ namespace FilterExtensions
         {
             foreach (customSubCategory sC in subCategories) // iterate through the already added sC's
             {
+                // collision only possible within a category
                 if (sC.category == sCToCheck.category)
                 {
                     if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
@@ -149,8 +199,8 @@ namespace FilterExtensions
             return true;
         }
 
-        private bool compareFilterLists(List<Filter> filterListA, List<Filter> filterListB) //can't just compare directly because order could be different
-        {
+        private bool compareFilterLists(List<Filter> filterListA, List<Filter> filterListB) 
+        {//can't just compare directly because order could be different, hence this ugly mess
             if (filterListA.Count == 0 || filterListB.Count == 0)
                 return false;
 
@@ -198,31 +248,37 @@ namespace FilterExtensions
 
         private void checkIcons(PartCategorizer.Category category)
         {
-            if (PartCategorizer.Instance.iconDictionary.ContainsKey(category.button.categoryName))
-                category.button.SetIcon(PartCategorizer.Instance.iconDictionary[category.button.categoryName]);
+            // if any of the names of the loaded icons match the category name, then replace their current icon with the match
+            if (getIcon(category.button.categoryName) != PartCategorizer.Instance.fallbackIcon)
+                category.button.SetIcon(getIcon(category.button.categoryName));
 
             foreach(PartCategorizer.Category c in category.subcategories)
             {
-                if (PartCategorizer.Instance.iconDictionary.ContainsKey(c.button.categoryName))
-                    c.button.SetIcon(PartCategorizer.Instance.iconDictionary[c.button.categoryName]);
+                // if any of the names of the loaded icons match the subCategory name, then replace their current icon with the match
+                if (getIcon(c.button.categoryName) != PartCategorizer.Instance.fallbackIcon)
+                    c.button.SetIcon(getIcon(category.button.categoryName));
             }
         }
 
         private void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = new List<GameDatabase.TextureInfo>(GameDatabase.Instance.databaseTexture);// GameDatabase.Instance.GetAllTexturesInFolderType("filterIcon");
+            List<GameDatabase.TextureInfo> texList = new List<GameDatabase.TextureInfo>(GameDatabase.Instance.databaseTexture);
+            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
+
             texList.RemoveAll(t => t.texture.width > 40 || t.texture.width < 25 || t.texture.height > 40 || t.texture.height < 25);
-            // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             
+            // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             foreach(GameDatabase.TextureInfo t in texList)
             {
                 if (!texDict.ContainsKey(t.name))
                     texDict.Add(t.name, t);
             }
+
             foreach (GameDatabase.TextureInfo t in texList)
             {
                 bool simple = false;
                 Texture2D selectedTex = null;
+
                 if (texDict.ContainsKey(t.name + "_selected"))
                     selectedTex = texDict[t.name + "_selected"].texture;
                 else
@@ -233,14 +289,17 @@ namespace FilterExtensions
 
                 string[] name = t.name.Split('/');
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
-                if (!PartCategorizer.Instance.iconDictionary.ContainsKey(icon.name))
-                    PartCategorizer.Instance.iconDictionary.Add(icon.name, icon);
+                
+                if (!iconDict.ContainsKey(icon.name))
+                    iconDict.Add(icon.name, icon);
             }
         }
 
         internal static PartCategorizer.Icon getIcon(string name)
         {
-            if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
+            if (iconDict.ContainsKey(name))
+                return iconDict[name];
+            else if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
                 return PartCategorizer.Instance.iconDictionary[name];
             else
                 return PartCategorizer.Instance.fallbackIcon;
