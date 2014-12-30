@@ -1,10 +1,10 @@
 ACTIVE_TEXTURE_MANAGER_CONFIG
 {
-	folder = 000_Configs_and_Icons
+	folder = 000_FilterExtensions
 	enabled  = true
 	OVERRIDES
 	{
-		000_Configs_and_Icons/Icons/.*
+		000_FilterExtensions/Icons/.*
 		{
 			compress = true
 			mipmaps = false
