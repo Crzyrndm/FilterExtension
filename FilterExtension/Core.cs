@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Collections;
 
 
 namespace FilterExtensions
@@ -71,7 +72,7 @@ namespace FilterExtensions
                         subCategories.Add(sC);
                 }
             }
-
+            StartCoroutine(checkForEmptySubCategories());
             loadIcons();
         }
 
@@ -314,6 +315,35 @@ namespace FilterExtensions
                 return;
 
             ap.partUrl = url.url;
+        }
+
+        IEnumerator checkForEmptySubCategories()
+        {
+            int i = 0;
+            List<customSubCategory> notEmpty = new List<customSubCategory>();
+
+            foreach (customSubCategory sC in subCategories)
+            {
+                foreach (AvailablePart p in PartLoader.Instance.parts)
+                {
+                    i++;
+                    if (i > 1000)
+                    {
+                        i = 0;
+                        yield return null;
+                    }
+
+                    if (sC.checkFilters(p))
+                    {
+                        print("sC: " + sC.subCategoryTitle);
+                        print("C " + sC.category);
+                        print("part: " + p.name);
+                        notEmpty.Add(sC);
+                        break;
+                    }
+                }
+            }
+            subCategories = notEmpty;
         }
     }
 }

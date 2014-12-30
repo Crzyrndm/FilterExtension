@@ -25,6 +25,9 @@ namespace FilterExtensions
             string temp = node.GetValue("value");
             if (!string.IsNullOrEmpty(temp))
                 value = temp.Split(',');
+
+            if (type == "mod")
+                generateSubCategories();
         }
 
         internal void initialise()
@@ -59,25 +62,16 @@ namespace FilterExtensions
             PartCategorizer.AddCustomSubcategoryFilter(category, "Science", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Science").button.icon, p => Filter(p, "Science"));
         }
 
+        private void generateSubCategories()
+        {
+            PartCategorizer.Category fbf = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Function");
+            
+
+        }
+
         private bool Filter(AvailablePart part, string category)
         {
             if (PartType.checkCategory(part, category) && PartType.checkFolder(part, value))
-                return true;
-            else
-                return false;
-        }
-
-        private bool Exclude(AvailablePart part)
-        {
-            if (PartType.checkFolder(part, value))
-                return true;
-            else
-                return false;
-        }
-
-        private bool genericExclude(AvailablePart part)
-        {
-            if (part.category != PartCategories.none)
                 return true;
             else
                 return false;
@@ -102,7 +96,7 @@ namespace FilterExtensions
                 c.a = 1;
                 c.r = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
                 c.g = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                c.b = (float)byte.Parse(hex_ARGB.Substring(3, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                c.b = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
                 colour = c;
             }
         }

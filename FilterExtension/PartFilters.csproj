@@ -26,7 +26,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\GameData\Filter Extensions\</OutputPath>
+    <OutputPath>..\GameData\000_FilterExtensions\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -62,7 +62,7 @@
   <PropertyGroup>
     <PostBuildEvent>set SOURCE="D:\Users\Joshua\GitHub\Filter-Extensions\GameData"
 set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData"
-xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y</PostBuildEvent>
+xcopy %25SOURCE%25 %25DESTINATION%25 /e /c /r /i /u /y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
