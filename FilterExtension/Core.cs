@@ -287,7 +287,7 @@ namespace FilterExtensions
                     simple = true;
                 }
 
-                string[] name = t.name.Split('/');
+                string[] name = t.name.Split(new char[] { '/', '\\' });
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
                 
                 if (!iconDict.ContainsKey(icon.name))
