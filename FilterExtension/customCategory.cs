@@ -19,16 +19,26 @@ namespace FilterExtensions
 
         public customCategory(ConfigNode node)
         {
+            Debug.Log("entering");
             categoryTitle = node.GetValue("title");
+            Debug.Log("entering1");
             iconName = node.GetValue("icon");
+            Debug.Log("entering2");
             convertToColor(node.GetValue("colour"));
-            type = node.GetValue("type");
-            string temp = node.GetValue("value");
-            if (!string.IsNullOrEmpty(temp))
-                value = temp.Split(',');
+            Debug.Log("entering3");
+            try
+            {
+                type = node.GetValue("type");
+                string temp = node.GetValue("value");
+                if (!string.IsNullOrEmpty(temp))
+                    value = temp.Split(',');
 
-            if (type == "mod")
-                generateSubCategories();
+                if (type == "mod")
+                    generateSubCategories();
+            }
+            catch { Debug.Log("no type"); }
+            Debug.Log("entering5");
+            Debug.Log(string.Format("{0}, {1}, {2}, {3}, {4}",categoryTitle, iconName, type, value, colour));
         }
 
         internal void initialise()
@@ -41,19 +51,6 @@ namespace FilterExtensions
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
             category.displayType = EditorPartList.State.PartsList;
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
-        }
-
-        private void generateSubCategories(PartCategorizer.Category category)
-        {
-            PartCategorizer.Category fbf = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Function");
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Pods", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Pods").button.icon, p => Filter(p, "Pod"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Engines", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Engines").button.icon, p => Filter(p, "Engine"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Fuel Tanks", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Fuel Tanks").button.icon, p => Filter(p, "Tank"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Command and Control", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Command and Control").button.icon, p => Filter(p, "Command"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Structural", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Structural").button.icon, p => Filter(p, "Struct"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Aerodynamics", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Aerodynamics").button.icon, p => Filter(p, "Aero"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Utility", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Utility").button.icon, p => Filter(p, "Utility"));
-            PartCategorizer.AddCustomSubcategoryFilter(category, "Science", fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == "Science").button.icon, p => Filter(p, "Science"));
         }
 
         private void generateSubCategories()
@@ -87,14 +84,6 @@ namespace FilterExtensions
 
                 Core.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
             }
-        }
-
-        private bool Filter(AvailablePart part, string category)
-        {
-            if (PartType.checkCategory(part, category) && PartType.checkFolder(part, value))
-                return true;
-            else
-                return false;
         }
 
         private void convertToColor(string hex_ARGB)

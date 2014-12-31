@@ -40,10 +40,13 @@ namespace FilterExtensions
                 if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
                 {
                     Categories.Add(C);
-                    foreach (string s in C.value)
+                    if (C.value != null)
                     {
-                        if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
-                            folderToCategoryDict.Add(C.categoryTitle, s);
+                        foreach (string s in C.value)
+                        {
+                            if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
+                                folderToCategoryDict.Add(C.categoryTitle, s);
+                        }
                     }
                 }
             }
@@ -138,9 +141,6 @@ namespace FilterExtensions
                 c.initialise();
             }
 
-            // refresh icons?
-            PartCategorizer.Instance.UpdateCategoryNameLabel();
-
             // icon autoloader pass
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
             {
@@ -164,6 +164,8 @@ namespace FilterExtensions
 
             // Remove any category with no subCategories (causes major breakages)
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
+            // refresh icons
+            PartCategorizer.Instance.UpdateCategoryNameLabel();
 
             // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();
