@@ -261,7 +261,7 @@ namespace FilterExtensions
 
         private void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = new List<GameDatabase.TextureInfo>(GameDatabase.Instance.databaseTexture);
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null).ToList();
             Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
 
             texList.RemoveAll(t => t.texture.width > 40 || t.texture.width < 25 || t.texture.height > 40 || t.texture.height < 25);
