@@ -341,9 +341,6 @@ namespace FilterExtensions
 
                     if (sC.checkFilters(p))
                     {
-                        print("sC: " + sC.subCategoryTitle);
-                        print("C " + sC.category);
-                        print("part: " + p.name);
                         notEmpty.Add(sC);
                         break;
                     }
