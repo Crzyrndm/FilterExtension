@@ -249,15 +249,11 @@ namespace FilterExtensions
 
         private void checkIcons(PartCategorizer.Category category)
         {
-            // if any of the names of the loaded icons match the category name, then replace their current icon with the match
-            if (getIcon(category.button.categoryName) != PartCategorizer.Instance.fallbackIcon)
-                category.button.SetIcon(getIcon(category.button.categoryName));
-
-            foreach(PartCategorizer.Category c in category.subcategories)
+            foreach (PartCategorizer.Category c in category.subcategories)
             {
                 // if any of the names of the loaded icons match the subCategory name, then replace their current icon with the match
-                if (getIcon(c.button.categoryName) != PartCategorizer.Instance.fallbackIcon)
-                    c.button.SetIcon(getIcon(category.button.categoryName));
+                if (iconDict.ContainsKey(c.button.categoryName))
+                    c.button.SetIcon(getIcon(c.button.categoryName));
             }
         }
 
@@ -299,17 +295,20 @@ namespace FilterExtensions
         internal static PartCategorizer.Icon getIcon(string name)
         {
             if (iconDict.ContainsKey(name))
+            {
                 return iconDict[name];
+            }
             else if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
+            {
                 return PartCategorizer.Instance.iconDictionary[name];
+            }
             else if (name.StartsWith("stock_"))
             {
                 PartCategorizer.Category fbf = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Function");
                 name = name.Substring(6);
                 return fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == name).button.icon;
             }
-            else
-                return PartCategorizer.Instance.fallbackIcon;
+            return null;
         }
 
         // credit to EvilReeperx for this lifesaving function
@@ -323,6 +322,7 @@ namespace FilterExtensions
             ap.partUrl = url.url;
         }
 
+        // check for empty subCategories. Only does 1k checks per frame to avoid any crazy overhead for users with lots of parts and categories
         IEnumerator checkForEmptySubCategories()
         {
             int i = 0;
