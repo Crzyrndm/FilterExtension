@@ -164,7 +164,7 @@ namespace FilterExtensions
 
             // Remove any category with no subCategories (causes major breakages)
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
-            // refresh icons
+            // refresh icons - doesn't work >.<
             PartCategorizer.Instance.UpdateCategoryNameLabel();
 
             // reveal categories

@@ -19,26 +19,17 @@ namespace FilterExtensions
 
         public customCategory(ConfigNode node)
         {
-            Debug.Log("entering");
             categoryTitle = node.GetValue("title");
-            Debug.Log("entering1");
             iconName = node.GetValue("icon");
-            Debug.Log("entering2");
             convertToColor(node.GetValue("colour"));
-            Debug.Log("entering3");
-            try
-            {
-                type = node.GetValue("type");
-                string temp = node.GetValue("value");
-                if (!string.IsNullOrEmpty(temp))
-                    value = temp.Split(',');
+            
+            type = node.GetValue("type");
+            string temp = node.GetValue("value");
+            if (!string.IsNullOrEmpty(temp))
+                value = temp.Split(',');
 
-                if (type == "mod")
-                    generateSubCategories();
-            }
-            catch { Debug.Log("no type"); }
-            Debug.Log("entering5");
-            Debug.Log(string.Format("{0}, {1}, {2}, {3}, {4}",categoryTitle, iconName, type, value, colour));
+            if (type == "mod")
+                generateSubCategories();
         }
 
         internal void initialise()
