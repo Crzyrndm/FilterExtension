@@ -14,7 +14,8 @@ namespace FilterExtensions
         internal Color colour;
         internal string type;
         internal string[] value; // mod folder name for mod type categories
-        // internal string location; // filter == top set, category = custom section
+
+        private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
         public customCategory(ConfigNode node)
         {
@@ -36,17 +37,10 @@ namespace FilterExtensions
                 return;
             
             PartCategorizer.AddCustomFilter(categoryTitle, Core.getIcon(iconName), colour);
-
-            //PartCategorizer.Instance.filters.Add(new PartCategorizer.Category(
-            //                        PartCategorizer.ButtonType.FILTER, EditorPartList.State.PartsList, categoryTitle, Core.getIcon(iconName), colour, colour,
-            //                        new EditorPartListFilter<AvailablePart>(categoryTitle, (part => Exclude(part)))));
             
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
             category.displayType = EditorPartList.State.PartsList;
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
-
-            if (type == "mod")
-                generateSubCategories(category);
         }
 
         private void generateSubCategories(PartCategorizer.Category category)
@@ -64,9 +58,35 @@ namespace FilterExtensions
 
         private void generateSubCategories()
         {
-            PartCategorizer.Category fbf = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Function");
-            
+            string folders = "";
+            foreach (string folder in value)
+            {
+                folders += folder + ",";
+            }
 
+            foreach (string s in categoryNames)
+            {
+                ConfigNode folderCheck = new ConfigNode("CHECK");
+                folderCheck.AddValue("type", "folder");
+                folderCheck.AddValue("value", folders);
+
+                ConfigNode catCheck = new ConfigNode("CHECK");
+                catCheck.AddValue("type", "category");
+                catCheck.AddValue("value", s);
+
+                ConfigNode nodeFilter = new ConfigNode("FILTER");
+                nodeFilter.AddValue("invert", "false");
+                nodeFilter.AddNode(folderCheck);
+                nodeFilter.AddNode(catCheck);
+
+                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
+                nodeSub.AddValue("category", categoryTitle);
+                nodeSub.AddValue("title", s);
+                nodeSub.AddValue("icon", "stock_" + s);
+                nodeSub.AddNode(nodeFilter);
+
+                Core.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
+            }
         }
 
         private bool Filter(AvailablePart part, string category)

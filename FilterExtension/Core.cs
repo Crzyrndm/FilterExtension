@@ -302,6 +302,12 @@ namespace FilterExtensions
                 return iconDict[name];
             else if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
                 return PartCategorizer.Instance.iconDictionary[name];
+            else if (name.StartsWith("stock_"))
+            {
+                PartCategorizer.Category fbf = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Function");
+                name = name.Substring(6);
+                return fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == name).button.icon;
+            }
             else
                 return PartCategorizer.Instance.fallbackIcon;
         }

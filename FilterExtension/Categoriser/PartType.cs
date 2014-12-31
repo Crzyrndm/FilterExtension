@@ -67,31 +67,31 @@ namespace FilterExtensions.Categoriser
         {
             switch (value)
             {
-                case "Pod":
+                case "Pods":
                     if (part.category == PartCategories.Pods)
                         return true;
                     break;
-                case "Engine":
+                case "Engines":
                     if (part.category == PartCategories.Engine)
                         return true;
                     else if (part.category == PartCategories.Propulsion && PartType.isEngine(part))
                         return true;
                     break;
-                case "Tank":
+                case "Fuel Tanks":
                     if (part.category == PartCategories.FuelTank)
                         return true;
                     else if (part.category == PartCategories.Propulsion && !PartType.isEngine(part))
                         return true;
                     break;
-                case "Command":
+                case "Command and Control":
                     if (part.category == PartCategories.Control)
                         return true;
                     break;
-                case "Struct":
+                case "Structural":
                     if (part.category == PartCategories.Structural)
                         return true;
                     break;
-                case "Aero":
+                case "Aerodynamics":
                     if (part.category == PartCategories.Aero)
                         return true;
                     break;
@@ -187,14 +187,8 @@ namespace FilterExtensions.Categoriser
 
         internal static bool checkFolder(AvailablePart part, string value)
         {
-            if (categoryCheck(part))
-                return false;
-
-            bool folderCheck = false;
-            if (Core.partFolderDict.ContainsKey(part.name))
-                folderCheck = Core.partFolderDict[part.name] == value;
-
-            return folderCheck;
+            string[] values = value.Split(',');
+            return checkFolder(part, values);
         }
 
         internal static bool checkFolder(AvailablePart part, string[] values)
