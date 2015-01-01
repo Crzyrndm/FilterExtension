@@ -70,7 +70,6 @@ namespace FilterExtensions
                             f.checks.Add(new Check(nodeCheck));
                         }
                     }
-
                     if (checkForConflicts(sC))
                         subCategories.Add(sC);
                 }
@@ -154,7 +153,8 @@ namespace FilterExtensions
                 {
                     sC.initialise();
                 }
-                catch {
+                catch
+                {
                     Debug.Log("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
                 }
             }
@@ -332,6 +332,11 @@ namespace FilterExtensions
 
             foreach (customSubCategory sC in subCategories)
             {
+                if (!sC.filter)
+                {
+                    notEmpty.Add(sC);
+                    continue;
+                }
                 foreach (AvailablePart p in PartLoader.Instance.parts)
                 {
                     i++;

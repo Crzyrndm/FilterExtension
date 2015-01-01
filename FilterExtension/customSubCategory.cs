@@ -12,7 +12,7 @@ namespace FilterExtensions
         internal string oldTitle; // title generated for the auto extending categories to search by
         internal string iconName; // default icon to use
         internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
-        internal bool filter;
+        internal bool filter = false;
 
         public customSubCategory(ConfigNode node, string category)
         {
@@ -24,8 +24,8 @@ namespace FilterExtensions
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
-                filter = true;
             }
+            filter = filters.Count > 0;
         }
 
         internal bool checkFilters(AvailablePart part)
@@ -54,6 +54,8 @@ namespace FilterExtensions
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == category);
+                if (Filter == null)
+                    return;
                 PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
             }
             else if (!string.IsNullOrEmpty(oldTitle))
