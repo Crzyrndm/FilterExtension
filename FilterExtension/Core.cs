@@ -149,13 +149,20 @@ namespace FilterExtensions
             // create all the new subCategories
             foreach (customSubCategory sC in subCategories)
             {
+                //sC.initialise();
                 try
                 {
                     sC.initialise();
                 }
                 catch
                 {
-                    Debug.Log("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
+                    print("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
+                    print(sC.category);
+                    print(sC.filter);
+                    if (sC.filter)
+                        print(sC.filters.Count);
+                    print(getIcon(sC.iconName));
+                    print(sC.oldTitle);
                 }
             }
 
@@ -165,7 +172,7 @@ namespace FilterExtensions
             // Remove any category with no subCategories (causes major breakages)
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
             // refresh icons - doesn't work >.<
-            PartCategorizer.Instance.UpdateCategoryNameLabel();
+            // PartCategorizer.Instance.UpdateCategoryNameLabel();
 
             // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();

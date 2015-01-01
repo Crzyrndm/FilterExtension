@@ -50,12 +50,15 @@ namespace FilterExtensions
             else
             {
                 icon = Core.getIcon(iconName);
+                if (icon == null)
+                    icon = PartCategorizer.Instance.fallbackIcon;
             }
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == category);
                 if (Filter == null)
-                    return;
+                    throw new Exception();
+
                 PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
             }
             else if (!string.IsNullOrEmpty(oldTitle))
