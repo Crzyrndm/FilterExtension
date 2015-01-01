@@ -51,13 +51,19 @@ namespace FilterExtensions
             {
                 icon = Core.getIcon(iconName);
                 if (icon == null)
+                {
+                    Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " no icon found");
                     icon = PartCategorizer.Instance.fallbackIcon;
+                }
             }
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == category);
                 if (Filter == null)
-                    throw new Exception();
+                {
+                    Debug.Log("[Filter Extensions] " + category + " missing, subCategory " + subCategoryTitle + " not able to be created");
+                    return;
+                }
 
                 PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
             }

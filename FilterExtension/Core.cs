@@ -154,15 +154,12 @@ namespace FilterExtensions
                 {
                     sC.initialise();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    // extended logging for errors
                     print("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
-                    print(sC.category);
-                    print(sC.filter);
-                    if (sC.filter)
-                        print(sC.filters.Count);
-                    print(getIcon(sC.iconName));
-                    print(sC.oldTitle);
+                    print("[Filter Extensions] Category:" + sC.category + ", filter?:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
+                    print(ex.StackTrace);
                 }
             }
 
