@@ -6,8 +6,7 @@ using UnityEngine;
 namespace FilterExtensions.Categoriser
 {
     static class PartType
-    {
-        internal static List<string> whiteList = new List<string>();
+    {        
         private static bool categoryCheck(AvailablePart part)
         {
             if (part.category != PartCategories.none)
@@ -48,9 +47,12 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool moduleCheck = part.moduleInfos.Any(m => m.moduleName == value);
-
-            return moduleCheck;
+            foreach (string s in value.Split(','))
+            {
+                if (part.moduleInfos.Any(m => m.moduleName == s.Trim()))
+                    return true;
+            }
+            return false;
         }
 
         internal static bool checkModuleName(AvailablePart part, string value)
@@ -58,51 +60,52 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool moduleCheck = part.partPrefab.Modules.Contains(value);
-
-            return moduleCheck;
+            return value.Split(',').Any(s => part.partPrefab.Modules.Contains(s.Trim()));
         }
 
         internal static bool checkCategory(AvailablePart part, string value)
         {
-            switch (value)
+            foreach (string s in value.Split())
             {
-                case "Pods":
-                    if (part.category == PartCategories.Pods)
-                        return true;
-                    break;
-                case "Engines":
-                    if (part.category == PartCategories.Engine)
-                        return true;
-                    else if (part.category == PartCategories.Propulsion && PartType.isEngine(part))
-                        return true;
-                    break;
-                case "Fuel Tanks":
-                    if (part.category == PartCategories.FuelTank)
-                        return true;
-                    else if (part.category == PartCategories.Propulsion && !PartType.isEngine(part))
-                        return true;
-                    break;
-                case "Command and Control":
-                    if (part.category == PartCategories.Control)
-                        return true;
-                    break;
-                case "Structural":
-                    if (part.category == PartCategories.Structural)
-                        return true;
-                    break;
-                case "Aerodynamics":
-                    if (part.category == PartCategories.Aero)
-                        return true;
-                    break;
-                case "Utility":
-                    if (part.category == PartCategories.Utility)
-                        return true;
-                    break;
-                case "Science":
-                    if (part.category == PartCategories.Science)
-                        return true;
-                    break;
+                switch (value.Trim())
+                {
+                    case "Pods":
+                        if (part.category == PartCategories.Pods)
+                            return true;
+                        break;
+                    case "Engines":
+                        if (part.category == PartCategories.Engine)
+                            return true;
+                        else if (part.category == PartCategories.Propulsion && PartType.isEngine(part))
+                            return true;
+                        break;
+                    case "Fuel Tanks":
+                        if (part.category == PartCategories.FuelTank)
+                            return true;
+                        else if (part.category == PartCategories.Propulsion && !PartType.isEngine(part))
+                            return true;
+                        break;
+                    case "Command and Control":
+                        if (part.category == PartCategories.Control)
+                            return true;
+                        break;
+                    case "Structural":
+                        if (part.category == PartCategories.Structural)
+                            return true;
+                        break;
+                    case "Aerodynamics":
+                        if (part.category == PartCategories.Aero)
+                            return true;
+                        break;
+                    case "Utility":
+                        if (part.category == PartCategories.Utility)
+                            return true;
+                        break;
+                    case "Science":
+                        if (part.category == PartCategories.Science)
+                            return true;
+                        break;
+                }
             }
 
             return false;
@@ -113,9 +116,7 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool nameCheck = part.name == value;
-
-            return nameCheck;
+            return value.Split(',').Any(s => s.Trim() == part.name);
         }
 
         internal static bool checkTitle(AvailablePart part, string value)
@@ -123,9 +124,7 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool titleCheck = part.title.Contains(value);
-
-            return titleCheck;
+            return value.Split(',').Any(s => part.title.Contains(s.Trim()));
         }
 
         internal static bool checkResource(AvailablePart part, string value)
@@ -133,9 +132,7 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool resourceCheck = part.partPrefab.Resources.Contains(value);
-
-            return resourceCheck;
+            return value.Split(',').Any(s => part.partPrefab.Resources.Contains(s.Trim()));
         }
 
         internal static bool checkPropellant(AvailablePart part, string value)
@@ -155,14 +152,12 @@ namespace FilterExtensions.Categoriser
             else
                 return false;
 
-            string[] props = value.Split(',');
-            foreach (string s in props)
+            foreach (string s in value.Split(','))
             {
-                if (propellants.FirstOrDefault(p => p.name == s.Trim()) == null)
-                    return false;
+                if (propellants.Any(p => p.name == s.Trim()))
+                    return true;
             }
-
-            return true;
+            return false;
         }
 
         internal static bool checkTech(AvailablePart part, string value)
@@ -170,9 +165,7 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool techCheck = part.TechRequired == value;
-
-            return techCheck;
+            return value.Split(',').Any(s => part.TechRequired == s.Trim());
         }
 
         internal static bool checkManufacturer(AvailablePart part, string value)
@@ -180,9 +173,7 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            bool manuCheck = (part.manufacturer == value);
-
-            return manuCheck;
+            return value.Split(',').Any(s => part.manufacturer == s.Trim());
         }
 
         internal static bool checkFolder(AvailablePart part, string value)

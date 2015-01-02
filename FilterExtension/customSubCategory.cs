@@ -56,30 +56,38 @@ namespace FilterExtensions
                     icon = PartCategorizer.Instance.fallbackIcon;
                 }
             }
+
             if (filter)
             {
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == category);
                 if (Filter == null)
-                {
-                    Debug.Log("[Filter Extensions] " + category + " missing, subCategory " + subCategoryTitle + " not able to be created");
                     return;
-                }
 
                 PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
             }
             else if (!string.IsNullOrEmpty(oldTitle))
             {
-                List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
-                if (string.IsNullOrEmpty(subCategoryTitle))
-                    subCategories.Remove(subCategories.Find(m => m.button.categoryName == oldTitle));
-                else
+                Edit_Delete(oldTitle, string.IsNullOrEmpty(subCategoryTitle), icon);
+            }
+            else
+            {
+                Edit_Delete(subCategoryTitle, false, icon);
+            }
+        }
+
+        private void Edit_Delete(string title, bool delete, PartCategorizer.Icon icon)
+        {
+            List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
+            if (delete)
+                subCategories.Remove(subCategories.Find(m => m.button.categoryName == title));
+            else
+            {
+                PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == title).button;
+                if (but != null)
                 {
-                    PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == oldTitle).button;
-                    if (but != null)
-                    {
-                        but.categoryName = subCategoryTitle;
+                    but.categoryName = subCategoryTitle;
+                    if (icon != PartCategorizer.Instance.fallbackIcon)
                         but.SetIcon(icon);
-                    }
                 }
             }
         }
