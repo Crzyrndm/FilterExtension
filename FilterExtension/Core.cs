@@ -24,6 +24,8 @@ namespace FilterExtensions
 
         void Awake()
         {
+            Log("Version 1.11");
+
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
 
@@ -105,7 +107,7 @@ namespace FilterExtensions
                 if (!partFolderDict.ContainsKey(p.name))
                     partFolderDict.Add(p.name, name);
                 else
-                    Debug.Log("[Filter Extensions] " + p.name + " duplicated part key in part-mod dictionary");
+                    Log(p.name + " duplicated part key in part-mod dictionary");
             }
             // Create subcategories for Manufacturer category
             foreach (string s in modNames)
@@ -157,9 +159,9 @@ namespace FilterExtensions
                 catch (Exception ex)
                 {
                     // extended logging for errors
-                    print("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
-                    print("[Filter Extensions] Category:" + sC.category + ", filter?:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
-                    print(ex.StackTrace);
+                    Log(sC.subCategoryTitle + " failed to initialise");
+                    Log("Category:" + sC.category + ", filter?:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
+                    Log(ex.StackTrace);
                 }
             }
 
@@ -190,67 +192,33 @@ namespace FilterExtensions
                 // collision only possible within a category
                 if (sC.category == sCToCheck.category)
                 {
-                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                    if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
                     {
-                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
-                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
-                    }
-                    else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
-                    {
-                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                        Log(sC.subCategoryTitle + " has multiple entries. Filters are being combined");
                         sCToCheck.filters.AddRange(sC.filters);
                         return false; // all other elements of this list have already been check for this condition. Don't need to continue
                     }
+                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                    {
+                        Log(sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
+                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
+                    }
                 }
             }
             return true;
         }
 
-        private bool compareFilterLists(List<Filter> filterListA, List<Filter> filterListB) 
-        {//can't just compare directly because order could be different, hence this ugly mess
-            if (filterListA.Count == 0 || filterListB.Count == 0)
-                return false;
-
-            if (filterListA.Count != filterListB.Count)
-                return false;
-
-            foreach(Filter fA in filterListA)
-            {
-                bool match = false;
-                foreach (Filter fB in filterListB)
-                {
-                    match = compareCheckLists(fA.checks, fB.checks, new CheckEqualityComparer());
-                    if (match)
-                        break;
-                }
-
-                if (!match)
-                    return false;
-            }
-            return true;
-        }
-
-        private bool compareCheckLists<T>(List<T> listA, List<T> listB, IEqualityComparer<T> comparer)
+        private bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
         {
-            if (listA.Count != listB.Count)
+            if (fLA.Count != fLB.Count)
                 return false;
 
-            Dictionary<T, int> cntDict = new Dictionary<T, int>(comparer);
-            foreach (T t in listA)
+            foreach (Filter fA in fLA)
             {
-                if (cntDict.ContainsKey(t))
-                    cntDict[t]++;
-                else
-                    cntDict.Add(t, 1);
-            }
-            foreach (T s in listB)
-            {
-                if (cntDict.ContainsKey(s))
-                    cntDict[s]--;
-                else
+                if (!fLB.Any(fB => fB.Equals(fA)))
                     return false;
             }
-            return cntDict.Values.All(c => c == 0);
+            return true;
         }
 
         private void checkIcons(PartCategorizer.Category category)
@@ -265,11 +233,12 @@ namespace FilterExtensions
 
         private void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null).ToList();
-            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null 
+                                                                                                && t.texture.height <= 40 && t.texture.width <= 40
+                                                                                                && t.texture.width >= 25 && t.texture.height >= 25
+                                                                                                ).ToList();
 
-            texList.RemoveAll(t => t.texture.width > 40 || t.texture.width < 25 || t.texture.height > 40 || t.texture.height < 25);
-            
+            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
             // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             foreach(GameDatabase.TextureInfo t in texList)
             {
@@ -279,19 +248,15 @@ namespace FilterExtensions
 
             foreach (GameDatabase.TextureInfo t in texList)
             {
-                bool simple = false;
                 Texture2D selectedTex = null;
 
                 if (texDict.ContainsKey(t.name + "_selected"))
                     selectedTex = texDict[t.name + "_selected"].texture;
                 else
-                {
                     selectedTex = t.texture;
-                    simple = true;
-                }
 
                 string[] name = t.name.Split(new char[] { '/', '\\' });
-                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
+                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, false);
                 
                 if (!iconDict.ContainsKey(icon.name))
                     iconDict.Add(icon.name, icon);
@@ -358,6 +323,11 @@ namespace FilterExtensions
                 }
             }
             subCategories = notEmpty;
+        }
+
+        internal static void Log(object o)
+        {
+            Debug.Log("[Filter Extensions] " + o);
         }
     }
 }

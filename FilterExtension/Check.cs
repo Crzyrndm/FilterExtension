@@ -65,25 +65,25 @@ namespace FilterExtensions
                     result = false;
                     break;
             }
+
             if (invert)
                 result = !result;
             return result;
         }
-    }
 
-    internal class CheckEqualityComparer : IEqualityComparer<Check>
-    {
-        public bool Equals(Check c1, Check c2)
+        public bool Equals(Check c2)
         {
-            if (c1.type == c2.type && c1.value == c2.value && c1.invert == c2.invert)
+            if (c2 == null)
+                return false;
+            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert)
                 return true;
             else
                 return false;
         }
 
-        public int GetHashCode(Check c)
+        public override int GetHashCode()
         {
-            return c.type.GetHashCode() + c.value.GetHashCode() + c.invert.GetHashCode();
+            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode();
         }
     }
 }

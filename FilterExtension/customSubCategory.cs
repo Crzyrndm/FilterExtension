@@ -44,7 +44,7 @@ namespace FilterExtensions
             PartCategorizer.Icon icon;
             if (string.IsNullOrEmpty(iconName))
             {
-                Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
+                Core.Log(this.subCategoryTitle + " missing icon reference");
                 icon = PartCategorizer.Instance.fallbackIcon;
             }
             else
@@ -52,7 +52,7 @@ namespace FilterExtensions
                 icon = Core.getIcon(iconName);
                 if (icon == null)
                 {
-                    Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " no icon found");
+                    Core.Log(this.subCategoryTitle + " no icon found");
                     icon = PartCategorizer.Instance.fallbackIcon;
                 }
             }
@@ -90,6 +90,37 @@ namespace FilterExtensions
                         but.SetIcon(icon);
                 }
             }
+        }
+
+        public bool Equals(customSubCategory sC2)
+        {
+            if (sC2 == null)
+                return false;
+
+            if (this.category != sC2.category || this.filter != sC2.filter || this.iconName != sC2.iconName
+                || this.oldTitle != sC2.oldTitle || this.subCategoryTitle != sC2.subCategoryTitle)
+                return false;
+
+            if (this.filters.Count != sC2.filters.Count)
+                return false;
+
+            foreach (Filter f1 in this.filters)
+            {
+                if (!sC2.filters.Any(f2 => f1.Equals(f2)))
+                    return false;
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 0;
+            foreach (Filter f in this.filters)
+            {
+                hash *= f.GetHashCode();
+            }
+            return hash * this.category.GetHashCode() * this.filter.GetHashCode() * this.iconName.GetHashCode()
+                * this.oldTitle.GetHashCode() * this.subCategoryTitle.GetHashCode();
         }
     }
 }

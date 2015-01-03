@@ -4,6 +4,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PartFilters", "FilterExtension\PartFilters.csproj", "{8633A568-654E-409D-A7B2-95839F2EBD3D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7249D770-00A9-491F-86C1-385E36150388} = {7249D770-00A9-491F-86C1-385E36150388}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilterCreator", "FilterCreator\FilterCreator.csproj", "{7249D770-00A9-491F-86C1-385E36150388}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{8633A568-654E-409D-A7B2-95839F2EBD3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8633A568-654E-409D-A7B2-95839F2EBD3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8633A568-654E-409D-A7B2-95839F2EBD3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7249D770-00A9-491F-86C1-385E36150388}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7249D770-00A9-491F-86C1-385E36150388}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7249D770-00A9-491F-86C1-385E36150388}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7249D770-00A9-491F-86C1-385E36150388}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
