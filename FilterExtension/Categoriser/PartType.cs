@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions.Categoriser
 {
-    static class PartType
+    public static class PartType
     {        
         private static bool categoryCheck(AvailablePart part)
         {

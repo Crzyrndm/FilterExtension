@@ -32,12 +32,14 @@ namespace FilterExtensions
                 generateSubCategories();
         }
 
-        internal void initialise()
+        public void initialise()
         {
             if (categoryTitle == null)
                 return;
-            
-            PartCategorizer.AddCustomFilter(categoryTitle, Core.getIcon(iconName), colour);
+            PartCategorizer.Icon icon = Core.getIcon(iconName);
+            if (icon == null)
+                icon = PartCategorizer.Instance.fallbackIcon;
+            PartCategorizer.AddCustomFilter(categoryTitle, icon, colour);
             
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
             category.displayType = EditorPartList.State.PartsList;
@@ -80,6 +82,7 @@ namespace FilterExtensions
         private void convertToColor(string hex_ARGB)
         {
             hex_ARGB = hex_ARGB.Replace("#", "");
+            hex_ARGB = hex_ARGB.Replace("0x", "");
 
             if (hex_ARGB.Length == 8)
             {

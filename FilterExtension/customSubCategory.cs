@@ -59,11 +59,14 @@ namespace FilterExtensions
 
             if (filter)
             {
-                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == category);
-                if (Filter == null)
+                PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
+                if (category == null)
+                {
+                    Core.Log("unable to find category " + this.category);
                     return;
+                }
 
-                PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
+                PartCategorizer.AddCustomSubcategoryFilter(category, subCategoryTitle, icon, p => checkFilters(p));
             }
             else if (!string.IsNullOrEmpty(oldTitle))
             {

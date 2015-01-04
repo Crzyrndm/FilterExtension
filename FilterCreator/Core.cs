@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ namespace FilterCreator
         ConfigNode activeCheck;
 
         List<ConfigNode> subCategoryNodes = new List<ConfigNode>();
+        List<ConfigNode> categoryNodes = new List<ConfigNode>();
 
         #region initialise
         public void Awake()
@@ -30,6 +32,7 @@ namespace FilterCreator
             Debug.Log("[Filter Creator] Version 1.0");
 
             subCategoryNodes = GameDatabase.Instance.GetConfigNodes("SUBCATEGORY").ToList();
+            categoryNodes = GameDatabase.Instance.GetConfigNodes("CATEGORY").ToList();
         }
         #endregion
 
@@ -46,69 +49,94 @@ namespace FilterCreator
 
         private void drawWindow(int id)
         {
+            ConfigNode category = new ConfigNode();
             ConfigNode subCategory = new ConfigNode();
-            ConfigNode subCategory_selected = new ConfigNode();
-
-            HighLogic.Skin.button.wordWrap = true;
+            ConfigNode active_subCategory_node = new ConfigNode();
 
             GUILayout.BeginHorizontal();
             // Categories column
-            categoryScroll = GUILayout.BeginScrollView(categoryScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(220));
             GUILayout.BeginVertical();
-            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
+            if (GUILayout.Button("Create Category"))
             {
-                if (activeCategory == null)
-                    activeCategory = c;
+                addCategory("blah", "blah", "#000000");
+            }
 
-                if (GUILayout.Toggle(activeCategory == c, c.button.categoryName, HighLogic.Skin.button, GUILayout.Width(200)))
+            categoryScroll = GUILayout.BeginScrollView(categoryScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
+            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
+            {                
+                category = categoryNodes.FirstOrDefault(n => n.GetValue("title") == c.button.categoryName);
+                string label = string.Format("title: {0}\r\nicon: {1}\r\ncolour: {2}", c.button.categoryName, category == null ? "" : category.GetValue("icon"), category == null ? "" : category.GetValue("colour"));
+                if (GUILayout.Toggle(activeCategory == c, label, HighLogic.Skin.button, GUILayout.Width(200)))
                 {
                     activeCategory = c;
                 }
             }
-            GUILayout.EndVertical();
             GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+            
             // subCategories column
-            subCategoryScroll = GUILayout.BeginScrollView(subCategoryScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(230));
             GUILayout.BeginVertical();
-            foreach (PartCategorizer.Category sC in activeCategory.subcategories)
+            if (GUILayout.Button("Create Sub-Category") && activeCategory != null)
             {
-                subCategory = subCategoryNodes.FirstOrDefault(n => n.GetValue("title") == sC.button.categoryName);
-                if (subCategory != null)
+                addSubCategory("blah", activeCategory.button.categoryName, "testIcon");
+            }
+
+            subCategoryScroll = GUILayout.BeginScrollView(subCategoryScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
+            if (activeCategory != null)
+            {
+                foreach (PartCategorizer.Category sC in activeCategory.subcategories)
                 {
-                    if (GUILayout.Toggle(activeSubCategory == sC, "title: " + sC.button.categoryName + "\r\ncategory: "
-                        + subCategory.GetValue("category").Split(',').FirstOrDefault(s => s.Trim() == activeCategory.button.categoryName)
-                        + "\r\noldTitle: " + subCategory.GetValue("oldTitle")
-                        + "\r\nicon: " + subCategory.GetValue("icon"), HighLogic.Skin.button, GUILayout.Width(200)))
+                    subCategory = subCategoryNodes.FirstOrDefault(n => n.GetValue("title") == sC.button.categoryName && n.GetValue("category").Split(',').Any(s => s.Trim() == activeCategory.button.categoryName));
+                    if (subCategory != null)
                     {
-                        activeSubCategory = sC;
-                        subCategory_selected = subCategoryNodes.FirstOrDefault(n => n.GetValue("title") == sC.button.categoryName);
+                        if (GUILayout.Toggle(activeSubCategory == sC, "title: " + sC.button.categoryName + "\r\ncategory: "
+                            + subCategory.GetValue("category").Split(',').FirstOrDefault(s => s.Trim() == activeCategory.button.categoryName)
+                            + "\r\noldTitle: " + subCategory.GetValue("oldTitle")
+                            + "\r\nicon: " + subCategory.GetValue("icon"), HighLogic.Skin.button, GUILayout.Width(200)))
+                        {
+                            activeSubCategory = sC;
+                            active_subCategory_node = subCategoryNodes.FirstOrDefault(n => n.GetValue("title") == sC.button.categoryName);
+                        }
                     }
                 }
             }
-            GUILayout.EndVertical();
             GUILayout.EndScrollView();
+            GUILayout.EndVertical();
 
             // Filters column
-            filterScroll = GUILayout.BeginScrollView(filterScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(220));
-            if (subCategory_selected != null && subCategory_selected.GetNodes("FILTER") != null)
+            GUILayout.BeginVertical();
+            if (GUILayout.Button("Create Filter") && active_subCategory_node != null)
             {
-                GUILayout.BeginVertical();
-                foreach (ConfigNode fil in subCategory_selected.GetNodes("FILTER"))
+                addFilter(active_subCategory_node);
+            }
+
+            int index = 0, sel = 0;
+            filterScroll = GUILayout.BeginScrollView(filterScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
+            if (active_subCategory_node != null && active_subCategory_node.GetNodes("FILTER") != null)
+            {
+                foreach (ConfigNode fil in active_subCategory_node.GetNodes("FILTER"))
                 {
+                    index++;
                     if (GUILayout.Toggle(activeFilter == fil, "invert: " + fil.GetValue("invert"), HighLogic.Skin.button, GUILayout.Width(200)))
                     {
+                        sel = index;
                         activeFilter = fil;
                     }
                 }
-                GUILayout.EndVertical();
             }
             GUILayout.EndScrollView();
+            GUILayout.EndVertical();
 
             // Checks column
-            checkScroll = GUILayout.BeginScrollView(checkScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(220));
+            GUILayout.BeginVertical();
+            if (GUILayout.Button("Create Check") && activeFilter != null)
+            {
+                addCheck(active_subCategory_node, activeFilter, "folder", "Squad", sel);
+            }
+
+            checkScroll = GUILayout.BeginScrollView(checkScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
             if (activeFilter != null && activeFilter.GetNodes("CHECK") != null)
             {
-                GUILayout.BeginVertical();
                 foreach (ConfigNode check in activeFilter.GetNodes("CHECK"))
                 {
                     if (GUILayout.Toggle(activeCheck == check, "type: " + check.GetValue("type") + "\r\nvalue: " + check.GetValue("value") + "\r\ninvert: " + check.GetValue("invert"), HighLogic.Skin.button, GUILayout.Width(200)))
@@ -116,17 +144,18 @@ namespace FilterCreator
                         activeCheck = check;
                     }
                 }
-                GUILayout.EndVertical();
             }
             GUILayout.EndScrollView();
+            GUILayout.EndVertical();
 
             // Parts column
-            if (subCategory_selected != null)
+            if (active_subCategory_node != null)
             {
-                FilterExtensions.customSubCategory sC = new FilterExtensions.customSubCategory(subCategory_selected, "");
-                partsScroll = GUILayout.BeginScrollView(partsScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(220));
-
                 GUILayout.BeginVertical();
+
+                FilterExtensions.customSubCategory sC = new FilterExtensions.customSubCategory(active_subCategory_node, "");
+                partsScroll = GUILayout.BeginScrollView(partsScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
+
                 foreach (AvailablePart ap in PartLoader.Instance.parts)
                 {
                     if (sC.checkFilters(ap))
@@ -134,8 +163,8 @@ namespace FilterCreator
                         GUILayout.Label(ap.title, GUILayout.Width(200));
                     }
                 }
-                GUILayout.EndVertical();
                 GUILayout.EndScrollView();
+                GUILayout.EndVertical();
             }
             GUILayout.EndHorizontal();
 
@@ -145,6 +174,65 @@ namespace FilterCreator
         internal static void Log(object o)
         {
             Debug.Log("[Filter Creator] " + o);
+        }
+
+        private void addCategory(string title, string icon, string colour)
+        {
+            ConfigNode category = new ConfigNode("CATEGORY");
+            category.AddValue("title", title);
+            category.AddValue("icon", icon);
+            category.AddValue("colour", colour);
+
+            FilterExtensions.customCategory c = new FilterExtensions.customCategory(category);
+            c.initialise();
+
+            ConfigNode sC = new ConfigNode("SUBCATEGORY");
+            sC.AddValue("category", title);
+            sC.AddValue("title", "all");
+
+            ConfigNode filter = new ConfigNode("FILTER");
+            sC.AddNode(filter);
+
+            FilterExtensions.customSubCategory dummySC = new FilterExtensions.customSubCategory(sC, title);
+            dummySC.initialise();
+        }
+
+        private void addSubCategory(string title, string category, string icon)
+        {
+            ConfigNode sC = new ConfigNode("SUBCATEGORY");
+            sC.AddValue("category", category);
+            sC.AddValue("title", title);
+            sC.AddValue("icon", icon);
+
+            ConfigNode filter = new ConfigNode("FILTER");
+            filter.AddValue("invert", "");
+            sC.AddNode(filter);
+
+            subCategoryNodes.Add(sC);
+            FilterExtensions.customSubCategory newSC = new FilterExtensions.customSubCategory(sC, category);
+            newSC.initialise();
+
+            FilterExtensions.Core.Instance.refreshList();
+        }
+
+        private void addFilter(ConfigNode sC, bool invert = false)
+        {
+            ConfigNode filter = new ConfigNode("FILTER");
+            filter.AddValue("invert", invert.ToString());
+            sC.AddNode(filter);
+        }
+
+        private void addCheck(ConfigNode sC, ConfigNode filter, string type, string value, int filterIndex, bool invert = false)
+        {
+            sC.RemoveNode("FILTER");
+            ConfigNode check = new ConfigNode("CHECK");
+            check.AddValue("type", type);
+            check.AddValue("value", value);
+            check.AddValue("invert", invert);
+            
+            filter.AddNode(check);
+            
+            sC.AddNode(filter);
         }
     }
 }

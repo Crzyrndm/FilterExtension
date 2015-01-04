@@ -188,7 +188,7 @@ namespace FilterExtensions
             PartCategorizer.Instance.SetAdvancedMode();
         }
 
-        private void refreshList()
+        public void refreshList()
         {
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
             RUIToggleButtonTyped button = Filter.button.activeButton;
