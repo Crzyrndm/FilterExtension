@@ -12,18 +12,29 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
+        private static Core instance;
+
         // storing categories/subCategories loaded at Main Menu for creation when entering SPH/VAB
-        internal static List<customCategory> Categories = new List<customCategory>();
-        internal static List<customSubCategory> subCategories = new List<customSubCategory>();
+        internal List<customCategory> Categories = new List<customCategory>();
+        internal List<customSubCategory> subCategories = new List<customSubCategory>();
 
         // mod folder for each part by internal name
-        internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+        public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
 
         // Dictionary of icons created on entering the main menu
-        internal static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
+        public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
+
+        public static Core Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
 
         void Awake()
         {
+            instance = this;
             Log("Version 1.11");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
@@ -231,7 +242,7 @@ namespace FilterExtensions
             }
         }
 
-        private void loadIcons()
+        private static void loadIcons()
         {
             List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null 
                                                                                                 && t.texture.height <= 40 && t.texture.width <= 40
@@ -263,7 +274,7 @@ namespace FilterExtensions
             }
         }
 
-        internal static PartCategorizer.Icon getIcon(string name)
+        public static PartCategorizer.Icon getIcon(string name)
         {
             if (iconDict.ContainsKey(name))
             {

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions
 {
-    class customSubCategory
+    public class customSubCategory
     {
         internal string category; // parent category
         internal string subCategoryTitle; // title of this subcategory
@@ -28,7 +28,7 @@ namespace FilterExtensions
             filter = filters.Count > 0;
         }
 
-        internal bool checkFilters(AvailablePart part)
+        public bool checkFilters(AvailablePart part)
         {
             foreach (Filter f in filters)
             {
@@ -39,7 +39,7 @@ namespace FilterExtensions
             return false; // part passed no filter(s), not compatible with this subcategory
         }
 
-        internal void initialise()
+        public void initialise()
         {
             PartCategorizer.Icon icon;
             if (string.IsNullOrEmpty(iconName))

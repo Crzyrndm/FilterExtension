@@ -7,7 +7,7 @@ namespace FilterExtensions
 {
     using Categoriser;
 
-    class customCategory
+    public class customCategory
     {
         internal string categoryTitle;
         internal string iconName;
@@ -73,7 +73,7 @@ namespace FilterExtensions
                 nodeSub.AddValue("icon", "stock_" + s);
                 nodeSub.AddNode(nodeFilter);
 
-                Core.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
+                Core.Instance.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
             }
         }
 

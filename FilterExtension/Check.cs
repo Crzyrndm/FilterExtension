@@ -7,7 +7,7 @@ namespace FilterExtensions
 {
     using Categoriser;
 
-    internal class Check
+    public class Check
     {
         internal string type = ""; // type of check to perform (module, title/name, resource,...)
         internal string value = "";

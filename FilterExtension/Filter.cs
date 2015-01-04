@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions
 {
-    class Filter
+    public class Filter
     {
         internal List<Check> checks = new List<Check>(); // checks are processed in serial (a && b), inversion gives (!a || !b) logic
         internal bool invert = false;
