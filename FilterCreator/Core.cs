@@ -26,6 +26,19 @@ namespace FilterCreator
         List<ConfigNode> subCategoryNodes = new List<ConfigNode>();
         List<ConfigNode> categoryNodes = new List<ConfigNode>();
 
+        bool showNewWindow = false;
+
+        [Flags]
+        enum newWindowStyle
+        {
+            Category,
+            subCategory,
+            Filter,
+            Check
+        }
+
+        newWindowStyle style = newWindowStyle.Category;
+
         #region initialise
         public void Awake()
         {
@@ -44,7 +57,11 @@ namespace FilterCreator
                 return;
 
             if (AppLauncherEditor.bDisplayEditor)
+            {
                 windowRect = GUILayout.Window(579164, windowRect, drawWindow, "");
+                if (showNewWindow)
+                    GUILayout.Window(597165, new Rect(windowRect.x, windowRect.y, 0,0), newCategoryWindow, "");
+            }
         }
 
         private void drawWindow(int id)
@@ -233,6 +250,11 @@ namespace FilterCreator
             filter.AddNode(check);
             
             sC.AddNode(filter);
+        }
+
+        private void newCategoryWindow(int id)
+        {
+            
         }
     }
 }
