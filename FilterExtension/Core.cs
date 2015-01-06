@@ -285,7 +285,7 @@ namespace FilterExtensions
                         i++;
                     if (i != 1000)
                         name = name + i.ToString();
-                    Log("Duplicated texture name. New name is: " + name);
+                    Log("Duplicated texture name by texture " + t.name + ". New reference is: " + name);
                 }
 
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
