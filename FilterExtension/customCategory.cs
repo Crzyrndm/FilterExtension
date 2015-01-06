@@ -13,7 +13,7 @@ namespace FilterExtensions
         internal string iconName;
         internal Color colour;
         internal string type;
-        internal string[] value; // mod folder name for mod type categories
+        internal string value; // mod folder name for mod type categories
         internal bool all;
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
@@ -25,11 +25,10 @@ namespace FilterExtensions
             convertToColor(node.GetValue("colour"));
             
             type = node.GetValue("type");
-            string temp = node.GetValue("value");
-            if (!string.IsNullOrEmpty(temp))
-                value = temp.Split(',');
+            value = node.GetValue("value");
 
             bool.TryParse(node.GetValue("all"), out all);
+            allSubCategory();
 
             if (type == "mod")
                 generateSubCategories();
@@ -49,19 +48,13 @@ namespace FilterExtensions
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
         }
 
-        private void generateSubCategories()
+        private void allSubCategory()
         {
-            string folders = "";
-            foreach (string folder in value)
-            {
-                folders += folder + ",";
-            }
-
             if (all)
             {
                 ConfigNode folderCheck = new ConfigNode("CHECK");
                 folderCheck.AddValue("type", "folder");
-                folderCheck.AddValue("value", folders);
+                folderCheck.AddValue("value", value);
 
                 ConfigNode nodeFilter = new ConfigNode("FILTER");
                 nodeFilter.AddValue("invert", "false");
@@ -75,12 +68,15 @@ namespace FilterExtensions
 
                 Core.Instance.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
             }
+        }
 
+        private void generateSubCategories()
+        {
             foreach (string s in categoryNames)
             {
                 ConfigNode folderCheck = new ConfigNode("CHECK");
                 folderCheck.AddValue("type", "folder");
-                folderCheck.AddValue("value", folders);
+                folderCheck.AddValue("value", value);
 
                 ConfigNode catCheck = new ConfigNode("CHECK");
                 catCheck.AddValue("type", "category");

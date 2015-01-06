@@ -55,10 +55,10 @@ namespace FilterExtensions
                     Categories.Add(C);
                     if (C.value != null)
                     {
-                        foreach (string s in C.value)
+                        foreach (string s in C.value.Split(','))
                         {
                             if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
-                                folderToCategoryDict.Add(C.categoryTitle, s);
+                                folderToCategoryDict.Add(C.categoryTitle, s.Trim());
                         }
                     }
                 }
