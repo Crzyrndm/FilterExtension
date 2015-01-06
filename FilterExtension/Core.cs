@@ -255,6 +255,17 @@ namespace FilterExtensions
             {
                 if (!texDict.ContainsKey(t.name))
                     texDict.Add(t.name, t);
+                else
+                {
+                    int i = 1;
+                    while (texDict.ContainsKey(t.name + i.ToString()) && i < 1000)
+                        i++;
+                    if (i != 1000)
+                    {
+                        texDict.Add(t.name + i.ToString(), t);
+                        Log(t.name+i.ToString());
+                    }
+                }
             }
 
             foreach (GameDatabase.TextureInfo t in texList)
@@ -266,9 +277,20 @@ namespace FilterExtensions
                 else
                     selectedTex = t.texture;
 
-                string[] name = t.name.Split(new char[] { '/', '\\' });
-                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, false);
+                string name = t.name.Split(new char[] { '/', '\\' }).Last();
+                if (iconDict.ContainsKey(name))
+                {
+                    int i = 1;
+                    while (iconDict.ContainsKey(name + i.ToString()) && i < 1000)
+                        i++;
+                    if (i != 1000)
+                        name = name + i.ToString();
+                    Log("Duplicated texture name. New name is: " + name);
+                }
+
+                PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
                 
+                // shouldn't be neccesary to check, but just in case...
                 if (!iconDict.ContainsKey(icon.name))
                     iconDict.Add(icon.name, icon);
             }
