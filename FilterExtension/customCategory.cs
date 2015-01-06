@@ -31,7 +31,7 @@ namespace FilterExtensions
             allSubCategory();
 
             if (type == "mod")
-                generateSubCategories();
+                generateModSubCategories();
         }
 
         public void initialise()
@@ -46,6 +46,18 @@ namespace FilterExtensions
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
             category.displayType = EditorPartList.State.PartsList;
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
+        }
+
+        private void typeSwitch()
+        {
+            switch (type)
+            {
+                case "mod":
+                    generateModSubCategories();
+                    return;
+                case "engine":
+                    return;
+            }
         }
 
         private void allSubCategory()
@@ -70,7 +82,7 @@ namespace FilterExtensions
             }
         }
 
-        private void generateSubCategories()
+        private void generateModSubCategories()
         {
             foreach (string s in categoryNames)
             {
