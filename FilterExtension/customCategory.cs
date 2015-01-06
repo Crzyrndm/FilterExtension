@@ -14,6 +14,7 @@ namespace FilterExtensions
         internal Color colour;
         internal string type;
         internal string[] value; // mod folder name for mod type categories
+        internal bool all;
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
@@ -27,6 +28,8 @@ namespace FilterExtensions
             string temp = node.GetValue("value");
             if (!string.IsNullOrEmpty(temp))
                 value = temp.Split(',');
+
+            bool.TryParse(node.GetValue("all"), out all);
 
             if (type == "mod")
                 generateSubCategories();
@@ -52,6 +55,25 @@ namespace FilterExtensions
             foreach (string folder in value)
             {
                 folders += folder + ",";
+            }
+
+            if (all)
+            {
+                ConfigNode folderCheck = new ConfigNode("CHECK");
+                folderCheck.AddValue("type", "folder");
+                folderCheck.AddValue("value", folders);
+
+                ConfigNode nodeFilter = new ConfigNode("FILTER");
+                nodeFilter.AddValue("invert", "false");
+                nodeFilter.AddNode(folderCheck);
+
+                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
+                nodeSub.AddValue("category", categoryTitle);
+                nodeSub.AddValue("title", "All");
+                nodeSub.AddValue("icon", "All");
+                nodeSub.AddNode(nodeFilter);
+
+                Core.Instance.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
             }
 
             foreach (string s in categoryNames)
