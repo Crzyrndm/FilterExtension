@@ -10,7 +10,7 @@ namespace FilterCreator
     public class Core : MonoBehaviour
     {
         // GUI Rectangle
-        Rect windowRect = new Rect(400, 100, 0, 0);
+        Rect windowRect = new Rect(400, 150, 0, 0);
         Rect catWindowRect = new Rect();
 
         Vector2 categoryScroll = new Vector2(0, 0);
@@ -50,7 +50,7 @@ namespace FilterCreator
             {
                 windowRect = GUILayout.Window(579164, windowRect, drawWindow, "");
                 if (showCatWindow)
-                    catWindowRect = GUILayout.Window(597165, new Rect(windowRect.x, windowRect.y-100, 0,0), CategoryWindow, "Category Editor", GUILayout.Width(0), GUILayout.Height(0));
+                    catWindowRect = GUILayout.Window(597165, new Rect(windowRect.x, windowRect.y-150, 0,0), CategoryWindow, "Category Editor", GUILayout.Width(0), GUILayout.Height(0));
             }
         }
 
@@ -264,22 +264,31 @@ namespace FilterCreator
 
             // category title
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Title:");
+            GUILayout.Label("Title:", GUILayout.Width(100));
             catTitle = GUILayout.TextField(catTitle, GUILayout.Width(100));
             GUILayout.EndHorizontal();
 
             // category colour
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Colour:");
+            GUILayout.Label("Colour:", GUILayout.Width(100));
             catColour = GUILayout.TextField(catColour, textColour, GUILayout.Width(100));
             GUILayout.EndHorizontal();
 
             // icon name
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Icon");
+            GUILayout.Label("Icon", GUILayout.Width(100));
             bool validIcon = FilterExtensions.Core.iconDict.ContainsKey(catIcon);
             catIcon = GUILayout.TextField(catIcon, validIcon ? iconFound : iconNotFound, GUILayout.Width(100));
             GUILayout.EndHorizontal();
+
+            if(GUILayout.Button("Log New Category"))
+            {
+                ConfigNode cat = new ConfigNode("CATEGORY");
+                cat.AddValue("title", catTitle);
+                cat.AddValue("colour", catColour);
+                cat.AddValue("icon", catIcon);
+                Log("\r\n" + cat);
+            }
         }
     }
 }

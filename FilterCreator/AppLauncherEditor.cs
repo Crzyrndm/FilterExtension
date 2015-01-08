@@ -11,7 +11,7 @@ namespace FilterCreator
     {
         private static ApplicationLauncherButton btnLauncher;
         private static Rect window;
-        private static string iconPath = "";
+        private static string iconPath = "000_FilterExtensions/Icons/FilterCreator";
 
         internal static bool bDisplayEditor = false;
 
