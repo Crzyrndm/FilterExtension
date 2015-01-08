@@ -62,7 +62,6 @@ namespace FilterExtensions
                 PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
                 if (category == null)
                 {
-                    Core.Log("unable to find category " + this.category);
                     return;
                 }
 

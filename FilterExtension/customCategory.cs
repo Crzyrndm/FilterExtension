@@ -22,16 +22,14 @@ namespace FilterExtensions
         {
             categoryTitle = node.GetValue("title");
             iconName = node.GetValue("icon");
-            convertToColor(node.GetValue("colour"));
+            colour = convertToColor(node.GetValue("colour"));
             
             type = node.GetValue("type");
             value = node.GetValue("value");
 
             bool.TryParse(node.GetValue("all"), out all);
-            allSubCategory();
 
-            if (type == "mod")
-                generateModSubCategories();
+            typeSwitch();
         }
 
         public void initialise()
@@ -109,29 +107,31 @@ namespace FilterExtensions
             }
         }
 
-        private void convertToColor(string hex_ARGB)
+        public static Color convertToColor(string hex_ARGB)
         {
-            hex_ARGB = hex_ARGB.Replace("#", "");
-            hex_ARGB = hex_ARGB.Replace("0x", "");
-
-            if (hex_ARGB.Length == 8)
+            hex_ARGB = hex_ARGB.Replace("#", "").Replace("0x", ""); // remove any hexadecimal identifiers
+            if (System.Text.RegularExpressions.Regex.IsMatch(hex_ARGB, "[0-9a-fA-F]{6,8}"))
             {
-                Color c = new Color();
-                c.a = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                c.r = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                c.g = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                c.b = (float)byte.Parse(hex_ARGB.Substring(6, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                colour = c;
+                if (hex_ARGB.Length == 8)
+                {
+                    Color c = new Color();
+                    c.a = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    c.r = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    c.g = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    c.b = (float)byte.Parse(hex_ARGB.Substring(6, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    return c;
+                }
+                else if (hex_ARGB.Length == 6)
+                {
+                    Color c = new Color();
+                    c.a = 1;
+                    c.r = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    c.g = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    c.b = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+                    return c;
+                }
             }
-            else if (hex_ARGB.Length == 6)
-            {
-                Color c = new Color();
-                c.a = 1;
-                c.r = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                c.g = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                c.b = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                colour = c;
-            }
+            return Color.clear;
         }
     }
 }

@@ -201,6 +201,9 @@ namespace FilterExtensions.Categoriser
 
         public static bool checkPartSize(AvailablePart part, string value)
         {
+            if (categoryCheck(part))
+                return false;
+
             int size = -1;
             foreach (AttachNode node in part.partPrefab.attachNodes)
             {
@@ -208,6 +211,23 @@ namespace FilterExtensions.Categoriser
                     size = node.size;
             }
             return value.Split(',').Any(p => p.Trim() == size.ToString());
+        }
+
+        public static bool checkCrewCapacity(AvailablePart part, string value)
+        {
+            if (categoryCheck(part))
+                return false;
+
+            foreach (string s in value.Split(','))
+            {
+                int i;
+                if (int.TryParse(s.Trim(), out i))
+                {
+                    if (i == part.partPrefab.CrewCapacity)
+                        return true;
+                }
+            }
+            return false;
         }
 
         public static bool isCommand(AvailablePart part)

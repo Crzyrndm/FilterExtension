@@ -11,6 +11,7 @@ namespace FilterCreator
     {
         // GUI Rectangle
         Rect windowRect = new Rect(400, 100, 0, 0);
+        Rect catWindowRect = new Rect();
 
         Vector2 categoryScroll = new Vector2(0, 0);
         Vector2 subCategoryScroll = new Vector2(0, 0);
@@ -26,18 +27,7 @@ namespace FilterCreator
         List<ConfigNode> subCategoryNodes = new List<ConfigNode>();
         List<ConfigNode> categoryNodes = new List<ConfigNode>();
 
-        bool showNewWindow = false;
-
-        [Flags]
-        enum newWindowStyle
-        {
-            Category,
-            subCategory,
-            Filter,
-            Check
-        }
-
-        newWindowStyle style = newWindowStyle.Category;
+        bool showCatWindow = false;
 
         #region initialise
         public void Awake()
@@ -59,8 +49,8 @@ namespace FilterCreator
             if (AppLauncherEditor.bDisplayEditor)
             {
                 windowRect = GUILayout.Window(579164, windowRect, drawWindow, "");
-                if (showNewWindow)
-                    GUILayout.Window(597165, new Rect(windowRect.x, windowRect.y, 0,0), newCategoryWindow, "");
+                if (showCatWindow)
+                    catWindowRect = GUILayout.Window(597165, new Rect(windowRect.x, windowRect.y-100, 0,0), CategoryWindow, "Category Editor", GUILayout.Width(0), GUILayout.Height(0));
             }
         }
 
@@ -75,7 +65,8 @@ namespace FilterCreator
             GUILayout.BeginVertical();
             if (GUILayout.Button("Create Category"))
             {
-                addCategory("blah", "blah", "#000000");
+                //addCategory("blah", "blah", "#000000");
+                showCatWindow = !showCatWindow;
             }
 
             categoryScroll = GUILayout.BeginScrollView(categoryScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
@@ -252,9 +243,43 @@ namespace FilterCreator
             sC.AddNode(filter);
         }
 
-        private void newCategoryWindow(int id)
+
+        private string catTitle = "";
+        private string catColour = "";
+        private string catIcon = "";
+        private void CategoryWindow(int id)
         {
-            
+            GUIStyle textColour = new GUIStyle(HighLogic.Skin.textField);
+            Color c = FilterExtensions.customCategory.convertToColor(catColour);
+            if (c != Color.clear)
+                textColour.onActive.textColor = textColour.onFocused.textColor = textColour.onHover.textColor = textColour.onNormal.textColor
+                    = textColour.active.textColor = textColour.focused.textColor = textColour.hover.textColor = textColour.normal.textColor = c;
+
+            GUIStyle iconFound = new GUIStyle(HighLogic.Skin.textField);
+            iconFound.onActive.textColor = iconFound.onFocused.textColor = iconFound.onHover.textColor = iconFound.onNormal.textColor
+                    = iconFound.active.textColor = iconFound.focused.textColor = iconFound.hover.textColor = iconFound.normal.textColor = Color.green;
+            GUIStyle iconNotFound = new GUIStyle(HighLogic.Skin.textField);
+            iconNotFound.onActive.textColor = iconNotFound.onFocused.textColor = iconNotFound.onHover.textColor = iconNotFound.onNormal.textColor
+                    = iconNotFound.active.textColor = iconNotFound.focused.textColor = iconNotFound.hover.textColor = iconNotFound.normal.textColor = Color.red;
+
+            // category title
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Title:");
+            catTitle = GUILayout.TextField(catTitle, GUILayout.Width(100));
+            GUILayout.EndHorizontal();
+
+            // category colour
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Colour:");
+            catColour = GUILayout.TextField(catColour, textColour, GUILayout.Width(100));
+            GUILayout.EndHorizontal();
+
+            // icon name
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Icon");
+            bool validIcon = FilterExtensions.Core.iconDict.ContainsKey(catIcon);
+            catIcon = GUILayout.TextField(catIcon, validIcon ? iconFound : iconNotFound, GUILayout.Width(100));
+            GUILayout.EndHorizontal();
         }
     }
 }

@@ -58,6 +58,9 @@ namespace FilterExtensions
                 case "size": // check by largest stack node size
                     result = PartType.checkPartSize(partToCheck, value);
                     break;
+                case "crew":
+                    result = PartType.checkCrewCapacity(partToCheck, value);
+                    break;
                 case "custom": // for when things get tricky
                     result = PartType.checkCustom(partToCheck, value);
                     break;
