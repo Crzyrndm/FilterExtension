@@ -27,6 +27,7 @@ namespace FilterExtensions
             type = node.GetValue("type");
             value = node.GetValue("value");
 
+            // not hooked up to anything
             bool.TryParse(node.GetValue("all"), out all);
 
             typeSwitch();
@@ -58,6 +59,7 @@ namespace FilterExtensions
             }
         }
 
+        // not hooked up yet
         private void allSubCategory()
         {
             if (all)

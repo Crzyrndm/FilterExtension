@@ -20,6 +20,7 @@ namespace FilterExtensions
 
         // mod folder for each part by internal name
         public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+        internal static int state = 0; // 0 = we haven't started yet, 1 = processing started, -1 = processing finished, 2 = processing reattempted
 
         // Dictionary of icons created on entering the main menu
         public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
@@ -35,7 +36,7 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.12");
+            Log("Version 1.13");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
@@ -55,11 +56,8 @@ namespace FilterExtensions
                     Categories.Add(C);
                     if (C.value != null)
                     {
-                        foreach (string s in C.value.Split(','))
-                        {
-                            if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
-                                folderToCategoryDict.Add(C.categoryTitle, s.Trim());
-                        }
+                        if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
+                            folderToCategoryDict.Add(C.categoryTitle, C.value.Trim());
                     }
                 }
             }
@@ -171,7 +169,7 @@ namespace FilterExtensions
                 {
                     // extended logging for errors
                     Log(sC.subCategoryTitle + " failed to initialise");
-                    Log("Category:" + sC.category + ", filter?:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
+                    Log("Category:" + sC.category + ", filter:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
                     Log(ex.StackTrace);
                 }
             }
@@ -179,7 +177,7 @@ namespace FilterExtensions
             // update icons
             refreshList();
 
-            // Remove any category with no subCategories (causes major breakages)
+            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing, just breakages
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
             // refresh icons - doesn't work >.<
             // PartCategorizer.Instance.UpdateCategoryNameLabel();
@@ -326,7 +324,7 @@ namespace FilterExtensions
             ap.partUrl = url.url;
         }
 
-        // check for empty subCategories. Only does 1k checks per frame to avoid any crazy overhead for users with lots of parts and categories
+        // check for empty subCategories. Only does 1k checks per frame to avoid any chance of excessive overhead for users with lots of parts and categories
         IEnumerator checkForEmptySubCategories()
         {
             int i = 0;

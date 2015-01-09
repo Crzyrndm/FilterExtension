@@ -32,7 +32,7 @@ namespace FilterCreator
         #region initialise
         public void Awake()
         {
-            Debug.Log("[Filter Creator] Version 1.0");
+            Debug.Log("[Filter Creator] Version 1.1");
 
             subCategoryNodes = GameDatabase.Instance.GetConfigNodes("SUBCATEGORY").ToList();
             categoryNodes = GameDatabase.Instance.GetConfigNodes("CATEGORY").ToList();
