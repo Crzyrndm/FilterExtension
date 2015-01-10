@@ -20,7 +20,10 @@ namespace FilterExtensions
 
         public customCategory(ConfigNode node)
         {
-            categoryTitle = node.GetValue("title");
+            categoryTitle = node.GetValue("name");
+            if (string.IsNullOrEmpty(categoryTitle))
+                categoryTitle = node.GetValue("title");
+
             iconName = node.GetValue("icon");
             colour = convertToColor(node.GetValue("colour"));
             

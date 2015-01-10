@@ -85,7 +85,7 @@ namespace FilterExtensions
                         subCategories.Add(sC);
                 }
             }
-            StartCoroutine(checkForEmptySubCategories());
+            checkForEmptySubCategories();
             loadIcons();
         }
 
@@ -139,8 +139,11 @@ namespace FilterExtensions
             }
         }
 
-        private void editor()
+        internal void editor()
         {
+            // set state == 1, we have started processing
+            state = 1;
+
             // clear manufacturers from Filter by Manufacturer
             // Don't rename incase other mods depend on finding it (and the name isn't half bad either...)
             PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Manufacturer").subcategories.Clear();
@@ -184,6 +187,9 @@ namespace FilterExtensions
 
             // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();
+
+            // set state == -1, we have finished processing with no critical errors
+            state = -1;
         }
 
         public void refreshList()
@@ -324,10 +330,8 @@ namespace FilterExtensions
             ap.partUrl = url.url;
         }
 
-        // check for empty subCategories. Only does 1k checks per frame to avoid any chance of excessive overhead for users with lots of parts and categories
-        IEnumerator checkForEmptySubCategories()
+        private void checkForEmptySubCategories()
         {
-            int i = 0;
             List<customSubCategory> notEmpty = new List<customSubCategory>();
 
             foreach (customSubCategory sC in subCategories)
@@ -339,13 +343,6 @@ namespace FilterExtensions
                 }
                 foreach (AvailablePart p in PartLoader.Instance.parts)
                 {
-                    i++;
-                    if (i > 1000)
-                    {
-                        i = 0;
-                        yield return null;
-                    }
-
                     if (sC.checkFilters(p))
                     {
                         notEmpty.Add(sC);

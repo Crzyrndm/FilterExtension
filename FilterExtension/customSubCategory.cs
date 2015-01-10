@@ -14,10 +14,13 @@ namespace FilterExtensions
         internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
         internal bool filter = false;
 
-        public customSubCategory(ConfigNode node, string category)
+        public customSubCategory(ConfigNode node, string Category)
         {
-            this.category = category;
-            subCategoryTitle = node.GetValue("title");
+            this.category = Category;
+            subCategoryTitle = node.GetValue("name");
+            if (string.IsNullOrEmpty(subCategoryTitle))
+                subCategoryTitle = node.GetValue("title");
+
             iconName = node.GetValue("icon");
             oldTitle = node.GetValue("oldTitle");
 
