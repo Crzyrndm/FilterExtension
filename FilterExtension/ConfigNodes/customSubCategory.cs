@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace FilterExtensions
+namespace FilterExtensions.ConfigNodes
 {
-    class customSubCategory
+    public class customSubCategory
     {
         internal string category; // parent category
         internal string subCategoryTitle; // title of this subcategory
@@ -14,21 +14,28 @@ namespace FilterExtensions
         internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
         internal bool filter = false;
 
-        public customSubCategory(ConfigNode node, string category)
+        public customSubCategory(ConfigNode node, string Category)
         {
-            this.category = category;
-            subCategoryTitle = node.GetValue("title");
+            this.category = Category;
+            subCategoryTitle = node.GetValue("name");
+            if (string.IsNullOrEmpty(subCategoryTitle))
+                subCategoryTitle = node.GetValue("title");
+
             iconName = node.GetValue("icon");
             oldTitle = node.GetValue("oldTitle");
 
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
+
+                // if there's an "All parts" subcategory, add the filters to it
+                if (Core.Instance.categoryAllSub.ContainsKey(category))
+                    Core.Instance.categoryAllSub[category].filters.Add(new Filter(subNode));
             }
             filter = filters.Count > 0;
         }
 
-        internal bool checkFilters(AvailablePart part)
+        public bool checkFilters(AvailablePart part)
         {
             foreach (Filter f in filters)
             {
@@ -39,12 +46,12 @@ namespace FilterExtensions
             return false; // part passed no filter(s), not compatible with this subcategory
         }
 
-        internal void initialise()
+        public void initialise()
         {
             PartCategorizer.Icon icon;
             if (string.IsNullOrEmpty(iconName))
             {
-                Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " missing icon reference");
+                Core.Log(this.subCategoryTitle + " missing icon reference");
                 icon = PartCategorizer.Instance.fallbackIcon;
             }
             else
@@ -52,18 +59,20 @@ namespace FilterExtensions
                 icon = Core.getIcon(iconName);
                 if (icon == null)
                 {
-                    Debug.Log("[Filter Extensions] " + this.subCategoryTitle + " no icon found");
+                    Core.Log(this.subCategoryTitle + " no icon found");
                     icon = PartCategorizer.Instance.fallbackIcon;
                 }
             }
 
             if (filter)
             {
-                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == category);
-                if (Filter == null)
+                PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
+                if (category == null)
+                {
                     return;
+                }
 
-                PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => checkFilters(p));
+                PartCategorizer.AddCustomSubcategoryFilter(category, subCategoryTitle, icon, p => checkFilters(p));
             }
             else if (!string.IsNullOrEmpty(oldTitle))
             {
@@ -90,6 +99,37 @@ namespace FilterExtensions
                         but.SetIcon(icon);
                 }
             }
+        }
+
+        public bool Equals(customSubCategory sC2)
+        {
+            if (sC2 == null)
+                return false;
+
+            if (this.category != sC2.category || this.filter != sC2.filter || this.iconName != sC2.iconName
+                || this.oldTitle != sC2.oldTitle || this.subCategoryTitle != sC2.subCategoryTitle)
+                return false;
+
+            if (this.filters.Count != sC2.filters.Count)
+                return false;
+
+            foreach (Filter f1 in this.filters)
+            {
+                if (!sC2.filters.Any(f2 => f1.Equals(f2)))
+                    return false;
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 0;
+            foreach (Filter f in this.filters)
+            {
+                hash *= f.GetHashCode();
+            }
+            return hash * this.category.GetHashCode() * this.filter.GetHashCode() * this.iconName.GetHashCode()
+                * this.oldTitle.GetHashCode() * this.subCategoryTitle.GetHashCode();
         }
     }
 }

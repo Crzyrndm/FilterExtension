@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace FilterExtensions
+namespace FilterExtensions.ConfigNodes
 {
-    using Categoriser;
+    using Utility;
 
-    internal class Check
+    public class Check
     {
         internal string type = ""; // type of check to perform (module, title/name, resource,...)
         internal string value = "";
@@ -58,6 +58,9 @@ namespace FilterExtensions
                 case "size": // check by largest stack node size
                     result = PartType.checkPartSize(partToCheck, value);
                     break;
+                case "crew":
+                    result = PartType.checkCrewCapacity(partToCheck, value);
+                    break;
                 case "custom": // for when things get tricky
                     result = PartType.checkCustom(partToCheck, value);
                     break;
@@ -65,25 +68,25 @@ namespace FilterExtensions
                     result = false;
                     break;
             }
+
             if (invert)
                 result = !result;
             return result;
         }
-    }
 
-    internal class CheckEqualityComparer : IEqualityComparer<Check>
-    {
-        public bool Equals(Check c1, Check c2)
+        public bool Equals(Check c2)
         {
-            if (c1.type == c2.type && c1.value == c2.value && c1.invert == c2.invert)
+            if (c2 == null)
+                return false;
+            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert)
                 return true;
             else
                 return false;
         }
 
-        public int GetHashCode(Check c)
+        public override int GetHashCode()
         {
-            return c.type.GetHashCode() + c.value.GetHashCode() + c.invert.GetHashCode();
+            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode();
         }
     }
 }

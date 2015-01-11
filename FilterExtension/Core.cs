@@ -7,23 +7,43 @@ using System.Collections;
 namespace FilterExtensions
 {
     using UnityEngine;
-    using FilterExtensions.Categoriser;
+    using Utility;
+    using ConfigNodes;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
+        private static Core instance;
+
         // storing categories/subCategories loaded at Main Menu for creation when entering SPH/VAB
-        internal static List<customCategory> Categories = new List<customCategory>();
-        internal static List<customSubCategory> subCategories = new List<customSubCategory>();
+        internal List<customCategory> Categories = new List<customCategory>();
+        internal List<customSubCategory> subCategories = new List<customSubCategory>();
 
         // mod folder for each part by internal name
-        internal static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+        public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+
+        // store all the "All parts" subcategories until all subcategories have been processed
+        internal Dictionary<string, customSubCategory> categoryAllSub = new Dictionary<string, customSubCategory>(); // store the config node for the "all" subcategories until all filters have been added
+
+        // state is set on initialisation starting and finishing. This way we know whether a problem was encountered and if it was a problem related to FE
+        internal static int state = 0; // 0 = we haven't started yet, 1 = processing started, -1 = processing finished, 2 = processing reattempted
 
         // Dictionary of icons created on entering the main menu
-        internal static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
+        public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
+
+        public static Core Instance // Reminder to self, don't be abusing static
+        {
+            get
+            {
+                return instance;
+            }
+        }
 
         void Awake()
         {
+            instance = this;
+            Log("Version 1.14");
+
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
 
@@ -37,16 +57,13 @@ namespace FilterExtensions
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
                 customCategory C = new customCategory(node);
-                if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
+                if (Categories.Find(n => n.categoryName == C.categoryName) == null)
                 {
                     Categories.Add(C);
                     if (C.value != null)
                     {
-                        foreach (string s in C.value)
-                        {
-                            if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
-                                folderToCategoryDict.Add(C.categoryTitle, s);
-                        }
+                        if (!folderToCategoryDict.ContainsKey(C.categoryName))
+                            folderToCategoryDict.Add(C.categoryName, C.value.Trim());
                     }
                 }
             }
@@ -62,19 +79,26 @@ namespace FilterExtensions
                     if (sC.filter && folderToCategoryDict.ContainsKey(sC.category))
                     {
                         foreach(Filter f in sC.filters)
-                        {
-                            ConfigNode nodeCheck = new ConfigNode("CHECK");
-                            nodeCheck.AddValue("type", "folder");
-                            nodeCheck.AddValue("value", folderToCategoryDict[sC.category]);
-
-                            f.checks.Add(new Check(nodeCheck));
-                        }
+                            f.checks.Add(Constructors.newCheck("folder", folderToCategoryDict[sC.category]));
                     }
                     if (checkForConflicts(sC))
                         subCategories.Add(sC);
                 }
             }
-            StartCoroutine(checkForEmptySubCategories());
+
+            foreach (KeyValuePair<string, customSubCategory> kvp in categoryAllSub)
+            {
+                customSubCategory sC = kvp.Value;
+                if (folderToCategoryDict.ContainsKey(kvp.Key))
+                {
+                    foreach (Filter f in sC.filters)
+                        f.checks.Add(Constructors.newCheck("folder", folderToCategoryDict[sC.category]));
+                }
+
+                subCategories.Insert(0, sC);
+            }
+
+            checkForEmptySubCategories();
             loadIcons();
         }
 
@@ -105,31 +129,27 @@ namespace FilterExtensions
                 if (!partFolderDict.ContainsKey(p.name))
                     partFolderDict.Add(p.name, name);
                 else
-                    Debug.Log("[Filter Extensions] " + p.name + " duplicated part key in part-mod dictionary");
+                    Log(p.name + " duplicated part key in part-mod dictionary");
             }
             // Create subcategories for Manufacturer category
             foreach (string s in modNames)
             {
-                ConfigNode nodeCheck = new ConfigNode("CHECK");
-                nodeCheck.AddValue("type", "folder");
-                nodeCheck.AddValue("value", s);
+                Check ch = Constructors.newCheck("folder", s);
+                Filter f = Constructors.newFilter(false);
+                customSubCategory sC = Constructors.newSubCategory(s, "Filter by Manufacturer", s);
 
-                ConfigNode nodeFilter = new ConfigNode("FILTER");
-                nodeFilter.AddValue("invert", "false");
-                nodeFilter.AddNode(nodeCheck);
+                f.checks.Add(ch);
+                sC.filters.Add(f);
 
-                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
-                nodeSub.AddValue("category", "Filter by Manufacturer");
-                nodeSub.AddValue("title", s);
-                nodeSub.AddValue("icon", s);
-                nodeSub.AddNode(nodeFilter);
-
-                subCategories.Add(new customSubCategory(nodeSub, nodeSub.GetValue("category")));
+                subCategories.Add(sC);
             }
         }
 
-        private void editor()
+        internal void editor()
         {
+            // set state == 1, we have started processing
+            state = 1;
+
             // clear manufacturers from Filter by Manufacturer
             // Don't rename incase other mods depend on finding it (and the name isn't half bad either...)
             PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Manufacturer").subcategories.Clear();
@@ -157,25 +177,28 @@ namespace FilterExtensions
                 catch (Exception ex)
                 {
                     // extended logging for errors
-                    print("[Filter Extensions]" + sC.subCategoryTitle + " failed to initialise");
-                    print("[Filter Extensions] Category:" + sC.category + ", filter?:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
-                    print(ex.StackTrace);
+                    Log(sC.subCategoryTitle + " failed to initialise");
+                    Log("Category:" + sC.category + ", filter:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
+                    Log(ex.StackTrace);
                 }
             }
 
             // update icons
             refreshList();
 
-            // Remove any category with no subCategories (causes major breakages)
+            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing, just breakages
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
             // refresh icons - doesn't work >.<
             // PartCategorizer.Instance.UpdateCategoryNameLabel();
 
             // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();
+
+            // set state == -1, we have finished processing with no critical errors
+            state = -1;
         }
 
-        private void refreshList()
+        public void refreshList()
         {
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
             RUIToggleButtonTyped button = Filter.button.activeButton;
@@ -190,67 +213,33 @@ namespace FilterExtensions
                 // collision only possible within a category
                 if (sC.category == sCToCheck.category)
                 {
-                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                    if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
                     {
-                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
-                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
-                    }
-                    else if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
-                    {
-                        Debug.Log("[Filter Extensions] " + sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                        Log(sC.subCategoryTitle + " has multiple entries. Filters are being combined");
                         sCToCheck.filters.AddRange(sC.filters);
                         return false; // all other elements of this list have already been check for this condition. Don't need to continue
                     }
+                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                    {
+                        Log(sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
+                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
+                    }
                 }
             }
             return true;
         }
 
-        private bool compareFilterLists(List<Filter> filterListA, List<Filter> filterListB) 
-        {//can't just compare directly because order could be different, hence this ugly mess
-            if (filterListA.Count == 0 || filterListB.Count == 0)
-                return false;
-
-            if (filterListA.Count != filterListB.Count)
-                return false;
-
-            foreach(Filter fA in filterListA)
-            {
-                bool match = false;
-                foreach (Filter fB in filterListB)
-                {
-                    match = compareCheckLists(fA.checks, fB.checks, new CheckEqualityComparer());
-                    if (match)
-                        break;
-                }
-
-                if (!match)
-                    return false;
-            }
-            return true;
-        }
-
-        private bool compareCheckLists<T>(List<T> listA, List<T> listB, IEqualityComparer<T> comparer)
+        private bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
         {
-            if (listA.Count != listB.Count)
+            if (fLA.Count != fLB.Count)
                 return false;
 
-            Dictionary<T, int> cntDict = new Dictionary<T, int>(comparer);
-            foreach (T t in listA)
+            foreach (Filter fA in fLA)
             {
-                if (cntDict.ContainsKey(t))
-                    cntDict[t]++;
-                else
-                    cntDict.Add(t, 1);
-            }
-            foreach (T s in listB)
-            {
-                if (cntDict.ContainsKey(s))
-                    cntDict[s]--;
-                else
+                if (!fLB.Any(fB => fB.Equals(fA)))
                     return false;
             }
-            return cntDict.Values.All(c => c == 0);
+            return true;
         }
 
         private void checkIcons(PartCategorizer.Category category)
@@ -263,42 +252,61 @@ namespace FilterExtensions
             }
         }
 
-        private void loadIcons()
+        private static void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null).ToList();
-            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null 
+                                                                                                && t.texture.height <= 40 && t.texture.width <= 40
+                                                                                                && t.texture.width >= 25 && t.texture.height >= 25
+                                                                                                ).ToList();
 
-            texList.RemoveAll(t => t.texture.width > 40 || t.texture.width < 25 || t.texture.height > 40 || t.texture.height < 25);
-            
+            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
             // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
             foreach(GameDatabase.TextureInfo t in texList)
             {
                 if (!texDict.ContainsKey(t.name))
                     texDict.Add(t.name, t);
+                else
+                {
+                    int i = 1;
+                    while (texDict.ContainsKey(t.name + i.ToString()) && i < 1000)
+                        i++;
+                    if (i != 1000)
+                    {
+                        texDict.Add(t.name + i.ToString(), t);
+                        Log(t.name+i.ToString());
+                    }
+                }
             }
 
             foreach (GameDatabase.TextureInfo t in texList)
             {
-                bool simple = false;
                 Texture2D selectedTex = null;
 
                 if (texDict.ContainsKey(t.name + "_selected"))
                     selectedTex = texDict[t.name + "_selected"].texture;
                 else
-                {
                     selectedTex = t.texture;
-                    simple = true;
+
+                string name = t.name.Split(new char[] { '/', '\\' }).Last();
+                if (iconDict.ContainsKey(name))
+                {
+                    int i = 1;
+                    while (iconDict.ContainsKey(name + i.ToString()) && i < 1000)
+                        i++;
+                    if (i != 1000)
+                        name = name + i.ToString();
+                    Log("Duplicated texture name by texture " + t.name + ". New reference is: " + name);
                 }
 
-                string[] name = t.name.Split(new char[] { '/', '\\' });
-                PartCategorizer.Icon icon = new PartCategorizer.Icon(name[name.Length - 1], t.texture, selectedTex, simple);
+                PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
                 
+                // shouldn't be neccesary to check, but just in case...
                 if (!iconDict.ContainsKey(icon.name))
                     iconDict.Add(icon.name, icon);
             }
         }
 
-        internal static PartCategorizer.Icon getIcon(string name)
+        public static PartCategorizer.Icon getIcon(string name)
         {
             if (iconDict.ContainsKey(name))
             {
@@ -328,10 +336,8 @@ namespace FilterExtensions
             ap.partUrl = url.url;
         }
 
-        // check for empty subCategories. Only does 1k checks per frame to avoid any crazy overhead for users with lots of parts and categories
-        IEnumerator checkForEmptySubCategories()
+        private void checkForEmptySubCategories()
         {
-            int i = 0;
             List<customSubCategory> notEmpty = new List<customSubCategory>();
 
             foreach (customSubCategory sC in subCategories)
@@ -343,13 +349,6 @@ namespace FilterExtensions
                 }
                 foreach (AvailablePart p in PartLoader.Instance.parts)
                 {
-                    i++;
-                    if (i > 1000)
-                    {
-                        i = 0;
-                        yield return null;
-                    }
-
                     if (sC.checkFilters(p))
                     {
                         notEmpty.Add(sC);
@@ -358,6 +357,11 @@ namespace FilterExtensions
                 }
             }
             subCategories = notEmpty;
+        }
+
+        internal static void Log(object o)
+        {
+            Debug.Log("[Filter Extensions] " + o);
         }
     }
 }
