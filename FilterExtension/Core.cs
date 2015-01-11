@@ -60,6 +60,7 @@ namespace FilterExtensions
                 if (Categories.Find(n => n.categoryName == C.categoryName) == null)
                 {
                     Categories.Add(C);
+                    Log("adding category");
                     if (C.value != null)
                     {
                         if (!folderToCategoryDict.ContainsKey(C.categoryName))
@@ -147,6 +148,9 @@ namespace FilterExtensions
 
         internal void editor()
         {
+            Log(subCategories.Count);
+            Log(Categories.Count);
+
             // set state == 1, we have started processing
             state = 1;
 

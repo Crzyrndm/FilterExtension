@@ -42,8 +42,11 @@ namespace FilterExtensions.Utility
             sC.AddValue("category", category);
             sC.AddValue("icon", icon);
 
-            foreach (ConfigNode node in filters)
-                sC.AddNode(node);
+            if (filters != null)
+            {
+                foreach (ConfigNode node in filters)
+                    sC.AddNode(node);
+            }
 
             return sC;
         }
@@ -59,8 +62,11 @@ namespace FilterExtensions.Utility
 
             f.AddValue("invert", invert.ToString());
 
-            foreach (ConfigNode node in checks)
-                f.AddNode(node);
+            if (checks != null)
+            {
+                foreach (ConfigNode node in checks)
+                    f.AddNode(node);
+            }
 
             return f;
         }
