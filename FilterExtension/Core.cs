@@ -7,7 +7,8 @@ using System.Collections;
 namespace FilterExtensions
 {
     using UnityEngine;
-    using FilterExtensions.Categoriser;
+    using Utility;
+    using ConfigNodes;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
@@ -22,7 +23,7 @@ namespace FilterExtensions
         public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
 
         // store all the "All parts" subcategories until all subcategories have been processed
-        internal Dictionary<string, ConfigNode> categoryAllSub = new Dictionary<string, ConfigNode>(); // store the config node for the "all" subcategories until all filters have been added
+        internal Dictionary<string, customSubCategory> categoryAllSub = new Dictionary<string, customSubCategory>(); // store the config node for the "all" subcategories until all filters have been added
 
         // state is set on initialisation starting and finishing. This way we know whether a problem was encountered and if it was a problem related to FE
         internal static int state = 0; // 0 = we haven't started yet, 1 = processing started, -1 = processing finished, 2 = processing reattempted
@@ -56,13 +57,13 @@ namespace FilterExtensions
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
                 customCategory C = new customCategory(node);
-                if (Categories.Find(n => n.categoryTitle == C.categoryTitle) == null)
+                if (Categories.Find(n => n.categoryName == C.categoryName) == null)
                 {
                     Categories.Add(C);
                     if (C.value != null)
                     {
-                        if (!folderToCategoryDict.ContainsKey(C.categoryTitle))
-                            folderToCategoryDict.Add(C.categoryTitle, C.value.Trim());
+                        if (!folderToCategoryDict.ContainsKey(C.categoryName))
+                            folderToCategoryDict.Add(C.categoryName, C.value.Trim());
                     }
                 }
             }
@@ -78,34 +79,23 @@ namespace FilterExtensions
                     if (sC.filter && folderToCategoryDict.ContainsKey(sC.category))
                     {
                         foreach(Filter f in sC.filters)
-                        {
-                            ConfigNode nodeCheck = new ConfigNode("CHECK");
-                            nodeCheck.AddValue("type", "folder");
-                            nodeCheck.AddValue("value", folderToCategoryDict[sC.category]);
-
-                            f.checks.Add(new Check(nodeCheck));
-                        }
+                            f.checks.Add(Constructors.newCheck("folder", folderToCategoryDict[sC.category]));
                     }
                     if (checkForConflicts(sC))
                         subCategories.Add(sC);
                 }
             }
 
-            foreach (KeyValuePair<string, ConfigNode> kvp in categoryAllSub)
+            foreach (KeyValuePair<string, customSubCategory> kvp in categoryAllSub)
             {
-                ConfigNode sC = kvp.Value;
+                customSubCategory sC = kvp.Value;
                 if (folderToCategoryDict.ContainsKey(kvp.Key))
                 {
-                    foreach (ConfigNode node in sC.GetNodes("FILTER"))
-                    {
-                        ConfigNode nodeCheck = new ConfigNode("CHECK");
-                        nodeCheck.AddValue("type", "folder");
-                        nodeCheck.AddValue("value", folderToCategoryDict[kvp.Key]);
-                        node.AddNode(nodeCheck);
-                    }
+                    foreach (Filter f in sC.filters)
+                        f.checks.Add(Constructors.newCheck("folder", folderToCategoryDict[sC.category]));
                 }
 
-                subCategories.Insert(0, new customSubCategory(sC, kvp.Key));
+                subCategories.Insert(0, sC);
             }
 
             checkForEmptySubCategories();
@@ -144,21 +134,14 @@ namespace FilterExtensions
             // Create subcategories for Manufacturer category
             foreach (string s in modNames)
             {
-                ConfigNode nodeCheck = new ConfigNode("CHECK");
-                nodeCheck.AddValue("type", "folder");
-                nodeCheck.AddValue("value", s);
+                Check ch = Constructors.newCheck("folder", s);
+                Filter f = Constructors.newFilter(false);
+                customSubCategory sC = Constructors.newSubCategory(s, "Filter by Manufacturer", s);
 
-                ConfigNode nodeFilter = new ConfigNode("FILTER");
-                nodeFilter.AddValue("invert", "false");
-                nodeFilter.AddNode(nodeCheck);
+                f.checks.Add(ch);
+                sC.filters.Add(f);
 
-                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
-                nodeSub.AddValue("category", "Filter by Manufacturer");
-                nodeSub.AddValue("title", s);
-                nodeSub.AddValue("icon", s);
-                nodeSub.AddNode(nodeFilter);
-
-                subCategories.Add(new customSubCategory(nodeSub, nodeSub.GetValue("category")));
+                subCategories.Add(sC);
             }
         }
 

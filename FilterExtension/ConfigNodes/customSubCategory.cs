@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace FilterExtensions
+namespace FilterExtensions.ConfigNodes
 {
     public class customSubCategory
     {
@@ -30,7 +30,7 @@ namespace FilterExtensions
 
                 // if there's an "All parts" subcategory, add the filters to it
                 if (Core.Instance.categoryAllSub.ContainsKey(category))
-                    Core.Instance.categoryAllSub[category].AddNode(subNode);
+                    Core.Instance.categoryAllSub[category].filters.Add(new Filter(subNode));
             }
             filter = filters.Count > 0;
         }

@@ -6,6 +6,10 @@ using UnityEngine;
 
 namespace FilterCreator
 {
+    using FilterExtensions;
+    using FilterExtensions.ConfigNodes;
+    using FilterExtensions.Utility;
+
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class Core : MonoBehaviour
     {
@@ -161,7 +165,7 @@ namespace FilterCreator
             {
                 GUILayout.BeginVertical();
 
-                FilterExtensions.customSubCategory sC = new FilterExtensions.customSubCategory(active_subCategory_node, "");
+                customSubCategory sC = new customSubCategory(active_subCategory_node, "");
                 partsScroll = GUILayout.BeginScrollView(partsScroll, GUILayout.Height((float)(Screen.height * 0.7)), GUILayout.Width(240));
 
                 foreach (AvailablePart ap in PartLoader.Instance.parts)
@@ -191,7 +195,7 @@ namespace FilterCreator
             category.AddValue("icon", icon);
             category.AddValue("colour", colour);
 
-            FilterExtensions.customCategory c = new FilterExtensions.customCategory(category);
+            customCategory c = new customCategory(category);
             c.initialise();
 
             ConfigNode sC = new ConfigNode("SUBCATEGORY");
@@ -201,7 +205,7 @@ namespace FilterCreator
             ConfigNode filter = new ConfigNode("FILTER");
             sC.AddNode(filter);
 
-            FilterExtensions.customSubCategory dummySC = new FilterExtensions.customSubCategory(sC, title);
+            customSubCategory dummySC = new customSubCategory(sC, title);
             dummySC.initialise();
         }
 
@@ -217,7 +221,7 @@ namespace FilterCreator
             sC.AddNode(filter);
 
             subCategoryNodes.Add(sC);
-            FilterExtensions.customSubCategory newSC = new FilterExtensions.customSubCategory(sC, category);
+            customSubCategory newSC = new customSubCategory(sC, category);
             newSC.initialise();
 
             FilterExtensions.Core.Instance.refreshList();
@@ -250,7 +254,7 @@ namespace FilterCreator
         private void CategoryWindow(int id)
         {
             GUIStyle textColour = new GUIStyle(HighLogic.Skin.textField);
-            Color c = FilterExtensions.customCategory.convertToColor(catColour);
+            Color c = customCategory.convertToColor(catColour);
             if (c != Color.clear)
                 textColour.onActive.textColor = textColour.onFocused.textColor = textColour.onHover.textColor = textColour.onNormal.textColor
                     = textColour.active.textColor = textColour.focused.textColor = textColour.hover.textColor = textColour.normal.textColor = c;

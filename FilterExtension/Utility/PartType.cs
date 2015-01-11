@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace FilterExtensions.Categoriser
+namespace FilterExtensions.Utility
 {
     public static class PartType
     {        

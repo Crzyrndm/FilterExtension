@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace FilterExtensions
+namespace FilterExtensions.ConfigNodes
 {
-    using Categoriser;
+    using Utility;
 
     public class Check
     {

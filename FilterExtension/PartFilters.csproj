@@ -49,12 +49,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="customCategory.cs" />
-    <Compile Include="Check.cs" />
+    <Compile Include="ConfigNodes\customCategory.cs" />
+    <Compile Include="ConfigNodes\Check.cs" />
     <Compile Include="Core.cs" />
-    <Compile Include="Categoriser\PartType.cs" />
-    <Compile Include="Filter.cs" />
-    <Compile Include="customSubCategory.cs" />
+    <Compile Include="Utility\Constructors.cs" />
+    <Compile Include="Utility\PartType.cs" />
+    <Compile Include="ConfigNodes\Filter.cs" />
+    <Compile Include="ConfigNodes\customSubCategory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="stateCheck.cs" />
   </ItemGroup>

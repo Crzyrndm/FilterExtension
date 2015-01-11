@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace FilterExtensions
+namespace FilterExtensions.ConfigNodes
 {
-    using Categoriser;
+    using Utility;
 
     public class customCategory
     {
-        internal string categoryTitle;
+        internal string categoryName;
         internal string iconName;
         internal Color colour;
         internal string type;
@@ -20,9 +20,9 @@ namespace FilterExtensions
 
         public customCategory(ConfigNode node)
         {
-            categoryTitle = node.GetValue("name");
-            if (string.IsNullOrEmpty(categoryTitle))
-                categoryTitle = node.GetValue("title");
+            categoryName = node.GetValue("name");
+            if (string.IsNullOrEmpty(categoryName))
+                categoryName = node.GetValue("title");
 
             iconName = node.GetValue("icon");
             colour = convertToColor(node.GetValue("colour"));
@@ -32,16 +32,8 @@ namespace FilterExtensions
 
             if (bool.TryParse(node.GetValue("all"), out all))
             {
-                if (!Core.Instance.categoryAllSub.ContainsKey(categoryTitle))
-                {
-                    // create confignode for an "All parts" subcategory
-                    ConfigNode c = new ConfigNode("SUBCATEGORY");
-                    c.AddValue("name", "All Parts in Category");
-                    c.AddValue("category", categoryTitle);
-                    c.AddValue("icon", iconName);
-                    // add it to the dictionary
-                    Core.Instance.categoryAllSub.Add(categoryTitle, c);
-                }
+                if (!Core.Instance.categoryAllSub.ContainsKey(categoryName))
+                    Core.Instance.categoryAllSub.Add(categoryName, Constructors.newSubCategory("All Parts in Category", categoryName, iconName));
             }
 
             typeSwitch();
@@ -49,14 +41,14 @@ namespace FilterExtensions
 
         public void initialise()
         {
-            if (categoryTitle == null)
+            if (categoryName == null)
                 return;
             PartCategorizer.Icon icon = Core.getIcon(iconName);
             if (icon == null)
                 icon = PartCategorizer.Instance.fallbackIcon;
-            PartCategorizer.AddCustomFilter(categoryTitle, icon, colour);
+            PartCategorizer.AddCustomFilter(categoryName, icon, colour);
             
-            PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryTitle);
+            PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryName);
             category.displayType = EditorPartList.State.PartsList;
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
         }
@@ -68,58 +60,26 @@ namespace FilterExtensions
                 case "mod":
                     generateModSubCategories();
                     return;
-                case "engine":
+                case "engine": // not hooked up yet
                     return;
             }
         }
 
-        // not hooked up yet
-        private void allSubCategory()
-        {
-            if (all)
-            {
-                ConfigNode folderCheck = new ConfigNode("CHECK");
-                folderCheck.AddValue("type", "folder");
-                folderCheck.AddValue("value", value);
-
-                ConfigNode nodeFilter = new ConfigNode("FILTER");
-                nodeFilter.AddValue("invert", "false");
-                nodeFilter.AddNode(folderCheck);
-
-                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
-                nodeSub.AddValue("category", categoryTitle);
-                nodeSub.AddValue("title", "All");
-                nodeSub.AddValue("icon", "All");
-                nodeSub.AddNode(nodeFilter);
-
-                Core.Instance.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
-            }
-        }
 
         private void generateModSubCategories()
         {
             foreach (string s in categoryNames)
             {
-                ConfigNode folderCheck = new ConfigNode("CHECK");
-                folderCheck.AddValue("type", "folder");
-                folderCheck.AddValue("value", value);
+                Check ch1 = Constructors.newCheck("folder", value);
+                Check ch2 = Constructors.newCheck("category", s);
+                Filter f = Constructors.newFilter(false);
+                customSubCategory sC = Constructors.newSubCategory(s, categoryName, "stock_" + s);
 
-                ConfigNode catCheck = new ConfigNode("CHECK");
-                catCheck.AddValue("type", "category");
-                catCheck.AddValue("value", s);
+                f.checks.Add(ch1);
+                f.checks.Add(ch2);
+                sC.filters.Add(f);
 
-                ConfigNode nodeFilter = new ConfigNode("FILTER");
-                nodeFilter.AddValue("invert", "false");
-                nodeFilter.AddNode(folderCheck);
-                nodeFilter.AddNode(catCheck);
-
-                ConfigNode nodeSub = new ConfigNode("SUBCATEGORY");
-                nodeSub.AddValue("category", categoryTitle);
-                nodeSub.AddValue("title", s);
-                nodeSub.AddValue("icon", "stock_" + s);
-                nodeSub.AddNode(nodeFilter);
-
-                Core.Instance.subCategories.Add(new customSubCategory(nodeSub, categoryTitle));
+                Core.Instance.subCategories.Add(sC);
             }
         }
 

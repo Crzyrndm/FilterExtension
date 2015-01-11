@@ -1,4 +1,4 @@
-This is a collection of icons and configs contributed by users of the mod Filter Extensions.
+This may need some updating...
 
 ============================  ICONS  ============================
 Recommended size for icons is 32x32, but any image with dimensions between 25 and 40 pixels
