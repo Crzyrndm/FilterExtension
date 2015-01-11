@@ -20,12 +20,17 @@ namespace FilterExtensions
 
         // mod folder for each part by internal name
         public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+
+        // store all the "All parts" subcategories until all subcategories have been processed
+        internal Dictionary<string, ConfigNode> categoryAllSub = new Dictionary<string, ConfigNode>(); // store the config node for the "all" subcategories until all filters have been added
+
+        // state is set on initialisation starting and finishing. This way we know whether a problem was encountered and if it was a problem related to FE
         internal static int state = 0; // 0 = we haven't started yet, 1 = processing started, -1 = processing finished, 2 = processing reattempted
 
         // Dictionary of icons created on entering the main menu
         public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
 
-        public static Core Instance
+        public static Core Instance // Reminder to self, don't be abusing static
         {
             get
             {
@@ -36,7 +41,7 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.13");
+            Log("Version 1.14");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
@@ -85,6 +90,24 @@ namespace FilterExtensions
                         subCategories.Add(sC);
                 }
             }
+
+            foreach (KeyValuePair<string, ConfigNode> kvp in categoryAllSub)
+            {
+                ConfigNode sC = kvp.Value;
+                if (folderToCategoryDict.ContainsKey(kvp.Key))
+                {
+                    foreach (ConfigNode node in sC.GetNodes("FILTER"))
+                    {
+                        ConfigNode nodeCheck = new ConfigNode("CHECK");
+                        nodeCheck.AddValue("type", "folder");
+                        nodeCheck.AddValue("value", folderToCategoryDict[kvp.Key]);
+                        node.AddNode(nodeCheck);
+                    }
+                }
+
+                subCategories.Insert(0, new customSubCategory(sC, kvp.Key));
+            }
+
             checkForEmptySubCategories();
             loadIcons();
         }

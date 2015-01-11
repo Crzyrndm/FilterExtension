@@ -30,8 +30,19 @@ namespace FilterExtensions
             type = node.GetValue("type");
             value = node.GetValue("value");
 
-            // not hooked up to anything
-            bool.TryParse(node.GetValue("all"), out all);
+            if (bool.TryParse(node.GetValue("all"), out all))
+            {
+                if (!Core.Instance.categoryAllSub.ContainsKey(categoryTitle))
+                {
+                    // create confignode for an "All parts" subcategory
+                    ConfigNode c = new ConfigNode("SUBCATEGORY");
+                    c.AddValue("name", "All Parts in Category");
+                    c.AddValue("category", categoryTitle);
+                    c.AddValue("icon", iconName);
+                    // add it to the dictionary
+                    Core.Instance.categoryAllSub.Add(categoryTitle, c);
+                }
+            }
 
             typeSwitch();
         }

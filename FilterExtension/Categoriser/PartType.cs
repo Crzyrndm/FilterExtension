@@ -140,22 +140,20 @@ namespace FilterExtensions.Categoriser
             if (categoryCheck(part))
                 return false;
 
-            List<Propellant> propellants = new List<Propellant>();
-            if (part.partPrefab.GetModuleEngines() != null)
-            {
-                propellants = part.partPrefab.GetModuleEngines().propellants;
-            }
-            else if (part.partPrefab.GetModuleEnginesFx() != null)
-            {
-                propellants = part.partPrefab.GetModuleEnginesFx().propellants;
-            }
-            else
-                return false;
+            List<List<Propellant>> propellants = new List<List<Propellant>>();
+            
+            foreach (ModuleEngines e in part.partPrefab.GetModuleEngines())
+                propellants.Add(e.propellants);
+            foreach (ModuleEnginesFX ex in part.partPrefab.GetModuleEnginesFx())
+                propellants.Add(ex.propellants);
 
-            foreach (string s in value.Split(','))
+            foreach (List<Propellant> Lp in propellants)
             {
-                if (propellants.Any(p => p.name == s.Trim()))
-                    return true;
+                foreach (string s in value.Split(','))
+                {
+                    if (Lp.Any(p => p.name == s.Trim()))
+                        return true;
+                }
             }
             return false;
         }
@@ -310,19 +308,24 @@ namespace FilterExtensions.Categoriser
             return false;
         }
 
+        public static List<T> GetModules<T>(this Part part) where T : PartModule
+        {
+            return part.Modules.OfType<T>().ToList();
+        }
+
         public static T GetModule<T>(this Part part) where T : PartModule
         {
             return part.Modules.OfType<T>().FirstOrDefault();
         }
 
-        public static ModuleEngines GetModuleEngines(this Part part)
+        public static List<ModuleEngines> GetModuleEngines(this Part part)
         {
-            return part.GetModule<ModuleEngines>();
+            return part.GetModules<ModuleEngines>();
         }
 
-        public static ModuleEnginesFX GetModuleEnginesFx(this Part part)
+        public static List<ModuleEnginesFX> GetModuleEnginesFx(this Part part)
         {
-            return part.GetModule<ModuleEnginesFX>();
+            return part.GetModules<ModuleEnginesFX>();
         }
     }
 }

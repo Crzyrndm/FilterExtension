@@ -27,6 +27,10 @@ namespace FilterExtensions
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
+
+                // if there's an "All parts" subcategory, add the filters to it
+                if (Core.Instance.categoryAllSub.ContainsKey(category))
+                    Core.Instance.categoryAllSub[category].AddNode(subNode);
             }
             filter = filters.Count > 0;
         }
