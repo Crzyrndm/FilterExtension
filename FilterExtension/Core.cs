@@ -79,7 +79,7 @@ namespace FilterExtensions
                     if (sC.filter && folderToCategoryDict.ContainsKey(sC.category))
                     {
                         foreach(Filter f in sC.filters)
-                            f.checks.Add(Constructors.newCheck("folder", folderToCategoryDict[sC.category]));
+                            f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
                     }
                     if (checkForConflicts(sC))
                         subCategories.Add(sC);
@@ -92,7 +92,7 @@ namespace FilterExtensions
                 if (folderToCategoryDict.ContainsKey(kvp.Key))
                 {
                     foreach (Filter f in sC.filters)
-                        f.checks.Add(Constructors.newCheck("folder", folderToCategoryDict[sC.category]));
+                        f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
                 }
 
                 subCategories.Insert(0, sC);
@@ -134,9 +134,9 @@ namespace FilterExtensions
             // Create subcategories for Manufacturer category
             foreach (string s in modNames)
             {
-                Check ch = Constructors.newCheck("folder", s);
-                Filter f = Constructors.newFilter(false);
-                customSubCategory sC = Constructors.newSubCategory(s, "Filter by Manufacturer", s);
+                Check ch = new Check("folder", s);
+                Filter f = new Filter(false);
+                customSubCategory sC = new customSubCategory(s, "Filter by Manufacturer", s);
 
                 f.checks.Add(ch);
                 sC.filters.Add(f);

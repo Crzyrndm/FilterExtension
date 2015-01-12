@@ -7,7 +7,7 @@ namespace FilterExtensions.Utility
 {
     using ConfigNodes;
 
-    public static class Constructors
+    public static class cfgConstructors
     {
         public static ConfigNode newCategoryNode(string name, string icon, string colour, string type = "", string value = "", string all = "")
         {
@@ -29,12 +29,18 @@ namespace FilterExtensions.Utility
             return c;
         }
 
-        public static customCategory newCategory(string name, string icon, string colour, string type = "", string value = "", string all = "")
+        public static ConfigNode newSubCategoryNode(string name, string category, string icon)
         {
-            return new customCategory(newCategoryNode(name, icon, colour, type, value, all));
+            ConfigNode sC = new ConfigNode("SUBCATEGORY");
+
+            sC.AddValue("name", name);
+            sC.AddValue("category", category);
+            sC.AddValue("icon", icon);
+
+            return sC;
         }
 
-        public static ConfigNode newSubCategoryNode(string name, string category, string icon, List<ConfigNode> filters = null)
+        public static ConfigNode newSubCategoryNode(string name, string category, string icon, List<ConfigNode> filters)
         {
             ConfigNode sC = new ConfigNode("SUBCATEGORY");
 
@@ -51,12 +57,7 @@ namespace FilterExtensions.Utility
             return sC;
         }
 
-        public static customSubCategory newSubCategory(string name, string category, string icon)
-        {
-            return new customSubCategory(newSubCategoryNode(name, category, icon), category);
-        }
-
-        public static ConfigNode newFilterNode(bool invert, List<ConfigNode> checks = null)
+        public static ConfigNode newFilterNode(bool invert, List<ConfigNode> checks)
         {
             ConfigNode f = new ConfigNode("FILTER");
 
@@ -71,9 +72,13 @@ namespace FilterExtensions.Utility
             return f;
         }
 
-        public static Filter newFilter(bool invert)
+        public static ConfigNode newFilterNode(bool invert)
         {
-            return new Filter(newFilterNode(invert));
+            ConfigNode f = new ConfigNode("FILTER");
+
+            f.AddValue("invert", invert.ToString());
+
+            return f;
         }
 
         public static ConfigNode newCheckNode(string type, string value, bool invert = false)
@@ -85,11 +90,6 @@ namespace FilterExtensions.Utility
             c.AddValue("invert", invert.ToString());
 
             return c;
-        }
-
-        public static Check newCheck(string type, string value, bool invert = false)
-        {
-            return new Check(newCheckNode(type, value, invert));
         }
     }
 }

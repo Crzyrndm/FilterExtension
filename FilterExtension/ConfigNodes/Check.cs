@@ -9,15 +9,25 @@ namespace FilterExtensions.ConfigNodes
 
     public class Check
     {
-        internal string type = ""; // type of check to perform (module, title/name, resource,...)
-        internal string value = "";
-        internal bool invert;
+        public string type { get; set; } // type of check to perform (module, title/name, resource,...)
+        public string value { get; set; }
+        public bool invert { get; set; }
 
         internal Check(ConfigNode node)
         {
             type = node.GetValue("type");
             value = node.GetValue("value");
-            bool.TryParse(node.GetValue("invert"), out invert);
+
+            bool tmp;
+            bool.TryParse(node.GetValue("invert"), out tmp);
+            invert = tmp;
+        }
+
+        internal Check(string type, string value, bool invert = false)
+        {
+            this.type = type;
+            this.value = value;
+            this.invert = invert;
         }
 
         internal bool checkPart(AvailablePart partToCheck)

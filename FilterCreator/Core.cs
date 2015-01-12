@@ -69,7 +69,6 @@ namespace FilterCreator
             GUILayout.BeginVertical();
             if (GUILayout.Button("Create Category"))
             {
-                //addCategory("blah", "blah", "#000000");
                 showCatWindow = !showCatWindow;
             }
 
@@ -190,38 +189,18 @@ namespace FilterCreator
 
         private void addCategory(string title, string icon, string colour)
         {
-            ConfigNode category = new ConfigNode("CATEGORY");
-            category.AddValue("title", title);
-            category.AddValue("icon", icon);
-            category.AddValue("colour", colour);
-
-            customCategory c = new customCategory(category);
+            customCategory c = new customCategory(title, icon, colour);
             c.initialise();
 
-            ConfigNode sC = new ConfigNode("SUBCATEGORY");
-            sC.AddValue("category", title);
-            sC.AddValue("title", "all");
-
-            ConfigNode filter = new ConfigNode("FILTER");
-            sC.AddNode(filter);
-
-            customSubCategory dummySC = new customSubCategory(sC, title);
+            customSubCategory dummySC = new customSubCategory("all", title, "");
             dummySC.initialise();
         }
 
         private void addSubCategory(string title, string category, string icon)
         {
-            ConfigNode sC = new ConfigNode("SUBCATEGORY");
-            sC.AddValue("category", category);
-            sC.AddValue("title", title);
-            sC.AddValue("icon", icon);
+            subCategoryNodes.Add(cfgConstructors.newSubCategoryNode(title, category, icon));
 
-            ConfigNode filter = new ConfigNode("FILTER");
-            filter.AddValue("invert", "");
-            sC.AddNode(filter);
-
-            subCategoryNodes.Add(sC);
-            customSubCategory newSC = new customSubCategory(sC, category);
+            customSubCategory newSC = new customSubCategory(title, category, icon);
             newSC.initialise();
 
             FilterExtensions.Core.Instance.refreshList();
@@ -229,9 +208,12 @@ namespace FilterCreator
 
         private void addFilter(ConfigNode sC, bool invert = false)
         {
-            ConfigNode filter = new ConfigNode("FILTER");
-            filter.AddValue("invert", invert.ToString());
-            sC.AddNode(filter);
+            sC.AddNode(cfgConstructors.newFilterNode(invert));
+        }
+
+        private void addFilter(customSubCategory sC, bool invert = false)
+        {
+            sC.filters.Add(new Filter(invert));
         }
 
         private void addCheck(ConfigNode sC, ConfigNode filter, string type, string value, int filterIndex, bool invert = false)
@@ -287,11 +269,7 @@ namespace FilterCreator
 
             if(GUILayout.Button("Log New Category"))
             {
-                ConfigNode cat = new ConfigNode("CATEGORY");
-                cat.AddValue("title", catTitle);
-                cat.AddValue("colour", catColour);
-                cat.AddValue("icon", catIcon);
-                Log("\r\n" + cat);
+                Log("\r\n" + cfgConstructors.newCategoryNode(catTitle, catIcon, catColour));
             }
         }
     }

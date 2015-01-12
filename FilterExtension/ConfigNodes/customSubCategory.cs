@@ -7,12 +7,12 @@ namespace FilterExtensions.ConfigNodes
 {
     public class customSubCategory
     {
-        internal string category; // parent category
-        internal string subCategoryTitle; // title of this subcategory
-        internal string oldTitle; // title generated for the auto extending categories to search by
-        internal string iconName; // default icon to use
-        internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
-        internal bool filter = false;
+        public string category { get; set; } // parent category
+        public string subCategoryTitle { get; set; } // title of this subcategory
+        public string oldTitle { get; set; } // title generated for the auto extending categories to search by
+        public string iconName { get; set; } // default icon to use
+        public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        public bool filter { get; set; }
 
         public customSubCategory(ConfigNode node, string Category)
         {
@@ -24,6 +24,7 @@ namespace FilterExtensions.ConfigNodes
             iconName = node.GetValue("icon");
             oldTitle = node.GetValue("oldTitle");
 
+            filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
@@ -33,6 +34,13 @@ namespace FilterExtensions.ConfigNodes
                     Core.Instance.categoryAllSub[category].filters.Add(new Filter(subNode));
             }
             filter = filters.Count > 0;
+        }
+
+        public customSubCategory(string name, string category, string icon)
+        {
+            this.category = category;
+            this.subCategoryTitle = name;
+            this.iconName = icon;
         }
 
         public bool checkFilters(AvailablePart part)

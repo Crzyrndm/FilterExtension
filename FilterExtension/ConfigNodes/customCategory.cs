@@ -9,12 +9,12 @@ namespace FilterExtensions.ConfigNodes
 
     public class customCategory
     {
-        internal string categoryName;
-        internal string iconName;
-        internal Color colour;
-        internal string type;
-        internal string value; // mod folder name for mod type categories
-        internal bool all;
+        public string categoryName { get; set; }
+        public string iconName { get; set; }
+        public Color colour { get; set; }
+        public string type { get; set; }
+        public string value { get; set; } // mod folder name for mod type categories
+        public bool all { get; set; }
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
@@ -30,12 +30,36 @@ namespace FilterExtensions.ConfigNodes
             type = node.GetValue("type");
             value = node.GetValue("value");
 
-            if (bool.TryParse(node.GetValue("all"), out all))
+            bool tmp;
+            bool.TryParse(node.GetValue("all"), out tmp);
+            this.all = tmp;
+
+            if (all)
             {
                 if (!Core.Instance.categoryAllSub.ContainsKey(categoryName))
-                    Core.Instance.categoryAllSub.Add(categoryName, Constructors.newSubCategory("All Parts in Category", categoryName, iconName));
+                    Core.Instance.categoryAllSub.Add(categoryName, new customSubCategory("All Parts in Category", categoryName, iconName));
             }
+            typeSwitch();
+        }
 
+        public customCategory(string name, string icon, string colour, string type = "", string value = "", string all = "")
+        {
+            categoryName = name;
+            iconName = icon;
+            this.colour = convertToColor(colour);
+
+            this.type = type;
+            this.value = value;
+            
+            bool tmp;
+            bool.TryParse(all, out tmp);
+            this.all = tmp;
+
+            if (this.all)
+            {
+                if (!Core.Instance.categoryAllSub.ContainsKey(categoryName))
+                    Core.Instance.categoryAllSub.Add(categoryName, new customSubCategory("All Parts in Category", categoryName, iconName));
+            }
             typeSwitch();
         }
 
@@ -70,10 +94,10 @@ namespace FilterExtensions.ConfigNodes
         {
             foreach (string s in categoryNames)
             {
-                Check ch1 = Constructors.newCheck("folder", value);
-                Check ch2 = Constructors.newCheck("category", s);
-                Filter f = Constructors.newFilter(false);
-                customSubCategory sC = Constructors.newSubCategory(s, categoryName, "stock_" + s);
+                Check ch1 = new Check("folder", value);
+                Check ch2 = new Check("category", s);
+                Filter f = new Filter(false);
+                customSubCategory sC = new customSubCategory(s, categoryName, "stock_" + s);
 
                 f.checks.Add(ch1);
                 f.checks.Add(ch2);
