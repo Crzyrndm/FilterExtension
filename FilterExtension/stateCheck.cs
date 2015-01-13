@@ -28,16 +28,21 @@ namespace FilterExtensions
                 if (Core.state == -1)
                 {
                     Core.Log("Filter creation successful"); // filter creation ran to completion successfully
+                    Core.state = 0;
                     yield break;
                 }
                 else if (Core.state == 0)
                 {
                     Core.Log("Filter creation restarting");
                     Core.Instance.editor(); // filter creation never started, lets try again
+                    Core.state = 0;
                     yield break;
                 }
                 else if (Core.state == 1)
+                {
                     Core.Log("Critical error encountered while creating filters"); // filter creation encountered a critical error, log it as such but don't attempt a retry
+                    Core.state = 0;
+                }
             }
         }
     }
