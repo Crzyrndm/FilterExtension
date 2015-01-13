@@ -45,12 +45,12 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.14");
+            Log("Version 1.15");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
 
-            // generate the associations between parts and folders, and create all the mod categories
+            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations
             associateParts();
 
             // mod categories key: title, value: folder
@@ -169,8 +169,6 @@ namespace FilterExtensions
                 sC.filters.Add(f);
                 subCategories.Add(sC);
             }
-
-            print("propellants " + propellantCombos.Count);
         }
 
         private bool stringListComparer(List<string> propellants)
@@ -275,6 +273,9 @@ namespace FilterExtensions
 
         private bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
         {
+            if (fLA.Count == 0 || fLB.Count == 0)
+                return false;
+
             if (fLA.Count != fLB.Count)
                 return false;
 

@@ -112,7 +112,12 @@ namespace FilterExtensions.ConfigNodes
                 {
                     but.categoryName = subCategoryTitle;
                     if (icon != PartCategorizer.Instance.fallbackIcon)
+                    {
                         but.SetIcon(icon);
+                        // need to individually refresh after an icon edit (why did this break, wasn't required earlier?)
+                        but.activeButton.SetFalse(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                        but.activeButton.SetTrue(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                    }
                 }
             }
         }

@@ -104,6 +104,9 @@ namespace FilterExtensions.ConfigNodes
                 sC.filters.Add(f);
 
                 Core.Instance.subCategories.Add(sC);
+
+                if (Core.Instance.categoryAllSub.ContainsKey(categoryName))
+                    Core.Instance.categoryAllSub[categoryName].filters.Add(f);
             }
         }
 
@@ -127,6 +130,9 @@ namespace FilterExtensions.ConfigNodes
                 sC.filters.Add(f);
 
                 Core.Instance.subCategories.Add(sC);
+
+                if (Core.Instance.categoryAllSub.ContainsKey(categoryName))
+                    Core.Instance.categoryAllSub[categoryName].filters.Add(f);
             }
         }
 
