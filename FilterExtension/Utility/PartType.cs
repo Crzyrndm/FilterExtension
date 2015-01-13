@@ -32,6 +32,9 @@ namespace FilterExtensions.Utility
                 case "adapter":
                     val = isAdapter(part);
                     break;
+                case "multicoupler":
+                    val = isMultiCoupler(part);
+                    break;
                 case "crewCabin":
                     val = isCabin(part);
                     break;

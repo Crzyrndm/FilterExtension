@@ -22,6 +22,9 @@ namespace FilterExtensions
         // mod folder for each part by internal name
         public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
 
+        // entry for each unique combination of propellants
+        public static List<List<string>> propellantCombos = new List<List<string>>();
+
         // store all the "All parts" subcategories until all subcategories have been processed
         internal Dictionary<string, customSubCategory> categoryAllSub = new Dictionary<string, customSubCategory>(); // store the config node for the "all" subcategories until all filters have been added
 
@@ -48,7 +51,7 @@ namespace FilterExtensions
             GameEvents.onGUIEditorToolbarReady.Add(editor);
 
             // generate the associations between parts and folders, and create all the mod categories
-            assignModsToParts();
+            associateParts();
 
             // mod categories key: title, value: folder
             // used for adding the folder check to subCategories
@@ -76,7 +79,7 @@ namespace FilterExtensions
                 foreach (string s in categories)
                 {
                     customSubCategory sC = new customSubCategory(node, s.Trim());
-                    if (sC.filter && folderToCategoryDict.ContainsKey(sC.category))
+                    if (sC.hasFilters && folderToCategoryDict.ContainsKey(sC.category))
                     {
                         foreach(Filter f in sC.filters)
                             f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
@@ -102,7 +105,7 @@ namespace FilterExtensions
             loadIcons();
         }
 
-        private void assignModsToParts()
+        private void associateParts()
         {
             // Build list of mod folder names and Dict associating parts with mods
             List<string> modNames = new List<string>();
@@ -111,16 +114,16 @@ namespace FilterExtensions
                 // don't want dummy parts
                 if (p.category == PartCategories.none)
                     continue;
-
+                
                 if (string.IsNullOrEmpty(p.partUrl))
                     RepairAvailablePartUrl(p);
-
-                // if the url is still borked, can't assign a mod to it
+                
+                // if the url is still borked, can't associate a mod to the part
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
-
+                
                 string name = p.partUrl.Split(new char[] { '/', '\\' })[0]; // mod folder name (\\ is escaping the \, read as  '\')
-
+                
                 // if we haven't seen any from this mod before
                 if (!modNames.Contains(name))
                     modNames.Add(name);
@@ -130,6 +133,30 @@ namespace FilterExtensions
                     partFolderDict.Add(p.name, name);
                 else
                     Log(p.name + " duplicated part key in part-mod dictionary");
+
+                if (p != null && PartType.isEngine(p))
+                {
+                    foreach (ModuleEngines e in p.partPrefab.GetModuleEngines())
+                    {
+                        List<string> propellants = new List<string>();
+                        foreach (Propellant prop in e.propellants)
+                            propellants.Add(prop.name);
+                        propellants.Sort();
+
+                        if (!stringListComparer(propellants))
+                            propellantCombos.Add(propellants);
+                    }
+                    foreach (ModuleEnginesFX ex in p.partPrefab.GetModuleEnginesFx())
+                    {
+                        List<string> propellants = new List<string>();
+                        foreach (Propellant prop in ex.propellants)
+                            propellants.Add(prop.name);
+                        propellants.Sort();
+
+                        if (!stringListComparer(propellants))
+                            propellantCombos.Add(propellants);
+                    }
+                }
             }
             // Create subcategories for Manufacturer category
             foreach (string s in modNames)
@@ -137,12 +164,29 @@ namespace FilterExtensions
                 Check ch = new Check("folder", s);
                 Filter f = new Filter(false);
                 customSubCategory sC = new customSubCategory(s, "Filter by Manufacturer", s);
-
+                
                 f.checks.Add(ch);
                 sC.filters.Add(f);
-
                 subCategories.Add(sC);
             }
+
+            print("propellants " + propellantCombos.Count);
+        }
+
+        private bool stringListComparer(List<string> propellants)
+        {
+            foreach (List<string> ls in propellantCombos)
+            {
+                if (propellants.Count == ls.Count)
+                {
+                    List<string> tmp = propellants.Except(ls).ToList();
+                    if (tmp.Count == 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         internal void editor()
@@ -178,7 +222,7 @@ namespace FilterExtensions
                 {
                     // extended logging for errors
                     Log(sC.subCategoryTitle + " failed to initialise");
-                    Log("Category:" + sC.category + ", filter:" + sC.filter + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
+                    Log("Category:" + sC.category + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
                     Log(ex.StackTrace);
                 }
             }
@@ -342,7 +386,7 @@ namespace FilterExtensions
 
             foreach (customSubCategory sC in subCategories)
             {
-                if (!sC.filter)
+                if (!sC.hasFilters)
                 {
                     notEmpty.Add(sC);
                     continue;

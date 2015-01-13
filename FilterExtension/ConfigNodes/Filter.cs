@@ -25,6 +25,7 @@ namespace FilterExtensions.ConfigNodes
 
         public Filter(bool invert)
         {
+            checks = new List<Check>();
             this.invert = invert;
         }
 

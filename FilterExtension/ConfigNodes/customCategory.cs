@@ -84,11 +84,11 @@ namespace FilterExtensions.ConfigNodes
                 case "mod":
                     generateModSubCategories();
                     return;
-                case "engine": // not hooked up yet
+                case "engine":
+                    generateEngineTypes();
                     return;
             }
         }
-
 
         private void generateModSubCategories()
         {
@@ -101,6 +101,29 @@ namespace FilterExtensions.ConfigNodes
 
                 f.checks.Add(ch1);
                 f.checks.Add(ch2);
+                sC.filters.Add(f);
+
+                Core.Instance.subCategories.Add(sC);
+            }
+        }
+
+        private void generateEngineTypes()
+        {
+            foreach (List<string> ls in Core.propellantCombos)
+            {
+                List<Check> checks = new List<Check>();
+                string props = "";
+                foreach (string s in ls)
+                {
+                    checks.Add(new Check("propellant", s));
+                    props += s + ",";
+                }
+                props = props.Substring(0, props.Length - 1);
+
+                customSubCategory sC = new customSubCategory(props, this.categoryName, "stock_Engines");
+
+                Filter f = new Filter(false);
+                f.checks = checks;
                 sC.filters.Add(f);
 
                 Core.Instance.subCategories.Add(sC);
