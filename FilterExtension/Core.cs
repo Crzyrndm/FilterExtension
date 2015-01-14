@@ -45,7 +45,7 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.15");
+            Log("Version 1.15.2");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);

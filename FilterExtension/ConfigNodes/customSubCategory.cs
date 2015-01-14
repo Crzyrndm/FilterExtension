@@ -115,10 +115,10 @@ namespace FilterExtensions.ConfigNodes
                     {
                         but.SetIcon(icon);
 
-                        category.button.activeButton.SetTrue(category.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-                        // need to individually refresh after an icon edit (why did this break, wasn't required earlier?)
-                        but.activeButton.SetFalse(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-                        but.activeButton.SetTrue(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                        //category.button.activeButton.SetTrue(category.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                        //// need to individually refresh after an icon edit (why did this break, wasn't required earlier?)
+                        //but.activeButton.SetFalse(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                        //but.activeButton.SetTrue(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                     }
                 }
             }
