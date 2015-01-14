@@ -211,7 +211,6 @@ namespace FilterExtensions
             // create all the new subCategories
             foreach (customSubCategory sC in subCategories)
             {
-                //sC.initialise();
                 try
                 {
                     sC.initialise();

@@ -55,8 +55,7 @@ namespace FilterExtensions.ConfigNodes
         {
             foreach (Filter f in filters)
             {
-                bool val = f.checkFilter(part);
-                if (val)
+                if (f.checkFilter(part))
                     return true;
             }
             return false; // part passed no filter(s), not compatible with this subcategory
@@ -102,7 +101,8 @@ namespace FilterExtensions.ConfigNodes
 
         private void Edit_Delete(string title, bool delete, PartCategorizer.Icon icon)
         {
-            List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
+            PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == this.category);
+            List<PartCategorizer.Category> subCategories = category.subcategories;
             if (delete)
                 subCategories.Remove(subCategories.Find(m => m.button.categoryName == title));
             else
@@ -114,6 +114,8 @@ namespace FilterExtensions.ConfigNodes
                     if (icon != PartCategorizer.Instance.fallbackIcon)
                     {
                         but.SetIcon(icon);
+
+                        category.button.activeButton.SetTrue(category.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                         // need to individually refresh after an icon edit (why did this break, wasn't required earlier?)
                         but.activeButton.SetFalse(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                         but.activeButton.SetTrue(but.activeButton, RUIToggleButtonTyped.ClickType.FORCED);

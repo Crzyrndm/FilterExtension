@@ -118,10 +118,12 @@ namespace FilterExtensions.ConfigNodes
                 string props = "";
                 foreach (string s in ls)
                 {
+                    if (props != "")
+                        props += ",";
+
                     checks.Add(new Check("propellant", s));
-                    props += s + ",";
+                    props += s;
                 }
-                props = props.Substring(0, props.Length - 1);
 
                 customSubCategory sC = new customSubCategory(props, this.categoryName, "stock_Engines");
 
@@ -139,7 +141,7 @@ namespace FilterExtensions.ConfigNodes
         public static Color convertToColor(string hex_ARGB)
         {
             hex_ARGB = hex_ARGB.Replace("#", "").Replace("0x", ""); // remove any hexadecimal identifiers
-            if (System.Text.RegularExpressions.Regex.IsMatch(hex_ARGB, "[0-9a-fA-F]{6,8}"))
+            if (System.Text.RegularExpressions.Regex.IsMatch(hex_ARGB, "[0-9a-fA-F]{6,8}")) // check it is valid hex
             {
                 if (hex_ARGB.Length == 8)
                 {
