@@ -122,7 +122,7 @@ namespace FilterExtensions.ConfigNodes
         {
             if (c2 == null)
                 return false;
-            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert)
+            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks)
                 return true;
             else
                 return false;
@@ -130,7 +130,8 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode();
+            int checks = this.checks.Any() ? this.checks.GetHashCode() : 1;
+            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * checks;
         }
     }
 }

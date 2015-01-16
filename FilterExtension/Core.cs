@@ -45,7 +45,7 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.15.2");
+            Log("Version 1.16");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
             GameEvents.onGUIEditorToolbarReady.Add(editor);
@@ -71,6 +71,7 @@ namespace FilterExtensions
                 }
             }
 
+            List<customSubCategory> editList = new List<customSubCategory>();
             // load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
@@ -84,10 +85,13 @@ namespace FilterExtensions
                         foreach(Filter f in sC.filters)
                             f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
                     }
-                    if (checkForConflicts(sC))
+                    if (sC.hasFilters && checkForConflicts(sC))
                         subCategories.Add(sC);
+                    if (!sC.hasFilters)
+                        editList.Add(sC);
                 }
             }
+            customSCEditDelete(editList);
 
             foreach (KeyValuePair<string, customSubCategory> kvp in categoryAllSub)
             {
@@ -103,6 +107,35 @@ namespace FilterExtensions
 
             checkForEmptySubCategories();
             loadIcons();
+        }
+
+        /// <summary>
+        /// creating subcategories and then trying to edit them during initialisation causes all sorts of problems. Instead, make the edits prior to initialisation
+        /// </summary>
+        /// <param name="sCs"></param>
+        private void customSCEditDelete(List<customSubCategory> sCs)
+        {
+            foreach (customSubCategory sC in sCs)
+            {
+                customSubCategory sCToEdit = subCategories.FirstOrDefault(sub => sub.category == sC.category && (sub.subCategoryTitle == sC.oldTitle || sub.subCategoryTitle == sC.subCategoryTitle));
+
+                if (sCToEdit != null)
+                {
+                    if (!string.IsNullOrEmpty(sC.subCategoryTitle))
+                    {
+                        sCToEdit.subCategoryTitle = sC.subCategoryTitle;
+                        sCToEdit.iconName = sC.iconName;
+                    }
+                    else
+                    {
+                        subCategories.Remove(sCToEdit);
+                    }
+                }
+                else
+                {
+                    subCategories.Add(sC);
+                }
+            }
         }
 
         private void associateParts()
