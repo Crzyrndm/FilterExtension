@@ -17,8 +17,7 @@ namespace FilterExtensions.Utility
 
         internal static bool checkCustom(AvailablePart part, string value)
         {
-            if (part.category == PartCategories.none)
-                return false;
+
 
             bool val;
             switch (value)
@@ -43,47 +42,6 @@ namespace FilterExtensions.Utility
                     break;
             }
             return val;
-        }
-
-        internal static bool checkModuleTitle(AvailablePart part, string value, bool contains = true)
-        {
-            if (categoryCheck(part))
-                return false;
-
-            if (contains)
-            {
-                foreach (string s in value.Split(','))
-                {
-                    if (part.moduleInfos.Any(m => m.moduleName == s.Trim()))
-                        return true;
-                }
-            }
-            else
-            {
-                foreach (AvailablePart.ModuleInfo i in part.moduleInfos)
-                {
-                    if (!value.Split(',').Contains(i.moduleName))
-                        return true;
-                }
-            }
-            return false;
-        }
-
-        internal static bool checkModuleName(AvailablePart part, string value, bool contains = true)
-        {
-            if (categoryCheck(part))
-                return false;
-            if (contains)
-                return value.Split(',').Any(s => part.partPrefab.Modules.Contains(s.Trim()));
-            else
-            {
-                foreach (PartModule module in part.partPrefab.Modules)
-                {
-                    if (!value.Split(',').Contains(module.ClassName))
-                        return true;
-                }
-                return false;
-            }
         }
 
         internal static bool checkCategory(AvailablePart part, string value)
@@ -134,27 +92,54 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        internal static bool checkModuleTitle(AvailablePart part, string value, bool contains = true)
+        {
+            if (contains)
+            {
+                foreach (string s in value.Split(','))
+                {
+                    if (part.moduleInfos.Any(m => m.moduleName == s.Trim()))
+                        return true;
+                }
+            }
+            else
+            {
+                foreach (AvailablePart.ModuleInfo i in part.moduleInfos)
+                {
+                    if (!value.Split(',').Contains(i.moduleName))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        internal static bool checkModuleName(AvailablePart part, string value, bool contains = true)
+        {
+            if (contains)
+                return value.Split(',').Any(s => part.partPrefab.Modules.Contains(s.Trim()));
+            else
+            {
+                foreach (PartModule module in part.partPrefab.Modules)
+                {
+                    if (!value.Split(',').Contains(module.ClassName))
+                        return true;
+                }
+                return false;
+            }
+        }
+
         internal static bool checkName(AvailablePart part, string value)
         {
-            if (categoryCheck(part))
-                return false;
-
             return value.Split(',').Any(s => s.Trim() == part.name);
         }
 
         internal static bool checkTitle(AvailablePart part, string value)
         {
-            if (categoryCheck(part))
-                return false;
-
             return value.Split(',').Any(s => part.title.Contains(s.Trim()));
         }
 
         internal static bool checkResource(AvailablePart part, string value, bool contains = true)
         {
-            if (categoryCheck(part))
-                return false;
-
             if (contains)
                 return value.Split(',').Any(s => part.partPrefab.Resources.Contains(s.Trim()));
             else
@@ -170,9 +155,6 @@ namespace FilterExtensions.Utility
 
         internal static bool checkPropellant(AvailablePart part, string value, bool contains = true)
         {
-            if (categoryCheck(part))
-                return false;
-
             List<List<Propellant>> propellants = new List<List<Propellant>>();
             
             foreach (ModuleEngines e in part.partPrefab.GetModuleEngines())
@@ -194,6 +176,7 @@ namespace FilterExtensions.Utility
                 {
                     foreach (Propellant p in Lp)
                     {
+                        Core.Log(p.name);
                         if (!value.Split(',').Contains(p.name))
                             return true;
                     }
@@ -204,17 +187,11 @@ namespace FilterExtensions.Utility
 
         internal static bool checkTech(AvailablePart part, string value)
         {
-            if (categoryCheck(part))
-                return false;
-
             return value.Split(',').Any(s => part.TechRequired == s.Trim());
         }
 
         internal static bool checkManufacturer(AvailablePart part, string value)
         {
-            if (categoryCheck(part))
-                return false;
-
             return value.Split(',').Any(s => part.manufacturer == s.Trim());
         }
 
@@ -226,9 +203,6 @@ namespace FilterExtensions.Utility
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            if (categoryCheck(part))
-                return false;
-
             if (Core.partFolderDict.ContainsKey(part.name))
             {
                 foreach (string s in values)
@@ -243,9 +217,6 @@ namespace FilterExtensions.Utility
 
         public static bool checkPartSize(AvailablePart part, string value, bool contains = true)
         {
-            if (categoryCheck(part))
-                return false;
-
             foreach (AttachNode node in part.partPrefab.attachNodes)
             {
                 if (contains)
@@ -255,7 +226,7 @@ namespace FilterExtensions.Utility
                 }
                 else
                 {
-                    if (!value.Split(',').Any(p => p.Trim() == node.size.ToString()))
+                    if (!value.Split(',').Contains(node.size.ToString()))
                         return true;
                 }
             }
@@ -264,9 +235,6 @@ namespace FilterExtensions.Utility
 
         public static bool checkCrewCapacity(AvailablePart part, string value)
         {
-            if (categoryCheck(part))
-                return false;
-
             foreach (string s in value.Split(','))
             {
                 int i;

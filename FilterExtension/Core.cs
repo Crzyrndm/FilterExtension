@@ -178,10 +178,8 @@ namespace FilterExtensions
                 if (propellants.Count == ls.Count)
                 {
                     List<string> tmp = propellants.Except(ls).ToList();
-                    if (tmp.Count == 0)
-                    {
+                    if (!tmp.Any())
                         return true;
-                    }
                 }
             }
             return false;

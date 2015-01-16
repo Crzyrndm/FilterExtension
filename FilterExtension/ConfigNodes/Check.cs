@@ -29,15 +29,15 @@ namespace FilterExtensions.ConfigNodes
                 contains = tmp;
             else
                 contains = true;
-
-            //if (type == "check")
-            //{
-            //    checks = new List<Check>();
-            //    foreach (ConfigNode subNode in node.GetNodes("CHECK"))
-            //    {
-            //        checks.Add(new Check(subNode));
-            //    }
-            //}
+            
+            checks = new List<Check>();
+            if (type == "check")
+            {
+                foreach (ConfigNode subNode in node.GetNodes("CHECK"))
+                {
+                    checks.Add(new Check(subNode));
+                }
+            }
         }
 
         internal Check(string type, string value, bool invert = false, bool contains = true)
@@ -46,10 +46,14 @@ namespace FilterExtensions.ConfigNodes
             this.value = value;
             this.invert = invert;
             this.contains = contains;
+            this.checks = new List<Check>();
         }
 
         internal bool checkPart(AvailablePart part)
         {
+            if (part.category == PartCategories.none)
+                return false;
+
             bool result = true;
 
             if (result)
@@ -96,7 +100,11 @@ namespace FilterExtensions.ConfigNodes
                         result = PartType.checkCustom(part, value);
                         break;
                     case "check":
-
+                        foreach (Check c in checks)
+                        {
+                            if (!c.checkPart(part))
+                                result = false;
+                        }
                         break;
                     default:
                         result = false;
