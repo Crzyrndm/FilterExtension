@@ -130,12 +130,12 @@ namespace FilterExtensions.Utility
 
         internal static bool checkName(AvailablePart part, string value)
         {
-            return value.Split(',').Any(s => s.Trim() == part.name);
+            return value.Split(',').Any(s => s.Trim().Equals(part.name, StringComparison.OrdinalIgnoreCase));
         }
 
         internal static bool checkTitle(AvailablePart part, string value)
         {
-            return value.Split(',').Any(s => part.title.Contains(s.Trim()));
+            return value.Split(',').Any(s => part.title.ToLower().Contains(s.Trim().ToLower()));
         }
 
         internal static bool checkResource(AvailablePart part, string value, bool contains = true)

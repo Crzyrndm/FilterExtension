@@ -45,10 +45,11 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.16");
+            Log("Version 1.17");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
-            GameEvents.onGUIEditorToolbarReady.Add(editor);
+            //GameEvents.onGUIEditorToolbarReady.Add(editor);
+            // not being used anymore, too fragile
 
             // generate the associations between parts and folders, create all the mod categories, get all propellant combinations
             associateParts();
