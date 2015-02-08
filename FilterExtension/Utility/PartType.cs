@@ -176,7 +176,6 @@ namespace FilterExtensions.Utility
                 {
                     foreach (Propellant p in Lp)
                     {
-                        Core.Log(p.name);
                         if (!value.Split(',').Contains(p.name))
                             return true;
                     }
@@ -301,8 +300,12 @@ namespace FilterExtensions.Utility
 
         public static bool isMultiCoupler(AvailablePart part)
         {
-            if (part.partPrefab.attachNodes.Count > 2)
+            if (part.partPrefab.attachNodes.Count <= 2 || part.title.Contains("Cargo Bay"))
+                return false;
+            float pos = part.partPrefab.attachNodes.Last().position.y;
+            if (part.partPrefab.attachNodes.FindAll(n => n.position.y == pos).Count > 1 && part.partPrefab.attachNodes.FindAll(n => n.position.y == pos).Count < part.partPrefab.attachNodes.Count)
                 return true;
+            
             return false;
         }
 

@@ -124,6 +124,7 @@ namespace FilterExtensions.ConfigNodes
                     checks.Add(new Check("propellant", s));
                     props += s;
                 }
+                checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
                 customSubCategory sC = new customSubCategory(props, this.categoryName, "stock_Engines");
 
