@@ -1,1 +1,4 @@
-Filter Extensions is licensed by Crzyrndm under the CC-BY-NC 4.0 license
+Icons distributed with Filter Extensions are licensed under the CC-BY-SA 4.0
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Plugin is licensed under GPL v3
