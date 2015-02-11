@@ -45,10 +45,11 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.16");
+            Log("Version 1.17");
 
             // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
-            GameEvents.onGUIEditorToolbarReady.Add(editor);
+            //GameEvents.onGUIEditorToolbarReady.Add(editor);
+            // not being used anymore, too fragile
 
             // generate the associations between parts and folders, create all the mod categories, get all propellant combinations
             associateParts();
@@ -145,7 +146,7 @@ namespace FilterExtensions
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
                 // don't want dummy parts
-                if (p.category == PartCategories.none)
+                if (p == null || p.category == PartCategories.none)
                     continue;
                 
                 if (string.IsNullOrEmpty(p.partUrl))
@@ -167,7 +168,7 @@ namespace FilterExtensions
                 else
                     Log(p.name + " duplicated part key in part-mod dictionary");
 
-                if (p != null && PartType.isEngine(p))
+                if (PartType.isEngine(p))
                 {
                     foreach (ModuleEngines e in p.partPrefab.GetModuleEngines())
                     {
@@ -221,7 +222,7 @@ namespace FilterExtensions
         internal void editor()
         {
             // set state == 1, we have started processing
-            state = 1;
+            // state = 1;
 
             // clear manufacturers from Filter by Manufacturer
             // Don't rename incase other mods depend on finding it (and the name isn't half bad either...)
@@ -260,14 +261,12 @@ namespace FilterExtensions
 
             // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing, just breakages
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
-            // refresh icons - doesn't work >.<
-            // PartCategorizer.Instance.UpdateCategoryNameLabel();
 
             // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();
 
             // set state == -1, we have finished processing with no critical errors
-            state = -1;
+            // state = -1;
         }
 
         public void refreshList()
@@ -370,7 +369,7 @@ namespace FilterExtensions
                         i++;
                     if (i != 1000)
                         name = name + i.ToString();
-                    Log("Duplicated texture name by texture " + t.name + ". New reference is: " + name);
+                    Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
                 }
 
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
@@ -393,9 +392,14 @@ namespace FilterExtensions
             }
             else if (name.StartsWith("stock_"))
             {
-                PartCategorizer.Category fbf = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == "Filter by Function");
-                name = name.Substring(6);
-                return fbf.subcategories.FirstOrDefault(sC => sC.button.categoryName == name).button.icon;
+                foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
+                {
+                    foreach (PartCategorizer.Category sC in C.subcategories)
+                    {
+                        if (name.Substring(6) == sC.button.categoryName)
+                            return sC.button.icon;
+                    }
+                }
             }
             return null;
         }
@@ -417,6 +421,8 @@ namespace FilterExtensions
 
             foreach (customSubCategory sC in subCategories)
             {
+                Debug.Log(sC.subCategoryTitle);
+                Debug.Log(sC.oldTitle);
                 if (!sC.hasFilters)
                 {
                     notEmpty.Add(sC);

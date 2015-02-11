@@ -10,40 +10,21 @@ namespace FilterExtensions
     {
         void Start()
         {
-            StartCoroutine(checkState());
+            StartCoroutine(checkState());   
         }
 
         IEnumerator checkState()
         {
             // wait until the part menu is initialised
             while (!PartCategorizer.Ready)
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(0.1f);//new WaitForSeconds(1f);
 
-            // wait for any other operations to finish
-            yield return new WaitForSeconds(3f);
+            // 2 frames after the flag is set it seems to be safe to initialise
+            yield return null;
+            yield return null;
+            
 
-            // find out what happened with the startup
-            if (EditorLogic.fetch != null)
-            {
-                if (Core.state == -1)
-                {
-                    Core.Log("Filter creation successful"); // filter creation ran to completion successfully
-                    Core.state = 0;
-                    yield break;
-                }
-                else if (Core.state == 0)
-                {
-                    Core.Log("Filter creation restarting");
-                    Core.Instance.editor(); // filter creation never started, lets try again
-                    Core.state = 0;
-                    yield break;
-                }
-                else if (Core.state == 1)
-                {
-                    Core.Log("Critical error encountered while creating filters"); // filter creation encountered a critical error, log it as such but don't attempt a retry
-                    Core.state = 0;
-                }
-            }
+            Core.Instance.editor();
         }
     }
 }

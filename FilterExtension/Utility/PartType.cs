@@ -130,12 +130,12 @@ namespace FilterExtensions.Utility
 
         internal static bool checkName(AvailablePart part, string value)
         {
-            return value.Split(',').Any(s => s.Trim() == part.name);
+            return value.Split(',').Any(s => s.Trim().Equals(part.name, StringComparison.OrdinalIgnoreCase));
         }
 
         internal static bool checkTitle(AvailablePart part, string value)
         {
-            return value.Split(',').Any(s => part.title.Contains(s.Trim()));
+            return value.Split(',').Any(s => part.title.ToLower().Contains(s.Trim().ToLower()));
         }
 
         internal static bool checkResource(AvailablePart part, string value, bool contains = true)
@@ -176,7 +176,6 @@ namespace FilterExtensions.Utility
                 {
                     foreach (Propellant p in Lp)
                     {
-                        Core.Log(p.name);
                         if (!value.Split(',').Contains(p.name))
                             return true;
                     }
@@ -301,8 +300,12 @@ namespace FilterExtensions.Utility
 
         public static bool isMultiCoupler(AvailablePart part)
         {
-            if (part.partPrefab.attachNodes.Count > 2)
+            if (part.partPrefab.attachNodes.Count <= 2 || part.title.Contains("Cargo Bay"))
+                return false;
+            float pos = part.partPrefab.attachNodes.Last().position.y;
+            if (part.partPrefab.attachNodes.FindAll(n => n.position.y == pos).Count > 1 && part.partPrefab.attachNodes.FindAll(n => n.position.y == pos).Count < part.partPrefab.attachNodes.Count)
                 return true;
+            
             return false;
         }
 
