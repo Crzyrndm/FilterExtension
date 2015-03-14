@@ -65,8 +65,12 @@ namespace FilterExtensions.ConfigNodes
 
         public void initialise()
         {
-            if (categoryName == null)
+            if (string.IsNullOrEmpty(categoryName))
+            {
+                Core.Log("Category name is null or empty");
                 return;
+            }
+
             PartCategorizer.Icon icon = Core.getIcon(iconName);
             if (icon == null)
                 icon = PartCategorizer.Instance.fallbackIcon;
@@ -81,32 +85,9 @@ namespace FilterExtensions.ConfigNodes
         {
             switch (type)
             {
-                case "mod":
-                    generateModSubCategories();
-                    return;
                 case "engine":
                     generateEngineTypes();
                     return;
-            }
-        }
-
-        private void generateModSubCategories()
-        {
-            foreach (string s in categoryNames)
-            {
-                Check ch1 = new Check("folder", value);
-                Check ch2 = new Check("category", s);
-                Filter f = new Filter(false);
-                customSubCategory sC = new customSubCategory(s, categoryName, "stock_" + s);
-
-                f.checks.Add(ch1);
-                f.checks.Add(ch2);
-                sC.filters.Add(f);
-
-                Core.Instance.subCategories.Add(sC);
-
-                if (Core.Instance.categoryAllSub.ContainsKey(categoryName))
-                    Core.Instance.categoryAllSub[categoryName].filters.Add(f);
             }
         }
 

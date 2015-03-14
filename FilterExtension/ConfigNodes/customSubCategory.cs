@@ -63,61 +63,56 @@ namespace FilterExtensions.ConfigNodes
 
         public void initialise()
         {
-            PartCategorizer.Icon icon;
-            if (string.IsNullOrEmpty(iconName))
+            PartCategorizer.Icon icon = Core.getIcon(iconName);
+            if (icon == null)
             {
-                Core.Log(this.subCategoryTitle + " missing icon reference");
+                Core.Log(this.subCategoryTitle + " no icon found");
                 icon = PartCategorizer.Instance.fallbackIcon;
-            }
-            else
-            {
-                icon = Core.getIcon(iconName);
-                if (icon == null)
-                {
-                    Core.Log(this.subCategoryTitle + " no icon found");
-                    icon = PartCategorizer.Instance.fallbackIcon;
-                }
             }
 
             if (hasFilters)
             {
                 PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
                 if (category == null)
-                {
                     return;
-                }
 
-                PartCategorizer.AddCustomSubcategoryFilter(category, subCategoryTitle, icon, p => checkFilters(p));
+                PartCategorizer.AddCustomSubcategoryFilter(category, this.subCategoryTitle, icon, p => checkFilters(p));
             }
-            else if (!string.IsNullOrEmpty(oldTitle))
-            {
-                Edit_Delete(oldTitle, string.IsNullOrEmpty(subCategoryTitle), icon);
-            }
+            //else if (!string.IsNullOrEmpty(oldTitle) && string.IsNullOrEmpty(subCategoryTitle))
+            //    Delete(oldTitle); // if there is an old title and no new title we are deleting
+            else if (!string.IsNullOrEmpty(subCategoryTitle))
+                Edit(subCategoryTitle, icon);
             else
-            {
-                Edit_Delete(subCategoryTitle, false, icon);
-            }
+                Core.Log("Invalid subCategory definition");
         }
 
-        private void Edit_Delete(string title, bool delete, PartCategorizer.Icon icon)
+        private void Edit(string title, PartCategorizer.Icon icon)
         {
-            PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == this.category);
+            PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
             List<PartCategorizer.Category> subCategories = category.subcategories;
-            if (delete)
-                subCategories.Remove(subCategories.Find(m => m.button.categoryName == title));
-            else
+
+            PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == title).button;
+            if (but != null)
             {
-                PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == title).button;
-                if (but != null)
+                but.categoryName = subCategoryTitle;
+                if (icon != PartCategorizer.Instance.fallbackIcon)
                 {
-                    but.categoryName = subCategoryTitle;
-                    if (icon != PartCategorizer.Instance.fallbackIcon)
-                    {
-                        but.SetIcon(icon);
-                    }
+                    but.SetIcon(icon);
                 }
             }
         }
+
+        //private void Delete(string title)
+        //{
+        //    PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == this.category);
+        //    category.button.activeButton.SetFalse(category.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+        //    int index = category.subcategories.IndexOf(category.subcategories.Find(m => m.button.categoryName == title));
+        //    // PartCategorizer.Instance.scrollListSub.scrollList.RemoveItem(index, true, false);
+        //    category.subcategories.RemoveAt(index);
+        //    category.button.activeButton.SetTrue(category.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+
+            
+        //}
 
         public bool Equals(customSubCategory sC2)
         {

@@ -57,7 +57,7 @@
     <Compile Include="ConfigNodes\Filter.cs" />
     <Compile Include="ConfigNodes\customSubCategory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="stateCheck.cs" />
+    <Compile Include="Editor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

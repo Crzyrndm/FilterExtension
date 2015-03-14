@@ -19,11 +19,19 @@ namespace FilterExtensions
         internal List<customCategory> Categories = new List<customCategory>();
         internal List<customSubCategory> subCategories = new List<customSubCategory>();
 
-        // mod folder for each part by internal name
-        public static Dictionary<string, string> partFolderDict = new Dictionary<string, string>();
+        // The first subcategory in a category. Need it to ensure the category is not empty when I clear it
+        internal customSubCategory firstFilterByFunction;
+        internal customSubCategory firstFilterByManufacturer;
+        internal customSubCategory firstFilterByResource;
+
+        // url for each part by internal name
+        public static Dictionary<string, string> partPathDict = new Dictionary<string, string>();
+        public static Dictionary<string, string> modNamesDict = new Dictionary<string, string>();
 
         // entry for each unique combination of propellants
         public static List<List<string>> propellantCombos = new List<List<string>>();
+        // entry for each unique resource
+        public static List<string> resources = new List<string>();
 
         // store all the "All parts" subcategories until all subcategories have been processed
         internal Dictionary<string, customSubCategory> categoryAllSub = new Dictionary<string, customSubCategory>(); // store the config node for the "all" subcategories until all filters have been added
@@ -47,11 +55,7 @@ namespace FilterExtensions
             instance = this;
             Log("Version 1.17");
 
-            // Add event for when the Editor GUI becomes active. This is never removed because we need it to fire every time
-            //GameEvents.onGUIEditorToolbarReady.Add(editor);
-            // not being used anymore, too fragile
-
-            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations
+            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
             associateParts();
 
             // mod categories key: title, value: folder
@@ -78,6 +82,17 @@ namespace FilterExtensions
             {
                 // if multiple categories are specified, create multiple subCategories
                 string[] categories = node.GetValue("category").Split(',');
+                if (categories.Any(s => s.Trim() == "AllMods"))
+                {
+                    List<string> categoriesToMake = new List<string>();
+                    categoriesToMake = categories.Where(s => s != "AllMods").ToList();
+                    foreach (customCategory c in this.Categories)
+                    {
+                        if (c.type == "mod")
+                            categoriesToMake.Add(c.categoryName);
+                    }
+                    categories = categoriesToMake.ToArray();
+                }
                 foreach (string s in categories)
                 {
                     customSubCategory sC = new customSubCategory(node, s.Trim());
@@ -87,10 +102,47 @@ namespace FilterExtensions
                             f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
                     }
                     if (sC.hasFilters && checkForConflicts(sC))
-                        subCategories.Add(sC);
+                    {
+                        if (firstFilterByFunction == null && sC.category == "Filter by Function")
+                            firstFilterByFunction = sC;
+                        else if (firstFilterByManufacturer == null && sC.category == "Filter by Manufacturer")
+                            firstFilterByManufacturer = sC;
+                        else if (firstFilterByResource == null && sC.category == "Filter by Resource")
+                            firstFilterByResource = sC;
+                        else
+                        {
+                            subCategories.Add(sC);
+                        }
+                    }
                     if (!sC.hasFilters)
                         editList.Add(sC);
                 }
+            }
+            
+            foreach (AvailablePart p in PartLoader.Instance.parts)
+            {
+                if (p.partPrefab.Resources != null)
+                {
+                    foreach (PartResource r in p.partPrefab.Resources)
+                    {
+                        resources.AddUnique(r.resourceName);
+                    }
+                }
+            }
+
+            foreach (string s in resources)
+            {
+                string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
+                customSubCategory sC = new customSubCategory(name, "Filter by Resource", "");
+                Check c = new Check("resource", s);
+                Filter f = new Filter(false);
+                f.checks.Add(c);
+                sC.filters.Add(f);
+
+                if (firstFilterByResource == null)
+                    firstFilterByResource = sC;
+                else if (!(subCategories.Any(sub => sub.category == "Filter by Resource" && sub.subCategoryTitle == name) || firstFilterByResource.subCategoryTitle == name))
+                    subCategories.Add(sC);
             }
             customSCEditDelete(editList);
 
@@ -118,7 +170,9 @@ namespace FilterExtensions
         {
             foreach (customSubCategory sC in sCs)
             {
-                customSubCategory sCToEdit = subCategories.FirstOrDefault(sub => sub.category == sC.category && (sub.subCategoryTitle == sC.oldTitle || sub.subCategoryTitle == sC.subCategoryTitle));
+                customSubCategory sCToEdit = subCategories.FirstOrDefault(sub => sub.category == sC.category
+                                                                && ((sub.subCategoryTitle == sC.oldTitle && !string.IsNullOrEmpty(sC.oldTitle)))
+                                                                    || (sub.subCategoryTitle == sC.subCategoryTitle && !string.IsNullOrEmpty(sC.subCategoryTitle)));
 
                 if (sCToEdit != null)
                 {
@@ -141,8 +195,8 @@ namespace FilterExtensions
 
         private void associateParts()
         {
-            // Build list of mod folder names and Dict associating parts with mods
             List<string> modNames = new List<string>();
+
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
                 // don't want dummy parts
@@ -155,16 +209,17 @@ namespace FilterExtensions
                 // if the url is still borked, can't associate a mod to the part
                 if (string.IsNullOrEmpty(p.partUrl))
                     continue;
-                
-                string name = p.partUrl.Split(new char[] { '/', '\\' })[0]; // mod folder name (\\ is escaping the \, read as  '\')
-                
-                // if we haven't seen any from this mod before
-                if (!modNames.Contains(name))
-                    modNames.Add(name);
 
-                // associate the mod to the part
-                if (!partFolderDict.ContainsKey(p.name))
-                    partFolderDict.Add(p.name, name);
+                string modFolderName = p.partUrl.Split(new char[] { '/', '\\' })[0]; // mod folder name (\\ is escaping the \, read as  '\')
+                // if we haven't seen any from this mod before
+                if (!modNamesDict.ContainsKey(p.name))
+                    modNamesDict.Add(p.name, modFolderName);
+
+                modNames.AddUnique(modFolderName);
+
+                // associate the path to the part
+                if (!partPathDict.ContainsKey(p.name))
+                    partPathDict.Add(p.name, p.partUrl);
                 else
                     Log(p.name + " duplicated part key in part-mod dictionary");
 
@@ -192,6 +247,7 @@ namespace FilterExtensions
                     }
                 }
             }
+
             // Create subcategories for Manufacturer category
             foreach (string s in modNames)
             {
@@ -201,7 +257,10 @@ namespace FilterExtensions
                 
                 f.checks.Add(ch);
                 sC.filters.Add(f);
-                subCategories.Add(sC);
+                if (firstFilterByManufacturer == null)
+                    firstFilterByManufacturer = sC;
+                else
+                    subCategories.Add(sC);
             }
         }
 
@@ -221,13 +280,6 @@ namespace FilterExtensions
 
         internal void editor()
         {
-            // set state == 1, we have started processing
-            // state = 1;
-
-            // clear manufacturers from Filter by Manufacturer
-            // Don't rename incase other mods depend on finding it (and the name isn't half bad either...)
-            PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Manufacturer").subcategories.Clear();
-
             // Add all the categories
             foreach (customCategory c in Categories)
             {
@@ -264,9 +316,6 @@ namespace FilterExtensions
 
             // reveal categories
             PartCategorizer.Instance.SetAdvancedMode();
-
-            // set state == -1, we have finished processing with no critical errors
-            // state = -1;
         }
 
         public void refreshList()
@@ -279,7 +328,17 @@ namespace FilterExtensions
 
         private bool checkForConflicts(customSubCategory sCToCheck)
         {
-            foreach (customSubCategory sC in subCategories) // iterate through the already added sC's
+            // firsts aren't contained in subCategories anymore. Need to make a new list containing for checking against
+            List<customSubCategory> subCategoriesAndFirsts = new List<customSubCategory>();
+            if (firstFilterByFunction != null)
+                subCategoriesAndFirsts.Add(firstFilterByFunction);
+            if (firstFilterByManufacturer != null)
+                subCategoriesAndFirsts.Add(firstFilterByManufacturer);
+            if (firstFilterByResource != null)
+                subCategoriesAndFirsts.Add(firstFilterByResource);
+            subCategoriesAndFirsts.AddRange(subCategories);
+
+            foreach (customSubCategory sC in subCategoriesAndFirsts) // iterate through the already added sC's
             {
                 // collision only possible within a category
                 if (sC.category == sCToCheck.category)
@@ -287,6 +346,10 @@ namespace FilterExtensions
                     if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
                     {
                         Log(sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                        Log(sC.subCategoryTitle);
+                        Log(sCToCheck.subCategoryTitle);
+                        Log(sCToCheck.category);
+                        Log(sC.category);
                         sCToCheck.filters.AddRange(sC.filters);
                         return false; // all other elements of this list have already been check for this condition. Don't need to continue
                     }
@@ -297,6 +360,8 @@ namespace FilterExtensions
                     }
                 }
             }
+
+
             return true;
         }
 
@@ -382,25 +447,12 @@ namespace FilterExtensions
 
         public static PartCategorizer.Icon getIcon(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                return null;
             if (iconDict.ContainsKey(name))
-            {
                 return iconDict[name];
-            }
-            else if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
-            {
+            if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
                 return PartCategorizer.Instance.iconDictionary[name];
-            }
-            else if (name.StartsWith("stock_"))
-            {
-                foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
-                {
-                    foreach (PartCategorizer.Category sC in C.subcategories)
-                    {
-                        if (name.Substring(6) == sC.button.categoryName)
-                            return sC.button.icon;
-                    }
-                }
-            }
             return null;
         }
 
@@ -418,22 +470,19 @@ namespace FilterExtensions
         private void checkForEmptySubCategories()
         {
             List<customSubCategory> notEmpty = new List<customSubCategory>();
-
             foreach (customSubCategory sC in subCategories)
             {
-                Debug.Log(sC.subCategoryTitle);
-                Debug.Log(sC.oldTitle);
                 if (!sC.hasFilters)
-                {
                     notEmpty.Add(sC);
-                    continue;
-                }
-                foreach (AvailablePart p in PartLoader.Instance.parts)
+                else
                 {
-                    if (sC.checkFilters(p))
+                    foreach (AvailablePart p in PartLoader.Instance.parts)
                     {
-                        notEmpty.Add(sC);
-                        break;
+                        if (sC.checkFilters(p))
+                        {
+                            notEmpty.Add(sC);
+                            break;
+                        }
                     }
                 }
             }

@@ -202,14 +202,22 @@ namespace FilterExtensions.Utility
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            if (Core.partFolderDict.ContainsKey(part.name))
-            {
-                foreach (string s in values)
-                {
-                    if (Core.partFolderDict[part.name] == s.Trim())
-                        return true;
-                }
-            }
+            if (Core.modNamesDict.ContainsKey(part.name))
+                return values.Any(s => s.Trim() == Core.modNamesDict[part.name]);
+
+            return false;
+        }
+
+        internal static bool checkPath(AvailablePart part, string value)
+        {
+            string[] values = value.Split(',');
+            return checkPath(part, values);
+        }
+
+        internal static bool checkPath(AvailablePart part, string[] values)
+        {
+            if (Core.partPathDict.ContainsKey(part.name))
+                return values.Any(s => Core.partPathDict[part.name].StartsWith(s, StringComparison.InvariantCultureIgnoreCase));
 
             return false;
         }
@@ -219,15 +227,11 @@ namespace FilterExtensions.Utility
             foreach (AttachNode node in part.partPrefab.attachNodes)
             {
                 if (contains)
-                {
-                    if (value.Split(',').Any(p => p.Trim() == node.size.ToString()))
+                    if (value.Split(',').Contains(node.size.ToString()))
                         return true;
-                }
                 else
-                {
                     if (!value.Split(',').Contains(node.size.ToString()))
                         return true;
-                }
             }
             return false;
         }
