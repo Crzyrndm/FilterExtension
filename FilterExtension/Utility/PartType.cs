@@ -202,9 +202,9 @@ namespace FilterExtensions.Utility
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            if (Core.modNamesDict.ContainsKey(part.name))
-                return values.Any(s => s.Trim() == Core.modNamesDict[part.name]);
-
+            string folder = Core.partPathDict[part.name].Split(new char[] { '\\', '/' })[0];
+            if (Core.partPathDict.ContainsKey(part.name))
+                return values.Any(s => s.Trim() == folder);
             return false;
         }
 

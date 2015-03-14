@@ -34,7 +34,7 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        public customSubCategory(string name, string category, string icon)
+        public customSubCategory(string name, string icon)
         {
             filters = new List<Filter>();
             this.subCategoryTitle = name;
