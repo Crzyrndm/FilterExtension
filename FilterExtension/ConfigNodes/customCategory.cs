@@ -15,6 +15,8 @@ namespace FilterExtensions.ConfigNodes
         public string type { get; set; }
         public string value { get; set; } // mod folder name for mod type categories
         public bool all { get; set; }
+        public string[] subCategories { get; set; }
+        public bool stockCategory { get; set; }
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
@@ -40,6 +42,33 @@ namespace FilterExtensions.ConfigNodes
                     Core.Instance.categoryAllSub.Add(categoryName, new customSubCategory("All Parts in Category", categoryName, iconName));
             }
             typeSwitch();
+
+            try
+            {
+                ConfigNode subcategoryList = node.GetNode("SUBCATEGORIES", 0);
+                if (subcategoryList != null)
+                {
+                    string[] stringList = subcategoryList.GetValues();
+                    subCategories = new string[1000];
+                    for (int i = 0; i < stringList.Length; i++)
+                    {
+                        string[] indexAndValue = stringList[i].Split(',');
+                        if (indexAndValue.Length >= 2)
+                        {
+                            int index;
+                            if (int.TryParse(indexAndValue[0], out index))
+                                subCategories[index] = indexAndValue[1].Trim();
+                        }
+                    }
+                    subCategories = subCategories.Distinct().ToArray(); // no duplicates and no gaps in a single function...
+                }
+            }
+            catch (Exception ex)
+            {
+                // extended logging for errors
+                Core.Log(categoryName);
+                Core.Log(ex.StackTrace);
+            }
         }
 
         public customCategory(string name, string icon, string colour, string type = "", string value = "", string all = "")
@@ -79,6 +108,28 @@ namespace FilterExtensions.ConfigNodes
             PartCategorizer.Category category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryName);
             category.displayType = EditorPartList.State.PartsList;
             category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
+
+            if (subCategories != null)
+            {
+                for (int i = 0; i < subCategories.Length; i++)
+                {
+                    if (!string.IsNullOrEmpty(subCategories[i]) && Core.Instance.subCategoriesDict.ContainsKey(subCategories[i]))
+                    {
+                        customSubCategory sC = Core.Instance.subCategoriesDict[subCategories[i]];
+                        try
+                        {
+                            sC.initialise(category);
+                        }
+                        catch (Exception ex)
+                        {
+                            // extended logging for errors
+                            Core.Log(subCategories[i] + " failed to initialise");
+                            Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
+                            Core.Log(ex.StackTrace);
+                        }
+                    }
+                }
+            }
         }
 
         private void typeSwitch()

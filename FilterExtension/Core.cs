@@ -18,6 +18,7 @@ namespace FilterExtensions
         // storing categories/subCategories loaded at Main Menu for creation when entering SPH/VAB
         internal List<customCategory> Categories = new List<customCategory>();
         internal List<customSubCategory> subCategories = new List<customSubCategory>();
+        internal Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
 
         // The first subcategory in a category. Need it to ensure the category is not empty when I clear it
         internal customSubCategory firstFilterByFunction;
@@ -77,48 +78,26 @@ namespace FilterExtensions
             }
 
             List<customSubCategory> editList = new List<customSubCategory>();
-            // load all subCategory configs
+            //load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                // if multiple categories are specified, create multiple subCategories
-                string[] categories = node.GetValue("category").Split(',');
-                if (categories.Any(s => s.Trim() == "AllMods"))
+                customSubCategory sC = new customSubCategory(node);
+                if (sC.hasFilters)
                 {
-                    List<string> categoriesToMake = new List<string>();
-                    categoriesToMake = categories.Where(s => s != "AllMods").ToList();
-                    foreach (customCategory c in this.Categories)
+                    foreach (Filter f in sC.filters)
                     {
-                        if (c.type == "mod")
-                            categoriesToMake.Add(c.categoryName);
+                        if (folderToCategoryDict.ContainsKey(sC.subCategoryTitle))
+                            f.checks.Add(new Check("folder", folderToCategoryDict[sC.subCategoryTitle]));
                     }
-                    categories = categoriesToMake.ToArray();
                 }
-                foreach (string s in categories)
+                if (sC.hasFilters)
                 {
-                    customSubCategory sC = new customSubCategory(node, s.Trim());
-                    if (sC.hasFilters && folderToCategoryDict.ContainsKey(sC.category))
-                    {
-                        foreach(Filter f in sC.filters)
-                            f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
-                    }
-                    if (sC.hasFilters && checkForConflicts(sC))
-                    {
-                        if (firstFilterByFunction == null && sC.category == "Filter by Function")
-                            firstFilterByFunction = sC;
-                        else if (firstFilterByManufacturer == null && sC.category == "Filter by Manufacturer")
-                            firstFilterByManufacturer = sC;
-                        else if (firstFilterByResource == null && sC.category == "Filter by Resource")
-                            firstFilterByResource = sC;
-                        else
-                        {
-                            subCategories.Add(sC);
-                        }
-                    }
-                    if (!sC.hasFilters)
-                        editList.Add(sC);
+                    subCategories.Add(sC);                        
+                    if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle))
+                        subCategoriesDict.Add(sC.subCategoryTitle, sC);
                 }
             }
-            
+            Log(1);
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
                 if (p.partPrefab.Resources != null)
@@ -129,7 +108,7 @@ namespace FilterExtensions
                     }
                 }
             }
-
+            Log(2);
             foreach (string s in resources)
             {
                 string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
@@ -141,23 +120,23 @@ namespace FilterExtensions
 
                 if (firstFilterByResource == null)
                     firstFilterByResource = sC;
-                else if (!(subCategories.Any(sub => sub.category == "Filter by Resource" && sub.subCategoryTitle == name) || firstFilterByResource.subCategoryTitle == name))
+                else if (!(subCategories.Any(sub => sub.subCategoryTitle == name) || firstFilterByResource.subCategoryTitle == name))
                     subCategories.Add(sC);
             }
-            customSCEditDelete(editList);
-
+            // customSCEditDelete(editList);
+            Log(3);
             foreach (KeyValuePair<string, customSubCategory> kvp in categoryAllSub)
             {
                 customSubCategory sC = kvp.Value;
                 if (folderToCategoryDict.ContainsKey(kvp.Key))
                 {
                     foreach (Filter f in sC.filters)
-                        f.checks.Add(new Check("folder", folderToCategoryDict[sC.category]));
+                        f.checks.Add(new Check("folder", folderToCategoryDict[sC.subCategoryTitle]));
                 }
 
                 subCategories.Insert(0, sC);
             }
-
+            Log(4);
             checkForEmptySubCategories();
             loadIcons();
         }
@@ -170,9 +149,7 @@ namespace FilterExtensions
         {
             foreach (customSubCategory sC in sCs)
             {
-                customSubCategory sCToEdit = subCategories.FirstOrDefault(sub => sub.category == sC.category
-                                                                && ((sub.subCategoryTitle == sC.oldTitle && !string.IsNullOrEmpty(sC.oldTitle)))
-                                                                    || (sub.subCategoryTitle == sC.subCategoryTitle && !string.IsNullOrEmpty(sC.subCategoryTitle)));
+                customSubCategory sCToEdit = subCategories.FirstOrDefault(sub => (sub.subCategoryTitle == sC.subCategoryTitle && !string.IsNullOrEmpty(sC.subCategoryTitle)));
 
                 if (sCToEdit != null)
                 {
@@ -293,20 +270,20 @@ namespace FilterExtensions
             }
 
             // create all the new subCategories
-            foreach (customSubCategory sC in subCategories)
-            {
-                try
-                {
-                    sC.initialise();
-                }
-                catch (Exception ex)
-                {
-                    // extended logging for errors
-                    Log(sC.subCategoryTitle + " failed to initialise");
-                    Log("Category:" + sC.category + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
-                    Log(ex.StackTrace);
-                }
-            }
+            //foreach (customSubCategory sC in subCategories)
+            //{
+            //    try
+            //    {
+            //        sC.initialise();
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        // extended logging for errors
+            //        Log(sC.subCategoryTitle + " failed to initialise");
+            //        Log("Category:" + sC.category + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + getIcon(sC.iconName) + ", oldTitle:" + sC.oldTitle);
+            //        Log(ex.StackTrace);
+            //    }
+            //}
 
             // update icons
             refreshList();
@@ -340,24 +317,16 @@ namespace FilterExtensions
 
             foreach (customSubCategory sC in subCategoriesAndFirsts) // iterate through the already added sC's
             {
-                // collision only possible within a category
-                if (sC.category == sCToCheck.category)
+                if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
                 {
-                    if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
-                    {
-                        Log(sC.subCategoryTitle + " has multiple entries. Filters are being combined");
-                        Log(sC.subCategoryTitle);
-                        Log(sCToCheck.subCategoryTitle);
-                        Log(sCToCheck.category);
-                        Log(sC.category);
-                        sCToCheck.filters.AddRange(sC.filters);
-                        return false; // all other elements of this list have already been check for this condition. Don't need to continue
-                    }
-                    if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
-                    {
-                        Log(sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
-                        return false; // ignore this subCategory, only the first processed sC in a conflict will get through
-                    }
+                    Log(sC.subCategoryTitle + " has multiple entries. Filters are being combined");
+                    sCToCheck.filters.AddRange(sC.filters);
+                    return false; // all other elements of this list have already been check for this condition. Don't need to continue
+                }
+                if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
+                {
+                    Log(sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
+                    return false; // ignore this subCategory, only the first processed sC in a conflict will get through
                 }
             }
 
