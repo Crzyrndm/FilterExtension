@@ -22,14 +22,10 @@ namespace FilterExtensions
 
         // url for each part by internal name
         public static Dictionary<string, string> partPathDict = new Dictionary<string, string>();
-
         // entry for each unique combination of propellants
         public static List<List<string>> propellantCombos = new List<List<string>>();
         // entry for each unique resource
         public static List<string> resources = new List<string>();
-
-        // store all the "All parts" subcategories until all subcategories have been processed
-        internal Dictionary<string, customSubCategory> categoryAllSub = new Dictionary<string, customSubCategory>(); // store the config node for the "all" subcategories until all filters have been added
 
         // Dictionary of icons created on entering the main menu
         public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
@@ -45,7 +41,7 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 1.17");
+            Log("Version 2.0 alpha1");
 
             // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
             getPartData();
@@ -67,8 +63,7 @@ namespace FilterExtensions
                     }
                 }
             }
-            
-            List<customSubCategory> editList = new List<customSubCategory>();
+
             //load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
@@ -80,29 +75,17 @@ namespace FilterExtensions
                         if (folderToCategoryDict.ContainsKey(sC.subCategoryTitle))
                             f.checks.Add(new Check("folder", folderToCategoryDict[sC.subCategoryTitle]));
                     }
-                }
-                if (sC.hasFilters)
-                {
-                    if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle))
+                    if (sC.subCategoryTitle != null && !subCategoriesDict.ContainsKey(sC.subCategoryTitle))
                         subCategoriesDict.Add(sC.subCategoryTitle, sC);
                 }
             }
-            
-            foreach (AvailablePart p in PartLoader.Instance.parts)
-            {
-                if (p.partPrefab.Resources != null)
-                {
-                    foreach (PartResource r in p.partPrefab.Resources)
-                    {
-                        resources.AddUnique(r.resourceName);
-                    }
-                }
-            }
-            
+
             foreach (string s in resources)
             {
+
+                // add spaces before each capital letter
                 string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
-                if (!subCategoriesDict.ContainsKey(name))
+                if (name != null && !subCategoriesDict.ContainsKey(name))
                 {
                     customSubCategory sC = new customSubCategory(name, "");
                     Check c = new Check("resource", s);
@@ -113,14 +96,25 @@ namespace FilterExtensions
                 }
             }
 
-            foreach (KeyValuePair<string, customSubCategory> kvp in categoryAllSub)
-            {
-                customSubCategory sC = kvp.Value;
-                if (folderToCategoryDict.ContainsKey(kvp.Key))
+            foreach (customCategory C in Categories)
+            {// generating the "all parts in ..." subcategories
+                if (!C.all)
+                    continue;
+
+                List<Filter> filterList = new List<Filter>();
+                foreach (string s in C.subCategories)
                 {
-                    foreach (Filter f in sC.filters)
-                        f.checks.Add(new Check("folder", folderToCategoryDict[sC.subCategoryTitle]));
+                    if (s != null && subCategoriesDict.ContainsKey(s))
+                        filterList.AddUniqueRange(subCategoriesDict[s].filters);
                 }
+
+                customSubCategory newSub = new customSubCategory("All parts in " + C.categoryName, C.iconName);
+                newSub.filters = filterList;
+                subCategoriesDict.Add(newSub.subCategoryTitle, newSub);
+
+                List<string> subCategories = new List<string>() { newSub.subCategoryTitle };
+                subCategories.AddUniqueRange(C.subCategories);
+                C.subCategories = subCategories.ToArray();
             }
             loadIcons();
         }
@@ -140,7 +134,7 @@ namespace FilterExtensions
 
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
-                // don't want dummy parts
+                // don't want dummy parts, roids, etc. (need to make MM configs for mods that use this category)
                 if (p == null || p.category == PartCategories.none)
                     continue;
                 
@@ -148,45 +142,57 @@ namespace FilterExtensions
                     RepairAvailablePartUrl(p);
                 
                 // if the url is still borked, can't associate a mod to the part
-                if (string.IsNullOrEmpty(p.partUrl))
-                    continue;
+                if (!string.IsNullOrEmpty(p.partUrl))
+                {
+                    // list of GameData folders
+                    modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
 
-                // list of GameData folders
-                modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
-
-                // associate the path to the part
-                if (!partPathDict.ContainsKey(p.name))
-                    partPathDict.Add(p.name, p.partUrl);
-                else
-                    Log(p.name + " duplicated part key in part path dictionary");
+                    // associate the path to the part
+                    if (!partPathDict.ContainsKey(p.name))
+                        partPathDict.Add(p.name, p.partUrl);
+                    else
+                        Log(p.name + " duplicated part key in part path dictionary");
+                }
 
                 if (PartType.isEngine(p))
-                {
-                    foreach (ModuleEngines e in p.partPrefab.GetModuleEngines())
-                    {
-                        List<string> propellants = new List<string>();
-                        foreach (Propellant prop in e.propellants)
-                            propellants.Add(prop.name);
-                        propellants.Sort();
+                    processEnginePropellants(p);
 
-                        if (!stringListComparer(propellants))
-                            propellantCombos.Add(propellants);
-                    }
-                    foreach (ModuleEnginesFX ex in p.partPrefab.GetModuleEnginesFx())
-                    {
-                        List<string> propellants = new List<string>();
-                        foreach (Propellant prop in ex.propellants)
-                            propellants.Add(prop.name);
-                        propellants.Sort();
-
-                        if (!stringListComparer(propellants))
-                            propellantCombos.Add(propellants);
-                    }
-                }
+                if (p.partPrefab.Resources != null)
+                    foreach (PartResource r in p.partPrefab.Resources)
+                        resources.AddUnique(r.resourceName);
             }
 
-            ConfigNode manufacturerSubs = new ConfigNode("SUBCATEGORIES");
-            // Create subcategories for Manufacturer category
+            processFilterByManufacturer(modNames);
+        }
+
+        private void processEnginePropellants(AvailablePart p)
+        {
+            foreach (ModuleEngines e in p.partPrefab.GetModuleEngines())
+            {
+                List<string> propellants = new List<string>();
+                foreach (Propellant prop in e.propellants)
+                    propellants.Add(prop.name);
+                propellants.Sort();
+
+                if (!stringListComparer(propellants))
+                    propellantCombos.Add(propellants);
+            }
+            foreach (ModuleEnginesFX ex in p.partPrefab.GetModuleEnginesFx())
+            {
+                List<string> propellants = new List<string>();
+                foreach (Propellant prop in ex.propellants)
+                    propellants.Add(prop.name);
+                propellants.Sort();
+
+                if (!stringListComparer(propellants))
+                    propellantCombos.Add(propellants);
+            }
+        }
+
+        private void processFilterByManufacturer(List<string> modNames)
+        {
+            customCategory fbm = Categories.FirstOrDefault(C => C.categoryName == "Filter by Manufacturer");
+            // define the mod subcategories
             for (int i = 0; i < modNames.Count; i++)
             {
                 Check ch = new Check("folder", modNames[i]);
@@ -197,13 +203,23 @@ namespace FilterExtensions
                 sC.filters.Add(f);
                 if (!subCategoriesDict.ContainsKey(modNames[i]))
                     subCategoriesDict.Add(modNames[i], sC);
-                manufacturerSubs.AddValue("list", i.ToString() + "," + modNames[i]);
             }
-            ConfigNode filterByManu = new ConfigNode("CATEGORY");
-            filterByManu.AddValue("name", "Filter by Manufacturer");
-            filterByManu.AddValue("stock", "true");
-            filterByManu.AddNode(manufacturerSubs);
-            Categories.Add(new customCategory(filterByManu));
+
+            // if there's nothing defined for fbm, create the category
+            if (fbm == null)
+            {
+                ConfigNode manufacturerSubs = new ConfigNode("SUBCATEGORIES");
+                for (int i = 0; i < modNames.Count; i++)
+                    manufacturerSubs.AddValue("list", i.ToString() + "," + modNames[i]);
+
+                ConfigNode filterByManufacturer = new ConfigNode("CATEGORY");
+                filterByManufacturer.AddValue("name", "Filter by Manufacturer");
+                filterByManufacturer.AddValue("stock", "true");
+                filterByManufacturer.AddNode(manufacturerSubs);
+                Categories.Add(new customCategory(filterByManufacturer));
+            }
+            else
+                fbm.subCategories.AddUniqueRange(modNames); // append the mod names
         }
 
         private bool stringListComparer(List<string> propellants)

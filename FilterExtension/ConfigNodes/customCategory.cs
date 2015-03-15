@@ -7,7 +7,7 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
-    public class customCategory
+    public class customCategory : IEquatable<customCategory>
     {
         public string categoryName { get; set; }
         public string iconName { get; set; }
@@ -51,7 +51,7 @@ namespace FilterExtensions.ConfigNodes
                             subCategories[index] = indexAndValue[1].Trim();
                     }
                 }
-                subCategories = subCategories.Distinct().ToArray(); // no duplicates and no gaps in a single function...
+                subCategories = subCategories.Distinct().ToArray(); // no duplicates and no gaps in a single function. Yay
             }
         }
 
@@ -137,8 +137,8 @@ namespace FilterExtensions.ConfigNodes
                 f.checks = checks;
                 sC.filters.Add(f);
 
-                if (Core.Instance.categoryAllSub.ContainsKey(categoryName))
-                    Core.Instance.categoryAllSub[categoryName].filters.Add(f);
+                //if (Core.Instance.categoryAllSub.ContainsKey(categoryName))
+                //    Core.Instance.categoryAllSub[categoryName].filters.Add(f);
             }
         }
 
@@ -175,6 +175,32 @@ namespace FilterExtensions.ConfigNodes
         public bool hasSubCategories()
         {
             return (this.subCategories != null && this.subCategories.Length > 0);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            if (obj.GetType() != this.GetType())
+                return false;
+            return Equals((customCategory)obj);
+        }
+
+        public bool Equals(customCategory C)
+        {
+            if (ReferenceEquals(null, C))
+                return false;
+            if (ReferenceEquals(this, C))
+                return true;
+
+            return categoryName.Equals(C.categoryName);
+        }
+
+        public override int GetHashCode()
+        {
+            return categoryName.GetHashCode();
         }
     }
 }
