@@ -93,6 +93,20 @@ namespace FilterExtensions.ConfigNodes
             {
                 if (!string.IsNullOrEmpty(subCategories[i]) && Core.Instance.subCategoriesDict.ContainsKey(subCategories[i]))
                 {
+                    if (Core.Instance.conflictsDict.ContainsKey(subCategories[i]))
+                    {
+                        List<string> conflicts = Core.Instance.conflictsDict[subCategories[i]].Intersect(subCategories).ToList();
+                        
+                        if (conflicts.Any(c => Array.IndexOf(subCategories, c) < i))
+                        {
+                            string conflictList = "";
+                            foreach (string s in conflicts)
+                                conflictList += "\r\n" + s;
+                            Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories" + conflictList);
+                            continue;
+                        }
+                    }
+
                     customSubCategory sC = new customSubCategory(Core.Instance.subCategoriesDict[subCategories[i]].toConfigNode());
                     if (template != null && template.Any())
                     {

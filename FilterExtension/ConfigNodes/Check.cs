@@ -15,7 +15,7 @@ namespace FilterExtensions.ConfigNodes
         public bool contains { get; set; }
         public List<Check> checks { get; set; } 
 
-        internal Check(ConfigNode node)
+        public Check(ConfigNode node)
         {
             type = node.GetValue("type");
             value = node.GetValue("value");
@@ -40,7 +40,7 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        internal Check(string type, string value, bool invert = false, bool contains = true)
+        public Check(string type, string value, bool invert = false, bool contains = true)
         {
             this.type = type;
             this.value = value;
@@ -63,7 +63,7 @@ namespace FilterExtensions.ConfigNodes
             return node;
         }
 
-        internal bool checkPart(AvailablePart part)
+        public bool checkPart(AvailablePart part)
         {
             if (part.category == PartCategories.none)
                 return false;

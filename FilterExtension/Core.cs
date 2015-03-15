@@ -19,6 +19,8 @@ namespace FilterExtensions
         internal List<customCategory> Categories = new List<customCategory>();
         // storing all subCategory definitions for categories to reference
         internal Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
+        // all subcategories with duplicated filters
+        public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
 
         // url for each part by internal name
         public static Dictionary<string, string> partPathDict = new Dictionary<string, string>();
@@ -75,14 +77,18 @@ namespace FilterExtensions
                         if (folderToCategoryDict.ContainsKey(sC.subCategoryTitle))
                             f.checks.Add(new Check("folder", folderToCategoryDict[sC.subCategoryTitle]));
                     }
-                    if (sC.subCategoryTitle != null && !subCategoriesDict.ContainsKey(sC.subCategoryTitle))
-                        subCategoriesDict.Add(sC.subCategoryTitle, sC);
+                    if (sC.subCategoryTitle != null)
+                    {
+                        if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if nothing else has the same title
+                            subCategoriesDict.Add(sC.subCategoryTitle, sC);
+                        else if (subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if something does have the same title
+                            subCategoriesDict[sC.subCategoryTitle].filters.AddRange(sC.filters);
+                    }
                 }
             }
 
             foreach (string s in resources)
             {
-
                 // add spaces before each capital letter
                 string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
                 if (name != null && !subCategoriesDict.ContainsKey(name))
@@ -117,15 +123,7 @@ namespace FilterExtensions
                 C.subCategories = subCategories.ToArray();
             }
             loadIcons();
-        }
-
-        /// <summary>
-        /// creating subcategories and then trying to edit them during initialisation causes all sorts of problems. Instead, make the edits prior to initialisation
-        /// </summary>
-        /// <param name="sCs"></param>
-        private void customSCEditDelete(List<customSubCategory> sCs)
-        {
-            
+            checkAndMarkConflicts();
         }
 
         private void getPartData()
@@ -254,10 +252,10 @@ namespace FilterExtensions
             // update icons
             refreshList();
 
-            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing, just breakages
+            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
 
-            // reveal categories
+            // reveal categories because why not
             PartCategorizer.Instance.SetAdvancedMode();
         }
 
@@ -269,36 +267,29 @@ namespace FilterExtensions
             button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
 
-        //private bool checkForConflicts(customSubCategory sCToCheck)
-        //{
-        //    // firsts aren't contained in subCategories anymore. Need to make a new list containing for checking against
-        //    List<customSubCategory> subCategoriesAndFirsts = new List<customSubCategory>();
-        //    if (firstFilterByFunction != null)
-        //        subCategoriesAndFirsts.Add(firstFilterByFunction);
-        //    if (firstFilterByManufacturer != null)
-        //        subCategoriesAndFirsts.Add(firstFilterByManufacturer);
-        //    if (firstFilterByResource != null)
-        //        subCategoriesAndFirsts.Add(firstFilterByResource);
-        //    subCategoriesAndFirsts.AddRange(subCategories);
+        private void checkAndMarkConflicts()
+        {
+            foreach (KeyValuePair<string, customSubCategory> kvpOuter in subCategoriesDict)
+            {
+                foreach (KeyValuePair<string, customSubCategory> kvp in subCategoriesDict) // iterate through the already added sC's
+                {
+                    if (compareFilterLists(kvp.Value.filters, kvpOuter.Value.filters)) // check for duplicated filters
+                    {
+                        // add conflict entry for the already entered subCategory
+                        if (conflictsDict.ContainsKey(kvp.Key))
+                            conflictsDict[kvp.Key].Add(kvpOuter.Key);
+                        else
+                            conflictsDict.Add(kvp.Key, new List<string>() { kvpOuter.Key});
 
-        //    foreach (customSubCategory sC in subCategoriesAndFirsts) // iterate through the already added sC's
-        //    {
-        //        if (sC.subCategoryTitle == sCToCheck.subCategoryTitle) // if they have the same name, just add the new filters on (OR'd together)
-        //        {
-        //            Log(sC.subCategoryTitle + " has multiple entries. Filters are being combined");
-        //            sCToCheck.filters.AddRange(sC.filters);
-        //            return false; // all other elements of this list have already been check for this condition. Don't need to continue
-        //        }
-        //        if (compareFilterLists(sC.filters, sCToCheck.filters)) // check for duplicated filters
-        //        {
-        //            Log(sC.subCategoryTitle + " has duplicated the filters of " + sCToCheck.subCategoryTitle);
-        //            return false; // ignore this subCategory, only the first processed sC in a conflict will get through
-        //        }
-        //    }
-
-
-        //    return true;
-        //}
+                        // add a conflict entry for the new subcategory
+                        if (conflictsDict.ContainsKey(kvpOuter.Key))
+                            conflictsDict[kvpOuter.Key].Add(kvp.Key);
+                        else
+                            conflictsDict.Add(kvpOuter.Key, new List<string>() { kvp.Key });
+                    }
+                }
+            }
+        }
 
         private bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
         {
