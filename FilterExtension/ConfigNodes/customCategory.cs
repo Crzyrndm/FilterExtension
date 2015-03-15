@@ -17,6 +17,7 @@ namespace FilterExtensions.ConfigNodes
         public bool all { get; set; } // has an all parts subCategory
         public string[] subCategories { get; set; } // array of subcategories
         public bool stockCategory { get; set; } // editing a stock category or creating a completely new one
+        public List<Check> template { get; set; } // Checks to add to every Filter in a category with the template tag
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
@@ -28,6 +29,9 @@ namespace FilterExtensions.ConfigNodes
 
             type = node.GetValue("type");
             value = node.GetValue("value");
+            typeSwitch();
+
+            makeTemplate(node);
 
             bool tmp;
             bool.TryParse(node.GetValue("all"), out tmp);
@@ -51,7 +55,7 @@ namespace FilterExtensions.ConfigNodes
                             subCategories[index] = indexAndValue[1].Trim();
                     }
                 }
-                subCategories = subCategories.Distinct().ToArray(); // no duplicates and no gaps in a single function. Yay
+                subCategories = subCategories.Distinct().ToArray(); // no duplicates and no gaps in a single line. Yay
             }
         }
 
@@ -89,7 +93,15 @@ namespace FilterExtensions.ConfigNodes
             {
                 if (!string.IsNullOrEmpty(subCategories[i]) && Core.Instance.subCategoriesDict.ContainsKey(subCategories[i]))
                 {
-                    customSubCategory sC = Core.Instance.subCategoriesDict[subCategories[i]];
+                    customSubCategory sC = new customSubCategory(Core.Instance.subCategoriesDict[subCategories[i]].toConfigNode());
+                    if (template != null && template.Any())
+                    {
+                        foreach (Filter f in sC.filters)
+                        {
+                            f.checks.AddRange(template);
+                        }
+                    }
+
                     try
                     {
                         sC.initialise(category);
@@ -111,7 +123,7 @@ namespace FilterExtensions.ConfigNodes
             {
                 case "engine":
                     generateEngineTypes();
-                    return;
+                    break;
             }
         }
 
@@ -136,10 +148,18 @@ namespace FilterExtensions.ConfigNodes
                 Filter f = new Filter(false);
                 f.checks = checks;
                 sC.filters.Add(f);
-
-                //if (Core.Instance.categoryAllSub.ContainsKey(categoryName))
-                //    Core.Instance.categoryAllSub[categoryName].filters.Add(f);
+                Core.Instance.subCategoriesDict.Add(sC.subCategoryTitle, sC);
             }
+        }
+
+        private void makeTemplate(ConfigNode node)
+        {
+            ConfigNode filtNode = node.GetNode("FILTER");
+            if (filtNode == null)
+                return;
+
+            Filter filter = new Filter(filtNode);
+            this.template = filter.checks;
         }
 
         public static Color convertToColor(string hex_ARGB)

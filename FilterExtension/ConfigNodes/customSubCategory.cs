@@ -41,6 +41,19 @@ namespace FilterExtensions.ConfigNodes
             this.iconName = icon;
         }
 
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("SUBCATEGORY");
+
+            node.AddValue("name", this.subCategoryTitle);
+            node.AddValue("icon", this.iconName);
+
+            foreach (Filter f in this.filters)
+                node.AddNode(f.toConfigNode());
+
+            return node;
+        }
+
         public bool checkFilters(AvailablePart part)
         {
             foreach (Filter f in filters)

@@ -29,6 +29,16 @@ namespace FilterExtensions.ConfigNodes
             this.invert = invert;
         }
 
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("FILTER");
+            node.AddValue("invert", this.invert.ToString());
+            foreach (Check c in checks)
+                node.AddNode(c.toConfigNode());
+
+            return node;
+        }
+
         internal bool checkFilter(AvailablePart part)
         {
             foreach (Check c in checks)

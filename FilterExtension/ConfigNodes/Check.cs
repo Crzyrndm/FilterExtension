@@ -49,6 +49,20 @@ namespace FilterExtensions.ConfigNodes
             this.checks = new List<Check>();
         }
 
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("CHECK");
+            node.AddValue("type", this.type);
+            node.AddValue("value", this.value);
+            node.AddValue("invert", this.invert.ToString());
+            node.AddValue("contains", this.contains.ToString());
+
+            foreach (Check c in this.checks)
+                node.AddNode(c.toConfigNode());
+
+            return node;
+        }
+
         internal bool checkPart(AvailablePart part)
         {
             if (part.category == PartCategories.none)
