@@ -165,7 +165,10 @@ namespace FilterExtensions
                     foreach (PartResource r in p.partPrefab.Resources)
                         resources.AddUnique(r.resourceName);
             }
-            processFilterByManufacturer(modNames);
+            bool FbM = config.GetValue("replaceFbM", true);
+            config["replaceFbM"] = FbM;
+            if (FbM)
+                processFilterByManufacturer(modNames);
         }
 
         private void processEnginePropellants(AvailablePart p)
