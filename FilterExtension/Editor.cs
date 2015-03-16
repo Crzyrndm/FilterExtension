@@ -47,16 +47,16 @@ namespace FilterExtensions
             // run everything
             Core.Instance.editor();
 
-            for (int i = 0; i < EditorPartList.Instance.sortingGroup.sortingButtons.Count; i++)
-            {
-                UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
-                Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
-                Core.Log(but.StateName); // ASC, DESC
+            //for (int i = 0; i < EditorPartList.Instance.sortingGroup.sortingButtons.Count; i++)
+            //{
+            //    UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
+            //    Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
+            //    Core.Log(but.StateName); // ASC, DESC
 
-                PartSort sorter = new PartSort(but);
-                but.SetInputDelegate(sorter.sortDelegate);
-                sorters.Add(sorter);
-            }
+            //    //PartSort sorter = new PartSort(but);
+            //    //but.SetInputDelegate(sorter.sortDelegate);
+            //    //sorters.Add(sorter);
+            //}
         }
 
         void Update()
