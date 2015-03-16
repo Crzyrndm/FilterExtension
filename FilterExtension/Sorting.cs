@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace FilterExtensions
 {
@@ -16,8 +17,9 @@ namespace FilterExtensions
 
         public Sorting(UIStateToggleBtn but, string sort)
         {
-            sortDelegate = new EZInputDelegate(OnInput);
             button = but;
+            sortDelegate = new EZInputDelegate(OnInput);
+            button.SetInputDelegate(sortDelegate);
             sortType = sort;
         }
 
@@ -39,6 +41,7 @@ namespace FilterExtensions
     {
         public int Compare(AvailablePart p1, AvailablePart p2)
         {
+            Debug.Log("here");
             if (p1 == null)
             {
                 if (p2 == null)

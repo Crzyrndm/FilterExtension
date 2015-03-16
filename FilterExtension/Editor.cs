@@ -51,8 +51,7 @@ namespace FilterExtensions
             {
                 UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
                 Sorting sorter = new Sorting(but, "Mass"); // replace as appropriate once I find that %^&* list of parts
-                but.SetInputDelegate(sorter.sortDelegate);
-                //sorters.Add(sorter);
+                sorters.Add(sorter);
 
                 //Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
                 //Core.Log(but.StateName); // ASC, DESC
