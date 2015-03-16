@@ -46,7 +46,10 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 2.0 alpha1");
+            Log("Version 2.0 alpha2");
+
+            config = KSP.IO.PluginConfiguration.CreateForType<Core>();
+            config.load();
 
             // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
             getPartData();
@@ -127,10 +130,6 @@ namespace FilterExtensions
             }
             loadIcons();
             checkAndMarkConflicts();
-            
-            
-            config = KSP.IO.PluginConfiguration.CreateForType<Core>();
-            config.load();
         }
 
         private void getPartData()
@@ -166,7 +165,6 @@ namespace FilterExtensions
                     foreach (PartResource r in p.partPrefab.Resources)
                         resources.AddUnique(r.resourceName);
             }
-
             processFilterByManufacturer(modNames);
         }
 
@@ -283,8 +281,8 @@ namespace FilterExtensions
                 Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
             }
 
-            Filter = Filter.subcategories.Find(sC => sC.button.categoryName == config.GetValue("subCategoryDefault", "Pods"));
-            if (Filter != null)
+            Filter = Filter.subcategories.Find(sC => sC.button.categoryName == config.GetValue("subCategoryDefault", "none"));
+            if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
                 Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
         }
 
