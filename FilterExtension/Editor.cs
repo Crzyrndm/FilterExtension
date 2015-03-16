@@ -11,7 +11,7 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     class Editor : MonoBehaviour
     {
-        List<PartSort> sorters = new List<PartSort>();
+        List<Sorting> sorters = new List<Sorting>();
 
         void Start()
         {
@@ -47,16 +47,16 @@ namespace FilterExtensions
             // run everything
             Core.Instance.editor();
 
-            //for (int i = 0; i < EditorPartList.Instance.sortingGroup.sortingButtons.Count; i++)
-            //{
-            //    UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
-            //    Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
-            //    Core.Log(but.StateName); // ASC, DESC
+            for (int i = 0; i < EditorPartList.Instance.sortingGroup.sortingButtons.Count; i++)
+            {
+                UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
+                Sorting sorter = new Sorting(but, "Mass"); // replace as appropriate once I find that %^&* list of parts
+                but.SetInputDelegate(sorter.sortDelegate);
+                //sorters.Add(sorter);
 
-            //    //PartSort sorter = new PartSort(but);
-            //    //but.SetInputDelegate(sorter.sortDelegate);
-            //    //sorters.Add(sorter);
-            //}
+                //Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
+                //Core.Log(but.StateName); // ASC, DESC
+            }
         }
 
         void Update()

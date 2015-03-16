@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace FilterExtensions.Utility
+namespace FilterCreator
 {
-    using ConfigNodes;
-
     public static class cfgConstructors
     {
         public static ConfigNode newCategoryNode(string name, string icon, string colour, string type = "", string value = "", string all = "")
