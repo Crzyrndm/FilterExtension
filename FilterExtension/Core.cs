@@ -32,6 +32,9 @@ namespace FilterExtensions
         // Dictionary of icons created on entering the main menu
         public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
 
+        // Config has options to disable the FbM replacement, and the default Category/SC and sort method
+        public KSP.IO.PluginConfiguration config;
+
         public static Core Instance // Reminder to self, don't be abusing static
         {
             get
@@ -124,6 +127,10 @@ namespace FilterExtensions
             }
             loadIcons();
             checkAndMarkConflicts();
+            
+            
+            config = KSP.IO.PluginConfiguration.CreateForType<Core>();
+            config.load();
         }
 
         private void getPartData()
@@ -250,7 +257,7 @@ namespace FilterExtensions
             }
 
             // update icons
-            refreshList();
+            setSelectedCategory();
 
             // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
@@ -259,12 +266,26 @@ namespace FilterExtensions
             PartCategorizer.Instance.SetAdvancedMode();
         }
 
-        public void refreshList()
+        public void setSelectedCategory()
         {
-            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == "Filter by Function");
-            RUIToggleButtonTyped button = Filter.button.activeButton;
-            button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-            button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
+            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
+            if (Filter != null)
+                Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+
+            Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == config.GetValue("categoryDefault", "Filter by Function"));
+            if (Filter != null)
+            {
+                Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+            }
+            else
+            {
+                Filter = PartCategorizer.Instance.filters[0];
+                Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+            }
+
+            Filter = Filter.subcategories.Find(sC => sC.button.categoryName == config.GetValue("subCategoryDefault", "Pods"));
+            if (Filter != null)
+                Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
         }
 
         private void checkAndMarkConflicts()

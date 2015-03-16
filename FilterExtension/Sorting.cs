@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace FilterExtensions
@@ -26,14 +25,21 @@ namespace FilterExtensions
         public void OnInput(ref POINTER_INFO ptr)
         {
             if (ptr.evt == POINTER_INFO.INPUT_EVENT.PRESS)
-                Sort();
+            {
+                //Editor.instance.Coroutine(Sort());
+            }
         }
 
-        void Sort()
+        IEnumerator Sort()
         {
+            for (int i = 0; i < 5; i++)
+                yield return null;
+
             Core.Log("sorting " + button.spriteText.text + " in " + ((button.StateName == "ASC") ? "ascending order" : "descending order"));
+            Core.Log(EditorPartList.Instance.sortingGroup.activeSortingButton == button);
+            Core.Log(EditorPartList.Instance.sortingGroup.startSortingAsc);
             EditorPartList.Instance.Refresh(comparer);
-            EditorPartList.Instance.Refresh();
+            //EditorPartList.Instance.Refresh();
         }
     }
 
@@ -41,7 +47,7 @@ namespace FilterExtensions
     {
         public int Compare(AvailablePart p1, AvailablePart p2)
         {
-            Debug.Log("here");
+            Debug.Log("here"); // never seen
             if (p1 == null)
             {
                 if (p2 == null)

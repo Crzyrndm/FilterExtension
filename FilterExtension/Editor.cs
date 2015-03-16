@@ -12,9 +12,10 @@ namespace FilterExtensions
     class Editor : MonoBehaviour
     {
         List<Sorting> sorters = new List<Sorting>();
-
+        public static Editor instance;
         void Start()
         {
+            instance = this;
             StartCoroutine(editorInit());   
         }
 
@@ -26,7 +27,7 @@ namespace FilterExtensions
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
-            // The event which most mods will be hooking into fires after this, so they still get their subCategories if I clear the category
+            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I clear the category
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
@@ -41,26 +42,35 @@ namespace FilterExtensions
             // wait until the part menu is initialised
             while (!PartCategorizer.Ready)
                 yield return null;
-            // frames after the flag is set to wait before initialising. Minimum of two for things to actually work
+            // frames after the flag is set to wait before initialising. Minimum of two for things to work consistently
             for (int i = 0; i < 4; i++)
                 yield return null;
             // run everything
             Core.Instance.editor();
-
+            
             for (int i = 0; i < EditorPartList.Instance.sortingGroup.sortingButtons.Count; i++)
             {
                 UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
-                Sorting sorter = new Sorting(but, "Mass"); // replace as appropriate once I find that %^&* list of parts
-                sorters.Add(sorter);
+
+                if (but.spriteText.text == Core.Instance.config.GetValue("sortDefault", ""))
+                {
+                    but.OnInput(new POINTER_INFO());
+                    if (Core.Instance.config.GetValue("sortOrder","ASC") == "DESC")
+                        but.OnInput(new POINTER_INFO());
+                }
+                //Sorting sorter = new Sorting(but, "Mass"); // replace as appropriate once I find how sorting is done
+                //sorters.Add(sorter);
 
                 //Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
                 //Core.Log(but.StateName); // ASC, DESC
             }
-        }
 
-        void Update()
-        {
-            
+            Core.Instance.config["sortDefault"] = "";
+            Core.Instance.config["sortOrder"] = "ASC";
+            Core.Instance.config["categoryDefault"] = "Filter by Function";
+            Core.Instance.config["subCategoryDefault"] = "Pods";
+
+            Core.Instance.config.save();
         }
     }
 }
