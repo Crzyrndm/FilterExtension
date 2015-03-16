@@ -333,8 +333,8 @@ namespace FilterExtensions
         {
             foreach (PartCategorizer.Category c in category.subcategories)
             {
-                // if any of the names of the loaded icons match the subCategory name, then replace their current icon with the match
-                if (iconDict.ContainsKey(c.button.categoryName))
+                // if any of the names of the loaded icons match the subCategory name and it didn't get a proper icon
+                if (iconDict.ContainsKey(c.button.categoryName) && (c.button.icon == PartCategorizer.Instance.fallbackIcon || !subCategoriesDict.ContainsKey(c.button.categoryName)))
                     c.button.SetIcon(getIcon(c.button.categoryName));
             }
         }
@@ -357,7 +357,7 @@ namespace FilterExtensions
                     int i = 1;
                     while (texDict.ContainsKey(t.name + i.ToString()) && i < 1000)
                         i++;
-                    if (i != 1000)
+                    if (i < 1000)
                     {
                         texDict.Add(t.name + i.ToString(), t);
                         Log(t.name+i.ToString());
