@@ -26,15 +26,12 @@ namespace FilterExtensions
         {
             if (ptr.evt == POINTER_INFO.INPUT_EVENT.PRESS)
             {
-                //Editor.instance.Coroutine(Sort());
+                Sort();
             }
         }
 
-        IEnumerator Sort()
+        void Sort()
         {
-            for (int i = 0; i < 5; i++)
-                yield return null;
-
             Core.Log("sorting " + button.spriteText.text + " in " + ((button.StateName == "ASC") ? "ascending order" : "descending order"));
             Core.Log(EditorPartList.Instance.sortingGroup.activeSortingButton == button);
             Core.Log(EditorPartList.Instance.sortingGroup.startSortingAsc);
