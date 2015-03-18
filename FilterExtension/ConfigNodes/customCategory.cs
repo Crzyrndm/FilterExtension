@@ -196,7 +196,10 @@ namespace FilterExtensions.ConfigNodes
                 }
                 engines.Add(name);
             }
-            subCategories.AddUniqueRange(engines);
+            if (subCategories != null)
+                subCategories.AddUniqueRange(engines);
+            else
+                subCategories = engines;
         }
 
         private void makeTemplate(ConfigNode node)
