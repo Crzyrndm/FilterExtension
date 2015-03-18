@@ -16,21 +16,24 @@ namespace FilterExtensions
         private static Core instance;
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
-        internal List<customCategory> Categories = new List<customCategory>();
+        public List<customCategory> Categories = new List<customCategory>();
         // storing all subCategory definitions for categories to reference
-        internal Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
+        public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
-
+        // renaming procedural stuff
+        public Dictionary<string, string> proceduralNames = new Dictionary<string, string>();
+        // icons for procedural stuff
+        public Dictionary<string, string> proceduralIcons = new Dictionary<string, string>();
         // url for each part by internal name
-        public static Dictionary<string, string> partPathDict = new Dictionary<string, string>();
+        public Dictionary<string, string> partPathDict = new Dictionary<string, string>();
         // entry for each unique combination of propellants
-        public static List<List<string>> propellantCombos = new List<List<string>>();
+        public List<List<string>> propellantCombos = new List<List<string>>();
         // entry for each unique resource
-        public static List<string> resources = new List<string>();
+        public List<string> resources = new List<string>();
 
         // Dictionary of icons created on entering the main menu
-        public static Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
+        public Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
 
         // Config has options to disable the FbM replacement, and the default Category/SC and sort method
         public KSP.IO.PluginConfiguration config;
@@ -46,43 +49,61 @@ namespace FilterExtensions
         void Awake()
         {
             instance = this;
-            Log("Version 2.0 alpha2");
-
+            DontDestroyOnLoad(this);
+            Log("Version 2.0");
             config = KSP.IO.PluginConfiguration.CreateForType<Core>();
             config.load();
 
-            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
-            getPartData();
-            
-            // mod categories key: title, value: folder
-            // used for adding the folder check to subCategories
-            Dictionary<string, string> folderToCategoryDict = new Dictionary<string, string>();
-            // load all category configs
-            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
+            // get the names and icons for the procedural categories
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROCNAMES"))
             {
-                customCategory C = new customCategory(node);
-                if (Categories.Find(n => n.categoryName == C.categoryName) == null)
+                string[] names = node.GetValues("name");
+                foreach (string s in names)
                 {
-                    Categories.Add(C);
-                    if (C.type == "mod" && C.value != null)
+                    if (s.Split().Length >= 2)
                     {
-                        if (!folderToCategoryDict.ContainsKey(C.categoryName))
-                            folderToCategoryDict.Add(C.categoryName, C.value.Trim());
+                        string nameToReplace = s.Split(',')[0].Trim();
+                        string newName = s.Split(',')[1].Trim();
+                        if (!proceduralNames.ContainsKey(nameToReplace))
+                            proceduralNames.Add(nameToReplace, newName);
                     }
                 }
             }
 
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROCICONS"))
+            {
+                string[] icons = node.GetValues("icon");
+                foreach (string s in icons)
+                {
+                    if (s.Split().Length >= 2)
+                    {
+                        string categoryName = s.Split(',')[0].Trim();
+                        string icon = s.Split(',')[1].Trim();
+                        if (!proceduralIcons.ContainsKey(categoryName))
+                            proceduralIcons.Add(categoryName, icon);
+                    }
+                }
+            }
+
+            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
+            getPartData();
+            
+            // load all category configs
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
+            {
+                customCategory C = new customCategory(node);
+                if (Categories.Find(n => n.categoryName == C.categoryName) == null && C.subCategories != null)
+                {
+                    Categories.Add(C);
+                }
+            }
+            
             //load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
                 customSubCategory sC = new customSubCategory(node);
                 if (sC.hasFilters)
                 {
-                    foreach (Filter f in sC.filters)
-                    {
-                        if (folderToCategoryDict.ContainsKey(sC.subCategoryTitle))
-                            f.checks.Add(new Check("folder", folderToCategoryDict[sC.subCategoryTitle]));
-                    }
                     if (sC.subCategoryTitle != null)
                     {
                         if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if nothing else has the same title
@@ -93,18 +114,28 @@ namespace FilterExtensions
                 }
             }
 
-            foreach (string s in resources)
+            customCategory Cat = Categories.Find(C => C.categoryName == "Filter by Resource");
+            if (Cat != null)
             {
-                // add spaces before each capital letter
-                string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
-                if (name != null && !subCategoriesDict.ContainsKey(name))
+                foreach (string s in resources)
                 {
-                    customSubCategory sC = new customSubCategory(name, "");
-                    Check c = new Check("resource", s);
-                    Filter f = new Filter(false);
-                    f.checks.Add(c);
-                    sC.filters.Add(f);
-                    subCategoriesDict.Add(name, sC);
+                    // add spaces before each capital letter
+                    string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
+                    string icon = "";
+                    if (proceduralNames.ContainsKey(name))
+                        name = proceduralNames[name];
+                    if (proceduralIcons.ContainsKey(name))
+                        icon = proceduralIcons[name];
+                    if (name != null && !subCategoriesDict.ContainsKey(name))
+                    {
+                        customSubCategory sC = new customSubCategory(name, icon);
+                        Check c = new Check("resource", s);
+                        Filter f = new Filter(false);
+                        f.checks.Add(c);
+                        sC.filters.Add(f);
+                        subCategoriesDict.Add(name, sC);
+                    }
+                    Cat.subCategories.AddUnique(name);
                 }
             }
 
@@ -112,21 +143,19 @@ namespace FilterExtensions
             {// generating the "all parts in ..." subcategories
                 if (!C.all)
                     continue;
-
                 List<Filter> filterList = new List<Filter>();
-                foreach (string s in C.subCategories)
+                if (C.subCategories != null)
                 {
-                    if (s != null && subCategoriesDict.ContainsKey(s))
-                        filterList.AddUniqueRange(subCategoriesDict[s].filters);
+                    foreach (string s in C.subCategories)
+                    {
+                        if (s != null && subCategoriesDict.ContainsKey(s))
+                            filterList.AddUniqueRange(subCategoriesDict[s].filters);
+                    }
                 }
-
                 customSubCategory newSub = new customSubCategory("All parts in " + C.categoryName, C.iconName);
                 newSub.filters = filterList;
                 subCategoriesDict.Add(newSub.subCategoryTitle, newSub);
-
-                List<string> subCategories = new List<string>() { newSub.subCategoryTitle };
-                subCategories.AddUniqueRange(C.subCategories);
-                C.subCategories = subCategories.ToArray();
+                C.subCategories.Insert(0, newSub.subCategoryTitle);
             }
             loadIcons();
             checkAndMarkConflicts();
@@ -199,11 +228,20 @@ namespace FilterExtensions
         {
             customCategory fbm = Categories.FirstOrDefault(C => C.categoryName == "Filter by Manufacturer");
             // define the mod subcategories
+            List<string> subCatNames = new List<string>();
             for (int i = 0; i < modNames.Count; i++)
             {
+                string name = modNames[i];
+                string icon = modNames[i];
+                if (proceduralNames.ContainsKey(name))
+                    name = proceduralNames[name];
+                if (proceduralIcons.ContainsKey(name))
+                    icon = proceduralIcons[name];
+
                 Check ch = new Check("folder", modNames[i]);
                 Filter f = new Filter(false);
-                customSubCategory sC = new customSubCategory(modNames[i], modNames[i]);
+                customSubCategory sC = new customSubCategory(name, icon);
+                subCatNames.Add(name);
 
                 f.checks.Add(ch);
                 sC.filters.Add(f);
@@ -215,8 +253,8 @@ namespace FilterExtensions
             if (fbm == null)
             {
                 ConfigNode manufacturerSubs = new ConfigNode("SUBCATEGORIES");
-                for (int i = 0; i < modNames.Count; i++)
-                    manufacturerSubs.AddValue("list", i.ToString() + "," + modNames[i]);
+                for (int i = 0; i < subCatNames.Count; i++)
+                    manufacturerSubs.AddValue("list", i.ToString() + "," + subCatNames[i]);
 
                 ConfigNode filterByManufacturer = new ConfigNode("CATEGORY");
                 filterByManufacturer.AddValue("name", "Filter by Manufacturer");
@@ -376,10 +414,10 @@ namespace FilterExtensions
                     selectedTex = t.texture;
 
                 string name = t.name.Split(new char[] { '/', '\\' }).Last();
-                if (iconDict.ContainsKey(name))
+                if (Instance.iconDict.ContainsKey(name))
                 {
                     int i = 1;
-                    while (iconDict.ContainsKey(name + i.ToString()) && i < 1000)
+                    while (Instance.iconDict.ContainsKey(name + i.ToString()) && i < 1000)
                         i++;
                     if (i != 1000)
                         name = name + i.ToString();
@@ -389,8 +427,8 @@ namespace FilterExtensions
                 PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
                 
                 // shouldn't be neccesary to check, but just in case...
-                if (!iconDict.ContainsKey(icon.name))
-                    iconDict.Add(icon.name, icon);
+                if (!Instance.iconDict.ContainsKey(icon.name))
+                    Instance.iconDict.Add(icon.name, icon);
             }
         }
 
@@ -398,8 +436,8 @@ namespace FilterExtensions
         {
             if (string.IsNullOrEmpty(name))
                 return null;
-            if (iconDict.ContainsKey(name))
-                return iconDict[name];
+            if (Instance.iconDict.ContainsKey(name))
+                return Instance.iconDict[name];
             if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
                 return PartCategorizer.Instance.iconDictionary[name];
             return null;

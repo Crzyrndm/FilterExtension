@@ -24,7 +24,7 @@ namespace FilterExtensions.ConfigNodes
         public string value { get; set; } // mod folder name for mod type categories
         public categoryTypeAndBehaviour behaviour { get; set; }
         public bool all { get; set; } // has an all parts subCategory
-        public string[] subCategories { get; set; } // array of subcategories
+        public List<string> subCategories { get; set; } // array of subcategories
         public List<Check> template { get; set; } // Checks to add to every Filter in a category with the template tag
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
@@ -39,8 +39,6 @@ namespace FilterExtensions.ConfigNodes
             type = node.GetValue("type");
             value = node.GetValue("value");
 
-            typeSwitch();
-
             makeTemplate(node);
 
             bool.TryParse(node.GetValue("all"), out tmp);
@@ -50,7 +48,7 @@ namespace FilterExtensions.ConfigNodes
             if (subcategoryList != null)
             {
                 string[] stringList = subcategoryList.GetValues();
-                subCategories = new string[1000];
+                string[] subs = new string[1000];
                 for (int i = 0; i < stringList.Length; i++)
                 {
                     string[] indexAndValue = stringList[i].Split(',');
@@ -58,11 +56,13 @@ namespace FilterExtensions.ConfigNodes
                     {
                         int index;
                         if (int.TryParse(indexAndValue[0], out index))
-                            subCategories[index] = indexAndValue[1].Trim();
+                            subs[index] = indexAndValue[1].Trim();
                     }
                 }
-                subCategories = subCategories.Distinct().ToArray(); // no duplicates and no gaps in a single line. Yay
+                subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
             }
+
+            typeSwitch();
         }
 
         public void initialise()
@@ -72,12 +72,11 @@ namespace FilterExtensions.ConfigNodes
                 Core.Log("Category name is null or empty");
                 return;
             }
-            if (subCategories == null || subCategories.Length == 0)
+            if (!hasSubCategories())
             {
                 Core.Log(categoryName + " has no subcategories");
                 return;
             }
-
             PartCategorizer.Category category;
             if (!stockCategory)
             {
@@ -100,7 +99,7 @@ namespace FilterExtensions.ConfigNodes
                 }
             }
             
-            for (int i = 0; i < subCategories.Length; i++)
+            for (int i = 0; i < subCategories.Count; i++)
             {
                 if (!string.IsNullOrEmpty(subCategories[i]) && Core.Instance.subCategoriesDict.ContainsKey(subCategories[i]))
                 {
@@ -108,7 +107,7 @@ namespace FilterExtensions.ConfigNodes
                     {
                         List<string> conflicts = Core.Instance.conflictsDict[subCategories[i]].Intersect(subCategories).ToList();
                         
-                        if (conflicts.Any(c => Array.IndexOf(subCategories, c) < i))
+                        if (conflicts.Any(c => subCategories.IndexOf(c) < i))
                         {
                             string conflictList = "";
                             foreach (string s in conflicts)
@@ -166,7 +165,7 @@ namespace FilterExtensions.ConfigNodes
         private void generateEngineTypes()
         {
             List<string> engines = new List<string>();
-            foreach (List<string> ls in Core.propellantCombos)
+            foreach (List<string> ls in Core.Instance.propellantCombos)
             {
                 List<Check> checks = new List<Check>();
                 string props = "";
@@ -174,22 +173,28 @@ namespace FilterExtensions.ConfigNodes
                 {
                     if (props != "")
                         props += ",";
-
-                    checks.Add(new Check("propellant", s));
                     props += s;
                 }
-                if (!Core.Instance.subCategoriesDict.ContainsKey(props))
-                {
-                    checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
+                checks.Add(new Check("propellant", props));
+                checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
-                    customSubCategory sC = new customSubCategory(props, "stock_Engines");
+                string name = props.Replace(',', '/');
+                string icon = props;
+                if (Core.Instance.proceduralNames.ContainsKey(name))
+                    name = Core.Instance.proceduralNames[name];
+                if (Core.Instance.proceduralIcons.ContainsKey(name))
+                    icon = Core.Instance.proceduralIcons[name];
+
+                if (!Core.Instance.subCategoriesDict.ContainsKey(name))
+                {
+                    customSubCategory sC = new customSubCategory(name, icon);
 
                     Filter f = new Filter(false);
                     f.checks = checks;
                     sC.filters.Add(f);
-                    Core.Instance.subCategoriesDict.Add(props, sC);
+                    Core.Instance.subCategoriesDict.Add(name, sC);
                 }
-                engines.Add(props);
+                engines.Add(name);
             }
             subCategories.AddUniqueRange(engines);
         }
@@ -236,7 +241,7 @@ namespace FilterExtensions.ConfigNodes
 
         public bool hasSubCategories()
         {
-            return (this.subCategories != null && this.subCategories.Length > 0);
+            return (this.subCategories != null && this.subCategories.Any());
         }
 
         public override bool Equals(object obj)

@@ -32,7 +32,9 @@ namespace FilterExtensions
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
-                if (cat != null && cat.hasSubCategories() && cat.stockCategory)
+                if (cat == null)
+                    continue;
+                if (cat.hasSubCategories() && cat.stockCategory)
                 {
                     if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
                         C.subcategories.Clear();

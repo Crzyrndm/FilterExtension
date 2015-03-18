@@ -202,8 +202,8 @@ namespace FilterExtensions.Utility
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            string folder = Core.partPathDict[part.name].Split(new char[] { '\\', '/' })[0];
-            if (Core.partPathDict.ContainsKey(part.name))
+            string folder = Core.Instance.partPathDict[part.name].Split(new char[] { '\\', '/' })[0];
+            if (Core.Instance.partPathDict.ContainsKey(part.name))
                 return values.Any(s => s.Trim() == folder);
             return false;
         }
@@ -216,8 +216,8 @@ namespace FilterExtensions.Utility
 
         internal static bool checkPath(AvailablePart part, string[] values)
         {
-            if (Core.partPathDict.ContainsKey(part.name))
-                return values.Any(s => Core.partPathDict[part.name].StartsWith(s.Trim(), StringComparison.InvariantCultureIgnoreCase));
+            if (Core.Instance.partPathDict.ContainsKey(part.name))
+                return values.Any(s => Core.Instance.partPathDict[part.name].StartsWith(s.Trim(), StringComparison.InvariantCultureIgnoreCase));
 
             return false;
         }
