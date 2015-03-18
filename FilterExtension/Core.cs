@@ -220,7 +220,8 @@ namespace FilterExtensions
 
                 ConfigNode filterByManufacturer = new ConfigNode("CATEGORY");
                 filterByManufacturer.AddValue("name", "Filter by Manufacturer");
-                filterByManufacturer.AddValue("stock", "true");
+                filterByManufacturer.AddValue("type", "stock");
+                filterByManufacturer.AddValue("value", "replace");
                 filterByManufacturer.AddNode(manufacturerSubs);
                 Categories.Add(new customCategory(filterByManufacturer));
             }
@@ -415,27 +416,18 @@ namespace FilterExtensions
             ap.partUrl = url.url;
         }
 
-        //private void checkForEmptySubCategories()
-        //{
-        //    List<customSubCategory> notEmpty = new List<customSubCategory>();
-        //    foreach (customSubCategory sC in subCategories)
-        //    {
-        //        if (!sC.hasFilters)
-        //            notEmpty.Add(sC);
-        //        else
-        //        {
-        //            foreach (AvailablePart p in PartLoader.Instance.parts)
-        //            {
-        //                if (sC.checkFilters(p))
-        //                {
-        //                    notEmpty.Add(sC);
-        //                    break;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    subCategories = notEmpty;
-        //}
+        public static bool checkSubCategoryHasParts(customSubCategory sC)
+        {
+            foreach (AvailablePart p in PartLoader.Instance.parts)
+            {
+                if (sC.checkFilters(p))
+                {
+                    return true;
+                }
+            }
+            Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
+            return false;
+        }
 
         internal static void Log(object o)
         {

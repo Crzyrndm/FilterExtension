@@ -64,31 +64,6 @@ namespace FilterExtensions.ConfigNodes
             return false; // part passed no filter(s), not compatible with this subcategory
         }
 
-        //public void initialise()
-        //{
-        //    PartCategorizer.Icon icon = Core.getIcon(iconName);
-        //    if (icon == null)
-        //    {
-        //        Core.Log(this.subCategoryTitle + " no icon found");
-        //        icon = PartCategorizer.Instance.fallbackIcon;
-        //    }
-
-        //    if (hasFilters)
-        //    {
-        //        PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
-        //        if (category == null)
-        //            return;
-
-        //        PartCategorizer.AddCustomSubcategoryFilter(category, this.subCategoryTitle, icon, p => checkFilters(p));
-        //    }
-        //    //else if (!string.IsNullOrEmpty(oldTitle) && string.IsNullOrEmpty(subCategoryTitle))
-        //    //    Delete(oldTitle); // if there is an old title and no new title we are deleting
-        //    else if (!string.IsNullOrEmpty(subCategoryTitle))
-        //        Edit(subCategoryTitle, icon);
-        //    else
-        //        Core.Log("Invalid subCategory definition");
-        //}
-
         public void initialise(PartCategorizer.Category cat)
         {
             PartCategorizer.Icon icon = Core.getIcon(iconName);
@@ -104,8 +79,6 @@ namespace FilterExtensions.ConfigNodes
                     return;
                 PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
             }
-            //else if (!string.IsNullOrEmpty(subCategoryTitle))
-            //    Edit(subCategoryTitle, icon);
             else
                 Core.Log("Invalid subCategory definition");
         }

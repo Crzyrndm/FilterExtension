@@ -210,14 +210,14 @@ namespace FilterExtensions.Utility
 
         internal static bool checkPath(AvailablePart part, string value)
         {
-            string[] values = value.Split(',');
+            string[] values = value.Replace('\\', '/').Split(',');
             return checkPath(part, values);
         }
 
         internal static bool checkPath(AvailablePart part, string[] values)
         {
             if (Core.partPathDict.ContainsKey(part.name))
-                return values.Any(s => Core.partPathDict[part.name].StartsWith(s, StringComparison.InvariantCultureIgnoreCase));
+                return values.Any(s => Core.partPathDict[part.name].StartsWith(s.Trim(), StringComparison.InvariantCultureIgnoreCase));
 
             return false;
         }

@@ -34,7 +34,8 @@ namespace FilterExtensions
                 customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
                 if (cat != null && cat.hasSubCategories() && cat.stockCategory)
                 {
-                    C.subcategories.Clear();
+                    if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
+                        C.subcategories.Clear();
                     cat.initialise();
                 }
             }

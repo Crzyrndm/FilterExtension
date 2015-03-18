@@ -7,6 +7,14 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
+    public enum categoryTypeAndBehaviour
+    {
+        None,
+        Engines,
+        StockAdd,
+        StockReplace
+    }
+
     public class customCategory : IEquatable<customCategory>
     {
         public string categoryName { get; set; }
@@ -14,31 +22,29 @@ namespace FilterExtensions.ConfigNodes
         public Color colour { get; set; }
         public string type { get; set; } // procedural categories
         public string value { get; set; } // mod folder name for mod type categories
+        public categoryTypeAndBehaviour behaviour { get; set; }
         public bool all { get; set; } // has an all parts subCategory
         public string[] subCategories { get; set; } // array of subcategories
-        public bool stockCategory { get; set; } // editing a stock category or creating a completely new one
         public List<Check> template { get; set; } // Checks to add to every Filter in a category with the template tag
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
         public customCategory(ConfigNode node)
         {
+            bool tmp;
             categoryName = node.GetValue("name");
             iconName = node.GetValue("icon");
             colour = convertToColor(node.GetValue("colour"));
 
             type = node.GetValue("type");
             value = node.GetValue("value");
+
             typeSwitch();
 
             makeTemplate(node);
 
-            bool tmp;
             bool.TryParse(node.GetValue("all"), out tmp);
             this.all = tmp;
-            
-            bool.TryParse(node.GetValue("stock"), out tmp);
-            this.stockCategory = tmp;
             
             ConfigNode subcategoryList = node.GetNode("SUBCATEGORIES", 0);
             if (subcategoryList != null)
@@ -87,6 +93,11 @@ namespace FilterExtensions.ConfigNodes
             else
             {
                 category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryName);
+                if (category == null)
+                {
+                    Core.Log("No Stock category of this name was found: " + categoryName);
+                    return;
+                }
             }
             
             for (int i = 0; i < subCategories.Length; i++)
@@ -118,7 +129,8 @@ namespace FilterExtensions.ConfigNodes
 
                     try
                     {
-                        sC.initialise(category);
+                        if (Core.checkSubCategoryHasParts(sC))
+                            sC.initialise(category);
                     }
                     catch (Exception ex)
                     {
@@ -137,12 +149,23 @@ namespace FilterExtensions.ConfigNodes
             {
                 case "engine":
                     generateEngineTypes();
+                    behaviour = categoryTypeAndBehaviour.Engines;
+                    break;
+                case "stock":
+                    if (value == "replace")
+                        behaviour = categoryTypeAndBehaviour.StockReplace;
+                    else
+                        behaviour = categoryTypeAndBehaviour.StockAdd;
+                    break;
+                default:
+                    behaviour = categoryTypeAndBehaviour.None;
                     break;
             }
         }
 
         private void generateEngineTypes()
         {
+            List<string> engines = new List<string>();
             foreach (List<string> ls in Core.propellantCombos)
             {
                 List<Check> checks = new List<Check>();
@@ -155,15 +178,20 @@ namespace FilterExtensions.ConfigNodes
                     checks.Add(new Check("propellant", s));
                     props += s;
                 }
-                checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
+                if (!Core.Instance.subCategoriesDict.ContainsKey(props))
+                {
+                    checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
-                customSubCategory sC = new customSubCategory(props, "stock_Engines");
+                    customSubCategory sC = new customSubCategory(props, "stock_Engines");
 
-                Filter f = new Filter(false);
-                f.checks = checks;
-                sC.filters.Add(f);
-                Core.Instance.subCategoriesDict.Add(sC.subCategoryTitle, sC);
+                    Filter f = new Filter(false);
+                    f.checks = checks;
+                    sC.filters.Add(f);
+                    Core.Instance.subCategoriesDict.Add(props, sC);
+                }
+                engines.Add(props);
             }
+            subCategories.AddUniqueRange(engines);
         }
 
         private void makeTemplate(ConfigNode node)
@@ -235,6 +263,14 @@ namespace FilterExtensions.ConfigNodes
         public override int GetHashCode()
         {
             return categoryName.GetHashCode();
+        }
+
+        public bool stockCategory
+        {
+            get
+            {
+                return this.behaviour == categoryTypeAndBehaviour.StockAdd || this.behaviour == categoryTypeAndBehaviour.StockReplace;
+            }
         }
     }
 }
