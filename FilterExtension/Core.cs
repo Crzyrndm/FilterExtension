@@ -354,10 +354,7 @@ namespace FilterExtensions
 
         private bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
         {
-            if (fLA.Count == 0 || fLB.Count == 0)
-                return false;
-
-            if (fLA.Count != fLB.Count)
+            if (fLA.Count != fLB.Count && fLA.Count != 0)
                 return false;
 
             foreach (Filter fA in fLA)

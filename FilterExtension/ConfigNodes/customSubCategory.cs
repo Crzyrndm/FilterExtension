@@ -104,28 +104,15 @@ namespace FilterExtensions.ConfigNodes
             if (sC2 == null)
                 return false;
 
-            if (this.hasFilters != sC2.hasFilters || this.iconName != sC2.iconName || this.subCategoryTitle != sC2.subCategoryTitle)
-                return false;
+            if (this.subCategoryTitle == sC2.subCategoryTitle)
+                return true;
 
-            if (this.filters.Count != sC2.filters.Count)
-                return false;
-
-            foreach (Filter f1 in this.filters)
-            {
-                if (!sC2.filters.Any(f2 => f1.Equals(f2)))
-                    return false;
-            }
-            return true;
+            return false;
         }
 
         public override int GetHashCode()
         {
-            int hash = 0;
-            foreach (Filter f in this.filters)
-            {
-                hash *= f.GetHashCode();
-            }
-            return hash * this.hasFilters.GetHashCode() * this.iconName.GetHashCode() * this.subCategoryTitle.GetHashCode();
+            return this.subCategoryTitle.GetHashCode();
         }
     }
 }
