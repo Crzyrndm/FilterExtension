@@ -178,12 +178,9 @@ namespace FilterExtensions.ConfigNodes
                 checks.Add(new Check("propellant", props));
                 checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
-                string name = props.Replace(',', '/');
-                string icon = props;
-                if (Core.Instance.proceduralNames.ContainsKey(name))
-                    name = Core.Instance.proceduralNames[name];
-                if (Core.Instance.proceduralIcons.ContainsKey(name))
-                    icon = Core.Instance.proceduralIcons[name];
+                string name = props.Replace(',', '/'); // can't use ',' as a delimiter in the procedural name/icon switch function
+                string icon = name;
+                Core.Instance.proceduralNameandIcon(ref name, ref icon);
 
                 if (!Core.Instance.subCategoriesDict.ContainsKey(name))
                 {

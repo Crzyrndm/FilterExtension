@@ -50,7 +50,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.0");
+            Log("Version 2.0.2");
             config = KSP.IO.PluginConfiguration.CreateForType<Core>();
             config.load();
 
@@ -122,10 +122,7 @@ namespace FilterExtensions
                     // add spaces before each capital letter
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
                     string icon = "";
-                    if (proceduralNames.ContainsKey(name))
-                        name = proceduralNames[name];
-                    if (proceduralIcons.ContainsKey(name))
-                        icon = proceduralIcons[name];
+                    proceduralNameandIcon(ref name, ref icon);
                     if (name != null && !subCategoriesDict.ContainsKey(name))
                     {
                         customSubCategory sC = new customSubCategory(name, icon);
@@ -233,10 +230,7 @@ namespace FilterExtensions
             {
                 string name = modNames[i];
                 string icon = modNames[i];
-                if (proceduralNames.ContainsKey(name))
-                    name = proceduralNames[name];
-                if (proceduralIcons.ContainsKey(name))
-                    icon = proceduralIcons[name];
+                proceduralNameandIcon(ref name, ref icon);
 
                 Check ch = new Check("folder", modNames[i]);
                 Filter f = new Filter(false);
@@ -270,14 +264,8 @@ namespace FilterExtensions
         private bool stringListComparer(List<string> propellants)
         {
             foreach (List<string> ls in propellantCombos)
-            {
-                if (propellants.Count == ls.Count)
-                {
-                    List<string> tmp = propellants.Except(ls).ToList();
-                    if (!tmp.Any())
-                        return true;
-                }
-            }
+                if (propellants.Count == ls.Count && !propellants.Except(ls).Any())
+                    return true;
             return false;
         }
 
@@ -285,23 +273,15 @@ namespace FilterExtensions
         {
             // Add all the categories
             foreach (customCategory c in Categories)
-            {
                 if (!c.stockCategory)
                     c.initialise();
-            }
-
             // icon autoloader pass
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
-            {
                 checkIcons(c);
-            }
-
             // update icons
             setSelectedCategory();
-
             // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
             PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
-
             // reveal categories because why not
             PartCategorizer.Instance.SetAdvancedMode();
         }
@@ -314,9 +294,7 @@ namespace FilterExtensions
 
             Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == config.GetValue("categoryDefault", "Filter by Function"));
             if (Filter != null)
-            {
                 Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-            }
             else
             {
                 Filter = PartCategorizer.Instance.filters[0];
@@ -377,10 +355,7 @@ namespace FilterExtensions
 
         private static void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null 
-                                                                                                && t.texture.height <= 40 && t.texture.width <= 40
-                                                                                                && t.texture.width >= 25 && t.texture.height >= 25
-                                                                                                ).ToList();
+            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null && t.texture.height <= 40 && t.texture.width <= 40 && t.texture.width >= 25 && t.texture.height >= 25).ToList();
 
             Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
             // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
@@ -404,7 +379,6 @@ namespace FilterExtensions
             foreach (GameDatabase.TextureInfo t in texList)
             {
                 Texture2D selectedTex = null;
-
                 if (texDict.ContainsKey(t.name + "_selected"))
                     selectedTex = texDict[t.name + "_selected"].texture;
                 else
@@ -421,11 +395,11 @@ namespace FilterExtensions
                     Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
                 }
 
-                PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
-                
-                // shouldn't be neccesary to check, but just in case...
-                if (!Instance.iconDict.ContainsKey(icon.name))
+                if (!Instance.iconDict.ContainsKey(name))
+                {
+                    PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
                     Instance.iconDict.Add(icon.name, icon);
+                }
             }
         }
 
@@ -444,24 +418,27 @@ namespace FilterExtensions
         private void RepairAvailablePartUrl(AvailablePart ap)
         {
             var url = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(u => u.name.Replace('_', '.') == ap.name);
-
             if (url == null)
                 return;
-
             ap.partUrl = url.url;
         }
 
         public static bool checkSubCategoryHasParts(customSubCategory sC)
         {
             foreach (AvailablePart p in PartLoader.Instance.parts)
-            {
                 if (sC.checkFilters(p))
-                {
                     return true;
-                }
-            }
+
             Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
             return false;
+        }
+
+        public void proceduralNameandIcon(ref string name, ref string icon)
+        {
+            if (proceduralNames.ContainsKey(name))
+                name = proceduralNames[name];
+            if (proceduralIcons.ContainsKey(name))
+                icon = proceduralIcons[name];
         }
 
         internal static void Log(object o)
