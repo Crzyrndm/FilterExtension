@@ -202,9 +202,11 @@ namespace FilterExtensions.Utility
 
         internal static bool checkFolder(AvailablePart part, string[] values)
         {
-            string folder = Core.Instance.partPathDict[part.name].Split(new char[] { '\\', '/' })[0];
             if (Core.Instance.partPathDict.ContainsKey(part.name))
+            {
+                string folder = Core.Instance.partPathDict[part.name].Split(new char[] { '\\', '/' })[0];
                 return values.Any(s => s.Trim() == folder);
+            }
             return false;
         }
 
