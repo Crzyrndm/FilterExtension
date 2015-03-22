@@ -65,5 +65,13 @@ namespace FilterExtensions
 
             Core.Instance.config.save();
         }
+
+        //public void OnGUI()
+        //{
+        //    if(GUI.Button(new Rect(500, 500, 100, 100), "Sort"))
+        //    {
+        //        EditorPartList.Instance.Refresh(new PartComparer());
+        //    }
+        //}
     }
 }

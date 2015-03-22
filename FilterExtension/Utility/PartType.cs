@@ -17,8 +17,6 @@ namespace FilterExtensions.Utility
 
         internal static bool checkCustom(AvailablePart part, string value)
         {
-
-
             bool val;
             switch (value)
             {
@@ -291,15 +289,6 @@ namespace FilterExtensions.Utility
         public static bool isCabin(AvailablePart part)
         {
             if (!part.partPrefab.Modules.OfType<ModuleCommand>().Any() && part.partPrefab.CrewCapacity > 0)
-                return true;
-            return false;
-        }
-
-        public static bool isFuselage(AvailablePart part)
-        {
-            if (!(part.partPrefab.Modules.Count == 0 && part.partPrefab.Resources.Count == 0 && part.partPrefab.attachNodes.Count == 2 && part.category.ToString() != "Aero"))
-                return false;
-            if (part.partPrefab.attachNodes[0].size == part.partPrefab.attachNodes[1].size)
                 return true;
             return false;
         }

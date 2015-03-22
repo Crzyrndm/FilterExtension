@@ -70,63 +70,61 @@ namespace FilterExtensions.ConfigNodes
 
             bool result = true;
 
-            if (result)
+            switch (type)
             {
-                switch (type)
-                {
-                    case "moduleTitle": // check by module title
-                        result = PartType.checkModuleTitle(part, value, contains);
-                        break;
-                    case "moduleName":
-                        result = PartType.checkModuleName(part, value, contains);
-                        break;
-                    case "name": // check by part name (cfg name)
-                        result = PartType.checkName(part, value);
-                        break;
-                    case "title": // check by part title (in game name)
-                        result = PartType.checkTitle(part, value);
-                        break;
-                    case "resource": // check for a resource
-                        result = PartType.checkResource(part, value, contains);
-                        break;
-                    case "propellant": // check for engine propellant
-                        result = PartType.checkPropellant(part, value, contains);
-                        break;
-                    case "tech": // check by tech
-                        result = PartType.checkTech(part, value);
-                        break;
-                    case "manufacturer": // check by manufacturer
-                        result = PartType.checkManufacturer(part, value);
-                        break;
-                    case "folder": // check by mod root folder
-                        result = PartType.checkFolder(part, value);
-                        break;
-                    case "path": // check by mod root folder
-                        result = PartType.checkPath(part, value);
-                        break;
-                    case "category":
-                        result = PartType.checkCategory(part, value);
-                        break;
-                    case "size": // check by largest stack node size
-                        result = PartType.checkPartSize(part, value, contains);
-                        break;
-                    case "crew":
-                        result = PartType.checkCrewCapacity(part, value);
-                        break;
-                    case "custom": // for when things get tricky
-                        result = PartType.checkCustom(part, value);
-                        break;
-                    case "check":
-                        foreach (Check c in checks)
-                        {
-                            if (!c.checkPart(part))
-                                result = false;
-                        }
-                        break;
-                    default:
-                        result = false;
-                        break;
-                }
+                case "moduleTitle": // check by module title
+                    result = PartType.checkModuleTitle(part, value, contains);
+                    break;
+                case "moduleName":
+                    result = PartType.checkModuleName(part, value, contains);
+                    break;
+                case "name": // check by part name (cfg name)
+                    result = PartType.checkName(part, value);
+                    break;
+                case "title": // check by part title (in game name)
+                    result = PartType.checkTitle(part, value);
+                    break;
+                case "resource": // check for a resource
+                    result = PartType.checkResource(part, value, contains);
+                    break;
+                case "propellant": // check for engine propellant
+                    result = PartType.checkPropellant(part, value, contains);
+                    break;
+                case "tech": // check by tech
+                    result = PartType.checkTech(part, value);
+                    break;
+                case "manufacturer": // check by manufacturer
+                    result = PartType.checkManufacturer(part, value);
+                    break;
+                case "folder": // check by mod root folder
+                    result = PartType.checkFolder(part, value);
+                    break;
+                case "path": // check by mod root folder
+                    result = PartType.checkPath(part, value);
+                    break;
+                case "category":
+                    result = PartType.checkCategory(part, value);
+                    break;
+                case "size": // check by largest stack node size
+                    result = PartType.checkPartSize(part, value, contains);
+                    break;
+                case "crew":
+                    result = PartType.checkCrewCapacity(part, value);
+                    break;
+                case "custom": // for when things get tricky
+                    result = PartType.checkCustom(part, value);
+                    break;
+                case "check":
+                    foreach (Check c in checks)
+                    {
+                        if (!c.checkPart(part))
+                            result = false;
+                    }
+                    break;
+                default:
+                    Core.Log("invalid Check type specified");
+                    result = false;
+                    break;
             }
             
             if (invert)
