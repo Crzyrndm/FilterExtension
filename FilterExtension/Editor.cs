@@ -32,46 +32,47 @@ namespace FilterExtensions
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
-                if (cat == null)
-                    continue;
-                if (cat.hasSubCategories() && cat.stockCategory)
+                if (cat != null && cat.hasSubCategories() && cat.stockCategory)
                 {
                     if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
                         C.subcategories.Clear();
                     cat.initialise();
                 }
             }
-
             // custom categories
             // wait until the part menu is initialised
             while (!PartCategorizer.Ready)
                 yield return null;
+
             // frames after the flag is set to wait before initialising. Minimum of two for things to work consistently
             for (int i = 0; i < 4; i++)
                 yield return null;
+
             // run everything
-            Core.Instance.editor();
+            foreach (customCategory c in Core.Instance.Categories)
+                if (!c.stockCategory)
+                    c.initialise();
 
-            //for (int i = 0; i < EditorPartList.Instance.sortingGroup.sortingButtons.Count; i++)
-            //{
-            //    UIStateToggleBtn but = EditorPartList.Instance.sortingGroup.sortingButtons[i];
+            // wait again so icon edits don't occur immediately and cause breakages
+            for (int i = 0; i < 4; i++)
+                yield return null;
+            // edit names and icons of all subcategories
+            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
+                Core.Instance.namesAndIcons(c);
 
-            //    Sorting sorter = new Sorting(but, "Mass"); // replace as appropriate once I find how sorting is done
-            //    sorters.Add(sorter);
-
-            //    //Core.Log(but.spriteText.text); // Name, Mass, Cost, Size
-            //    //Core.Log(but.StateName); // ASC, DESC
-            //}
+            Core.Instance.setSelectedCategory();
+            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
+            List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
+            foreach (PartCategorizer.Category cat in catsToDelete)
+            {
+                Core.Log("removing Category " + cat.button.categoryName);
+                PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
+                PartCategorizer.Instance.filters.Remove(cat);
+            }
+            // reveal categories because why not
+            PartCategorizer.Instance.SetAdvancedMode();
 
             Core.Instance.config.save();
         }
-
-        //public void OnGUI()
-        //{
-        //    if(GUI.Button(new Rect(500, 500, 100, 100), "Sort"))
-        //    {
-        //        EditorPartList.Instance.Refresh(new PartComparer());
-        //    }
-        //}
     }
 }

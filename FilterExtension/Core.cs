@@ -269,23 +269,6 @@ namespace FilterExtensions
             return false;
         }
 
-        internal void editor()
-        {
-            // Add all the categories
-            foreach (customCategory c in Categories)
-                if (!c.stockCategory)
-                    c.initialise();
-            // icon autoloader pass
-            foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
-                checkIcons(c);
-            // update icons
-            setSelectedCategory();
-            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
-            PartCategorizer.Instance.filters.RemoveAll(c => c.subcategories.Count == 0);
-            // reveal categories because why not
-            PartCategorizer.Instance.SetAdvancedMode();
-        }
-
         public void setSelectedCategory()
         {
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
@@ -343,13 +326,36 @@ namespace FilterExtensions
             return true;
         }
 
-        private void checkIcons(PartCategorizer.Category category)
+        /// <summary>
+        /// checks all subcategories and edits their names/icons if required
+        /// </summary>
+        public void namesAndIcons(PartCategorizer.Category category)
         {
             foreach (PartCategorizer.Category c in category.subcategories)
             {
-                // if any of the names of the loaded icons match the subCategory name and it didn't get a proper icon
-                if (iconDict.ContainsKey(c.button.categoryName) && (c.button.icon == PartCategorizer.Instance.fallbackIcon || !subCategoriesDict.ContainsKey(c.button.categoryName)))
-                    c.button.SetIcon(getIcon(c.button.categoryName));
+                if (subCategoriesDict.ContainsKey(c.button.categoryName))
+                {// custom subcategory that didn't define any icon
+                    if (string.IsNullOrEmpty(subCategoriesDict[c.button.categoryName].iconName))
+                    {
+                        if (iconDict.ContainsKey(c.button.categoryName))
+                            c.button.SetIcon(getIcon(c.button.categoryName));
+                    }
+                }
+                else
+                {// subcategory created by someone else (stock or other plugin)
+                    if (proceduralNames.ContainsKey(c.button.categoryName)) // update the name first
+                        c.button.categoryName = proceduralNames[c.button.categoryName];
+
+                    if (proceduralIcons.ContainsKey(c.button.categoryName)) // update the icon
+                    {
+                        if (iconDict.ContainsKey(proceduralIcons[c.button.categoryName])) // if the icon dict contains a matching name
+                            c.button.SetIcon(getIcon(proceduralIcons[c.button.categoryName]));
+                        else if (iconDict.ContainsKey(c.button.categoryName)) // if it doesn't
+                            c.button.SetIcon(getIcon(c.button.categoryName));
+                    }
+                    else if (iconDict.ContainsKey(c.button.categoryName))
+                        c.button.SetIcon(getIcon(c.button.categoryName));
+                }
             }
         }
 
