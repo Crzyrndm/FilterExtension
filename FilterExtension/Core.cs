@@ -50,7 +50,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.0.2");
+            Log("Version 2.0.4");
             config = KSP.IO.PluginConfiguration.CreateForType<Core>();
             config.load();
 
@@ -104,7 +104,7 @@ namespace FilterExtensions
                 customSubCategory sC = new customSubCategory(node);
                 if (sC.hasFilters)
                 {
-                    if (sC.subCategoryTitle != null)
+                    if (sC.subCategoryTitle != null && checkSubCategoryHasParts(sC))
                     {
                         if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if nothing else has the same title
                             subCategoriesDict.Add(sC.subCategoryTitle, sC);
@@ -406,6 +406,7 @@ namespace FilterExtensions
                     PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
                     Instance.iconDict.Add(icon.name, icon);
                 }
+
             }
         }
 
@@ -429,13 +430,16 @@ namespace FilterExtensions
             ap.partUrl = url.url;
         }
 
-        public static bool checkSubCategoryHasParts(customSubCategory sC)
+        public static bool checkSubCategoryHasParts(customSubCategory sC, string category = "")
         {
             foreach (AvailablePart p in PartLoader.Instance.parts)
                 if (sC.checkFilters(p))
                     return true;
 
-            Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
+            if (!string.IsNullOrEmpty(category))
+                Log(sC.subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
+            else
+                Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
             return false;
         }
 

@@ -128,7 +128,7 @@ namespace FilterExtensions.ConfigNodes
 
                     try
                     {
-                        if (Core.checkSubCategoryHasParts(sC))
+                        if (Core.checkSubCategoryHasParts(sC, categoryName))
                             sC.initialise(category);
                     }
                     catch (Exception ex)
