@@ -99,7 +99,7 @@ namespace FilterExtensions.ConfigNodes
                 case "folder": // check by mod root folder
                     result = PartType.checkFolder(part, value);
                     break;
-                case "path": // check by mod root folder
+                case "path": // check by part folder location
                     result = PartType.checkPath(part, value);
                     break;
                 case "category":

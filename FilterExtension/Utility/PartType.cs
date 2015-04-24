@@ -20,22 +20,14 @@ namespace FilterExtensions.Utility
             bool val;
             switch (value)
             {
-                case "isEngine":
-                    val = isEngine(part);
-                    break;
-                case "isCommand":
-                    val = isCommand(part);
-                    break;
                 case "adapter":
                     val = isAdapter(part);
                     break;
                 case "multicoupler":
                     val = isMultiCoupler(part);
                     break;
-                case "crewCabin":
-                    val = isCabin(part);
-                    break;
                 default:
+                    Core.Log("incorrect value in custom type check");
                     val = false;
                     break;
             }
@@ -317,7 +309,7 @@ namespace FilterExtensions.Utility
 
         public static bool isWing(AvailablePart part)
         {
-            if (part.partPrefab.GetComponent<Winglet>() != null)
+            if (part.partPrefab is Winglet)
                 return true;
             if (part.partPrefab.Modules.Contains("FARWingAerodynamicModel"))
                 return true;

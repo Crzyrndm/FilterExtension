@@ -17,7 +17,6 @@ namespace FilterExtensions
         {
             instance = this;
             StartCoroutine(editorInit());
-            Core.Instance.config.load();
         }
 
         IEnumerator editorInit()
@@ -69,10 +68,11 @@ namespace FilterExtensions
                 PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
+
+
+
             // reveal categories because why not
             PartCategorizer.Instance.SetAdvancedMode();
-
-            Core.Instance.config.save();
         }
     }
 }

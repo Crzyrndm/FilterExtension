@@ -21,10 +21,12 @@ namespace FilterExtensions
         public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
-        // renaming procedural stuff
-        public Dictionary<string, string> proceduralNames = new Dictionary<string, string>();
-        // icons for procedural stuff
-        public Dictionary<string, string> proceduralIcons = new Dictionary<string, string>();
+        // renaming categories not defined by FE
+        public Dictionary<string, string> Rename = new Dictionary<string, string>();
+        // icons for categories not defined by FE
+        public Dictionary<string, string> setIcon = new Dictionary<string, string>();
+        // removing cateogries not defined by FE
+        public HashSet<string> removeSubCategory = new HashSet<string>();
         // url for each part by internal name
         public Dictionary<string, string> partPathDict = new Dictionary<string, string>();
         // entry for each unique combination of propellants
@@ -36,7 +38,9 @@ namespace FilterExtensions
         public Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
 
         // Config has options to disable the FbM replacement, and the default Category/SC and sort method
-        public KSP.IO.PluginConfiguration config;
+        public bool replaceFbM = true;
+        public string categoryDefault;
+        public string subCategoryDefault;
 
         public static Core Instance // Reminder to self, don't be abusing static
         {
@@ -50,12 +54,34 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.0.4");
-            config = KSP.IO.PluginConfiguration.CreateForType<Core>();
-            config.load();
+            Log("Version 2.1.0");
 
-            // get the names and icons for the procedural categories
-            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROCNAMES"))
+            // settings, rename, iconset, and subCat removals
+            getConfigs();
+
+            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
+            getPartData();
+            
+            // load all category configs
+            processFilterDefinitions();
+
+            loadIcons();
+            checkAndMarkConflicts();
+        }
+
+        private void getConfigs()
+        {
+            ConfigNode settings = GameDatabase.Instance.GetConfigNode("FilterSettings");
+            if (settings != null)
+            {
+                if (!bool.TryParse(settings.GetValue("replaceFbM"), out replaceFbM))
+                    replaceFbM = true;
+                categoryDefault = settings.GetValue("categoryDefault");
+                subCategoryDefault = settings.GetValue("subCategoryDefault");
+            }
+
+
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRename"))
             {
                 string[] names = node.GetValues("name");
                 foreach (string s in names)
@@ -64,13 +90,13 @@ namespace FilterExtensions
                     {
                         string nameToReplace = s.Split(',')[0].Trim();
                         string newName = s.Split(',')[1].Trim();
-                        if (!proceduralNames.ContainsKey(nameToReplace))
-                            proceduralNames.Add(nameToReplace, newName);
+                        if (!Rename.ContainsKey(nameToReplace))
+                            Rename.Add(nameToReplace, newName);
                     }
                 }
             }
 
-            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROCICONS"))
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterSetIcon"))
             {
                 string[] icons = node.GetValues("icon");
                 foreach (string s in icons)
@@ -79,16 +105,64 @@ namespace FilterExtensions
                     {
                         string categoryName = s.Split(',')[0].Trim();
                         string icon = s.Split(',')[1].Trim();
-                        if (!proceduralIcons.ContainsKey(categoryName))
-                            proceduralIcons.Add(categoryName, icon);
+                        if (!setIcon.ContainsKey(categoryName))
+                            setIcon.Add(categoryName, icon);
                     }
                 }
             }
 
-            // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
-            getPartData();
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRemove"))
+            {
+                string[] toRemove = node.GetValues("remove");
+                foreach (string s in toRemove)
+                {
+                    if (string.IsNullOrEmpty(s.Trim()))
+                        continue;
+                    removeSubCategory.Add(s.Trim()); // hashset apparently doesn't need duplicate check
+                }
+            }
+        }
+
+        private void getPartData()
+        {
+            List<string> modNames = new List<string>();
+
+            foreach (AvailablePart p in PartLoader.Instance.parts)
+            {
+                // don't want dummy parts, roids, etc. (need to make MM configs for mods that use this category)
+                if (p == null || p.category == PartCategories.none)
+                    continue;
+                
+                if (string.IsNullOrEmpty(p.partUrl))
+                    RepairAvailablePartUrl(p);
+                
+                // if the url is still borked, can't associate a mod to the part
+                if (!string.IsNullOrEmpty(p.partUrl))
+                {
+                    // list of GameData folders
+                    modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
+
+                    // associate the path to the part
+                    if (!partPathDict.ContainsKey(p.name))
+                        partPathDict.Add(p.name, p.partUrl);
+                    else
+                        Log(p.name + " duplicated part key in part path dictionary");
+                }
+
+                if (PartType.isEngine(p))
+                    processEnginePropellants(p);
+
+                if (p.partPrefab.Resources != null)
+                    foreach (PartResource r in p.partPrefab.Resources)
+                        resources.AddUnique(r.resourceName);
+            }
             
-            // load all category configs
+            if (replaceFbM)
+                processFilterByManufacturer(modNames);
+        }
+
+        private void processFilterDefinitions()
+        {
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
                 customCategory C = new customCategory(node);
@@ -97,7 +171,7 @@ namespace FilterExtensions
                     Categories.Add(C);
                 }
             }
-            
+
             //load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
@@ -154,47 +228,6 @@ namespace FilterExtensions
                 subCategoriesDict.Add(newSub.subCategoryTitle, newSub);
                 C.subCategories.Insert(0, newSub.subCategoryTitle);
             }
-            loadIcons();
-            checkAndMarkConflicts();
-        }
-
-        private void getPartData()
-        {
-            List<string> modNames = new List<string>();
-
-            foreach (AvailablePart p in PartLoader.Instance.parts)
-            {
-                // don't want dummy parts, roids, etc. (need to make MM configs for mods that use this category)
-                if (p == null || p.category == PartCategories.none)
-                    continue;
-                
-                if (string.IsNullOrEmpty(p.partUrl))
-                    RepairAvailablePartUrl(p);
-                
-                // if the url is still borked, can't associate a mod to the part
-                if (!string.IsNullOrEmpty(p.partUrl))
-                {
-                    // list of GameData folders
-                    modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
-
-                    // associate the path to the part
-                    if (!partPathDict.ContainsKey(p.name))
-                        partPathDict.Add(p.name, p.partUrl);
-                    else
-                        Log(p.name + " duplicated part key in part path dictionary");
-                }
-
-                if (PartType.isEngine(p))
-                    processEnginePropellants(p);
-
-                if (p.partPrefab.Resources != null)
-                    foreach (PartResource r in p.partPrefab.Resources)
-                        resources.AddUnique(r.resourceName);
-            }
-            bool FbM = config.GetValue("replaceFbM", true);
-            config["replaceFbM"] = FbM;
-            if (FbM)
-                processFilterByManufacturer(modNames);
         }
 
         private void processEnginePropellants(AvailablePart p)
@@ -275,7 +308,7 @@ namespace FilterExtensions
             if (Filter != null)
                 Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
 
-            Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == config.GetValue("categoryDefault", "Filter by Function"));
+            Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == categoryDefault);
             if (Filter != null)
                 Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
             else
@@ -284,7 +317,7 @@ namespace FilterExtensions
                 Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
             }
 
-            Filter = Filter.subcategories.Find(sC => sC.button.categoryName == config.GetValue("subCategoryDefault", "none"));
+            Filter = Filter.subcategories.Find(sC => sC.button.categoryName == subCategoryDefault);
             if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
                 Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
         }
@@ -331,6 +364,7 @@ namespace FilterExtensions
         /// </summary>
         public void namesAndIcons(PartCategorizer.Category category)
         {
+            List<string> toRemove = new List<string>();
             foreach (PartCategorizer.Category c in category.subcategories)
             {
                 if (subCategoriesDict.ContainsKey(c.button.categoryName))
@@ -342,21 +376,25 @@ namespace FilterExtensions
                     }
                 }
                 else
-                {// subcategory created by someone else (stock or other plugin)
-                    if (proceduralNames.ContainsKey(c.button.categoryName)) // update the name first
-                        c.button.categoryName = proceduralNames[c.button.categoryName];
+                {// subcategory created by someone else (stock or other plugin). Edits to FE subcats should be made through MM
+                    if (Rename.ContainsKey(c.button.categoryName)) // update the name first
+                        c.button.categoryName = Rename[c.button.categoryName];
 
-                    if (proceduralIcons.ContainsKey(c.button.categoryName)) // update the icon
+                    if (setIcon.ContainsKey(c.button.categoryName)) // update the icon
                     {
-                        if (iconDict.ContainsKey(proceduralIcons[c.button.categoryName])) // if the icon dict contains a matching name
-                            c.button.SetIcon(getIcon(proceduralIcons[c.button.categoryName]));
+                        if (iconDict.ContainsKey(setIcon[c.button.categoryName])) // if the icon dict contains a matching name
+                            c.button.SetIcon(getIcon(setIcon[c.button.categoryName]));
                         else if (iconDict.ContainsKey(c.button.categoryName)) // if it doesn't
                             c.button.SetIcon(getIcon(c.button.categoryName));
                     }
                     else if (iconDict.ContainsKey(c.button.categoryName))
                         c.button.SetIcon(getIcon(c.button.categoryName));
+
+                    if (removeSubCategory.Contains(c.button.categoryName))
+                        toRemove.Add(c.button.categoryName);
                 }
             }
+            category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
         }
 
         private static void loadIcons()
@@ -445,10 +483,10 @@ namespace FilterExtensions
 
         public void proceduralNameandIcon(ref string name, ref string icon)
         {
-            if (proceduralNames.ContainsKey(name))
-                name = proceduralNames[name];
-            if (proceduralIcons.ContainsKey(name))
-                icon = proceduralIcons[name];
+            if (Rename.ContainsKey(name))
+                name = Rename[name];
+            if (setIcon.ContainsKey(name))
+                icon = setIcon[name];
         }
 
         internal static void Log(object o)
