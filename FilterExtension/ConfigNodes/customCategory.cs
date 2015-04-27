@@ -80,9 +80,9 @@ namespace FilterExtensions.ConfigNodes
             PartCategorizer.Category category;
             if (!stockCategory)
             {
-                PartCategorizer.Icon icon = Core.getIcon(iconName);
+                RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
                 if (icon == null)
-                    icon = PartCategorizer.Instance.fallbackIcon;
+                    icon = PartCategorizer.Instance.iconLoader.iconDictionary["number1"];
                 PartCategorizer.AddCustomFilter(categoryName, icon, colour);
 
                 category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryName);

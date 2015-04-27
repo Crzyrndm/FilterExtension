@@ -35,7 +35,7 @@ namespace FilterExtensions
         public List<string> resources = new List<string>();
 
         // Dictionary of icons created on entering the main menu
-        public Dictionary<string, PartCategorizer.Icon> iconDict = new Dictionary<string, PartCategorizer.Icon>();
+        public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
 
         // Config has options to disable the FbM replacement, and the default Category/SC and sort method
         public bool replaceFbM = true;
@@ -441,21 +441,22 @@ namespace FilterExtensions
 
                 if (!Instance.iconDict.ContainsKey(name))
                 {
-                    PartCategorizer.Icon icon = new PartCategorizer.Icon(name, t.texture, selectedTex, false);
+                    RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
                     Instance.iconDict.Add(icon.name, icon);
                 }
 
             }
         }
 
-        public static PartCategorizer.Icon getIcon(string name)
+        public static RUI.Icons.Selectable.Icon getIcon(string name)
         {
             if (string.IsNullOrEmpty(name))
                 return null;
             if (Instance.iconDict.ContainsKey(name))
                 return Instance.iconDict[name];
-            if (PartCategorizer.Instance.iconDictionary.ContainsKey(name))
-                return PartCategorizer.Instance.iconDictionary[name];
+            if (PartCategorizer.Instance.iconLoader.iconDictionary.ContainsKey(name))
+                return PartCategorizer.Instance.iconLoader.iconDictionary[name];
+            
             return null;
         }
 
