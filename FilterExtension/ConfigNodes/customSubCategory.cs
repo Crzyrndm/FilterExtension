@@ -72,7 +72,6 @@ namespace FilterExtensions.ConfigNodes
                 Core.Log(this.subCategoryTitle + " no icon found");
                 icon = PartCategorizer.Instance.iconLoader.iconDictionary.First().Value;
             }
-
             if (hasFilters)
             {
                 if (cat == null)
