@@ -190,6 +190,8 @@ namespace FilterExtensions.ConfigNodes
                     f.checks = checks;
                     sC.filters.Add(f);
                     Core.Instance.subCategoriesDict.Add(name, sC);
+
+                    Debug.Log(sC.toConfigNode());
                 }
                 engines.Add(name);
             }

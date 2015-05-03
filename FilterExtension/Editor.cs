@@ -61,14 +61,16 @@ namespace FilterExtensions
             Core.Instance.setSelectedCategory();
             // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
+
+            for (int i = 0; i < 4; i++)
+                yield return null;
+
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
                 Core.Log("removing Category " + cat.button.categoryName);
                 PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
-
-
 
             // reveal categories because why not
             PartCategorizer.Instance.SetAdvancedMode();

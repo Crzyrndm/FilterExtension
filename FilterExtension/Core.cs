@@ -192,11 +192,22 @@ namespace FilterExtensions
             if (Cat != null)
             {
                 foreach (string s in resources)
+                    Debug.Log(s);
+                foreach (string s in resources)
                 {
                     // add spaces before each capital letter
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
-                    string icon = "";
-                    proceduralNameandIcon(ref name, ref icon);
+                    if (subCategoriesDict.ContainsKey(name))
+                    {
+                        if (subCategoriesDict[name].filters.Count == 1 && subCategoriesDict[name].filters[0].checks.Count > 0)
+                        {
+                            if (subCategoriesDict[name].filters[0].checks[0].type == "resource" && subCategoriesDict[name].filters[0].checks[0].value == s)
+                                continue;
+                        }
+                        name = "res_" + name;
+                    }
+                    string icon = name;
+                    //proceduralNameandIcon(ref name, ref icon);
                     if (name != null && !subCategoriesDict.ContainsKey(name))
                     {
                         customSubCategory sC = new customSubCategory(name, icon);
@@ -262,7 +273,9 @@ namespace FilterExtensions
             for (int i = 0; i < modNames.Count; i++)
             {
                 string name = modNames[i];
-                string icon = modNames[i];
+                if (subCategoriesDict.ContainsKey(modNames[i]))
+                    name = "mod_" + name;
+                string icon = name;
                 proceduralNameandIcon(ref name, ref icon);
 
                 Check ch = new Check("folder", modNames[i]);
@@ -272,8 +285,8 @@ namespace FilterExtensions
 
                 f.checks.Add(ch);
                 sC.filters.Add(f);
-                if (!subCategoriesDict.ContainsKey(modNames[i]))
-                    subCategoriesDict.Add(modNames[i], sC);
+                if (!subCategoriesDict.ContainsKey(name))
+                    subCategoriesDict.Add(name, sC);
             }
 
             // if there's nothing defined for fbm, create the category
@@ -367,16 +380,10 @@ namespace FilterExtensions
             List<string> toRemove = new List<string>();
             foreach (PartCategorizer.Category c in category.subcategories)
             {
-                if (subCategoriesDict.ContainsKey(c.button.categoryName))
-                {// custom subcategory that didn't define any icon
-                    if (string.IsNullOrEmpty(subCategoriesDict[c.button.categoryName].iconName))
-                    {
-                        if (iconDict.ContainsKey(c.button.categoryName))
-                            c.button.SetIcon(getIcon(c.button.categoryName));
-                    }
-                }
+                if (removeSubCategory.Contains(c.button.categoryName))
+                    toRemove.Add(c.button.categoryName);
                 else
-                {// subcategory created by someone else (stock or other plugin). Edits to FE subcats should be made through MM
+                {
                     if (Rename.ContainsKey(c.button.categoryName)) // update the name first
                         c.button.categoryName = Rename[c.button.categoryName];
 
@@ -389,9 +396,6 @@ namespace FilterExtensions
                     }
                     else if (iconDict.ContainsKey(c.button.categoryName))
                         c.button.SetIcon(getIcon(c.button.categoryName));
-
-                    if (removeSubCategory.Contains(c.button.categoryName))
-                        toRemove.Add(c.button.categoryName);
                 }
             }
             category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
