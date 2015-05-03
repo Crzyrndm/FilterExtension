@@ -70,7 +70,7 @@ namespace FilterExtensions.ConfigNodes
             if (icon == null)
             {
                 Core.Log(this.subCategoryTitle + " no icon found");
-                icon = PartCategorizer.Instance.iconLoader.iconDictionary["number1"];
+                icon = PartCategorizer.Instance.iconLoader.iconDictionary.First().Value;
             }
 
             if (hasFilters)
