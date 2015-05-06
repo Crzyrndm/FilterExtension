@@ -192,8 +192,6 @@ namespace FilterExtensions
             if (Cat != null)
             {
                 foreach (string s in resources)
-                    Debug.Log(s);
-                foreach (string s in resources)
                 {
                     // add spaces before each capital letter
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");

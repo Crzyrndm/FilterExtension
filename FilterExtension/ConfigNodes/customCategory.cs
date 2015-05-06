@@ -175,7 +175,8 @@ namespace FilterExtensions.ConfigNodes
                         props += ",";
                     props += s;
                 }
-                checks.Add(new Check("propellant", props));
+                foreach (string s in props.Split(','))
+                    checks.Add(new Check("propellant", s.Trim()));
                 checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
                 string name = props.Replace(',', '/'); // can't use ',' as a delimiter in the procedural name/icon switch function
@@ -190,8 +191,6 @@ namespace FilterExtensions.ConfigNodes
                     f.checks = checks;
                     sC.filters.Add(f);
                     Core.Instance.subCategoriesDict.Add(name, sC);
-
-                    Debug.Log(sC.toConfigNode());
                 }
                 engines.Add(name);
             }
@@ -209,6 +208,8 @@ namespace FilterExtensions.ConfigNodes
 
             Filter filter = new Filter(filtNode);
             this.template = filter.checks;
+
+            
         }
 
         public static Color convertToColor(string hex_ARGB)

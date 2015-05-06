@@ -94,9 +94,6 @@ namespace FilterExtensions.Utility
             }
             else
             {
-                foreach (string s in value.Split(','))
-                    if (!part.moduleInfos.Any(i => i.moduleName == s.Trim()))
-                        return true;
                 foreach (AvailablePart.ModuleInfo i in part.moduleInfos)
                 {
                     if (!value.Split(',').Contains(i.moduleName))
@@ -112,10 +109,6 @@ namespace FilterExtensions.Utility
                 return value.Split(',').Any(s => part.partPrefab.Modules.Contains(s.Trim()));
             else
             {
-                foreach (string s in value.Split(','))
-                    if (!part.partPrefab.Modules.Contains(s.Trim()))
-                        return true;
-
                 foreach (PartModule module in part.partPrefab.Modules)
                     if (!value.Split(',').Contains(module.ClassName))
                         return true;
@@ -139,9 +132,6 @@ namespace FilterExtensions.Utility
                 return value.Split(',').Any(s => part.partPrefab.Resources.Contains(s.Trim()));
             else
             {
-                foreach (string s in value.Split(','))
-                    if (!part.partPrefab.Resources.Contains(s.Trim()))
-                        return true;
                 foreach (PartResource r in part.partPrefab.Resources)
                     if (!value.Split(',').Contains(r.resourceName))
                         return true;
@@ -170,10 +160,6 @@ namespace FilterExtensions.Utility
                 }
                 else
                 {
-                    foreach (string s in value.Split(','))
-                        if (!Lp.Any(p => p.name == s.Trim()))
-                            return true;
-
                     foreach (Propellant p in Lp)
                         if (!value.Split(',').Contains(p.name))
                             return true;

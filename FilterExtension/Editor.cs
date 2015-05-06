@@ -59,15 +59,13 @@ namespace FilterExtensions
                 Core.Instance.namesAndIcons(c);
 
             Core.Instance.setSelectedCategory();
-            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakages
-            List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
-
+            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakage
             for (int i = 0; i < 4; i++)
                 yield return null;
-
+            List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
-                Core.Log("removing Category " + cat.button.categoryName);
+                //Core.Log("removing Category " + cat.button.categoryName);
                 PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
