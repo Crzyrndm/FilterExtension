@@ -54,7 +54,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.1.0");
+            Log("Version 2.1.1");
 
             // settings, rename, iconset, and subCat removals
             getConfigs();
