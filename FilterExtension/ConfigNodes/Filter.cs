@@ -7,16 +7,36 @@ namespace FilterExtensions.ConfigNodes
 {
     public class Filter
     {
-        internal List<Check> checks = new List<Check>(); // checks are processed in serial (a && b), inversion gives (!a || !b) logic
-        internal bool invert = false;
+        public List<Check> checks { get; set; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
+        public bool invert { get; set; }
 
         public Filter(ConfigNode node)
         {
+            checks = new List<Check>();
             foreach (ConfigNode subNode in node.GetNodes("CHECK"))
             {
                 checks.Add(new Check(subNode));
             }
-            bool.TryParse(node.GetValue("invert"), out invert);
+
+            bool tmp;
+            bool.TryParse(node.GetValue("invert"), out tmp);
+            invert = tmp;
+        }
+
+        public Filter(bool invert)
+        {
+            checks = new List<Check>();
+            this.invert = invert;
+        }
+
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("FILTER");
+            node.AddValue("invert", this.invert.ToString());
+            foreach (Check c in checks)
+                node.AddNode(c.toConfigNode());
+
+            return node;
         }
 
         internal bool checkFilter(AvailablePart part)

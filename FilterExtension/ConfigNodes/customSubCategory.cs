@@ -7,96 +7,93 @@ namespace FilterExtensions.ConfigNodes
 {
     public class customSubCategory
     {
-        internal string category; // parent category
-        internal string subCategoryTitle; // title of this subcategory
-        internal string oldTitle; // title generated for the auto extending categories to search by
-        internal string iconName; // default icon to use
-        internal List<Filter> filters = new List<Filter>(); // Filters are OR'd together (pass if it meets this filter, or this filter)
-        internal bool filter = false;
+        public string subCategoryTitle { get; set; } // title of this subcategory
+        public string iconName { get; set; } // default icon to use
+        public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
 
-        public customSubCategory(ConfigNode node, string Category)
+        public bool hasFilters
         {
-            this.category = Category;
+            get
+            {
+                return filters.Count > 0;
+            }
+        }
+
+        public customSubCategory(ConfigNode node)
+        {
             subCategoryTitle = node.GetValue("name");
             if (string.IsNullOrEmpty(subCategoryTitle))
                 subCategoryTitle = node.GetValue("title");
 
             iconName = node.GetValue("icon");
-            oldTitle = node.GetValue("oldTitle");
 
+            filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
-
-                // if there's an "All parts" subcategory, add the filters to it
-                if (Core.Instance.categoryAllSub.ContainsKey(category))
-                    Core.Instance.categoryAllSub[category].filters.Add(new Filter(subNode));
             }
-            filter = filters.Count > 0;
+        }
+
+        public customSubCategory(string name, string icon)
+        {
+            filters = new List<Filter>();
+            this.subCategoryTitle = name;
+            this.iconName = icon;
+        }
+
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("SUBCATEGORY");
+
+            node.AddValue("name", this.subCategoryTitle);
+            node.AddValue("icon", this.iconName);
+
+            foreach (Filter f in this.filters)
+                node.AddNode(f.toConfigNode());
+
+            return node;
         }
 
         public bool checkFilters(AvailablePart part)
         {
             foreach (Filter f in filters)
             {
-                bool val = f.checkFilter(part);
-                if (val)
+                if (f.checkFilter(part))
                     return true;
             }
             return false; // part passed no filter(s), not compatible with this subcategory
         }
 
-        public void initialise()
+        public void initialise(PartCategorizer.Category cat)
         {
-            PartCategorizer.Icon icon;
-            if (string.IsNullOrEmpty(iconName))
+            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
+            if (icon == null)
             {
-                Core.Log(this.subCategoryTitle + " missing icon reference");
-                icon = PartCategorizer.Instance.fallbackIcon;
+                Core.Log(this.subCategoryTitle + " no icon found");
+                icon = PartCategorizer.Instance.iconLoader.iconDictionary.First().Value;
             }
-            else
+            if (hasFilters)
             {
-                icon = Core.getIcon(iconName);
-                if (icon == null)
-                {
-                    Core.Log(this.subCategoryTitle + " no icon found");
-                    icon = PartCategorizer.Instance.fallbackIcon;
-                }
-            }
-
-            if (filter)
-            {
-                PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == this.category);
-                if (category == null)
-                {
+                if (cat == null)
                     return;
-                }
-
-                PartCategorizer.AddCustomSubcategoryFilter(category, subCategoryTitle, icon, p => checkFilters(p));
-            }
-            else if (!string.IsNullOrEmpty(oldTitle))
-            {
-                Edit_Delete(oldTitle, string.IsNullOrEmpty(subCategoryTitle), icon);
+                PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
             }
             else
-            {
-                Edit_Delete(subCategoryTitle, false, icon);
-            }
+                Core.Log("Invalid subCategory definition");
         }
 
-        private void Edit_Delete(string title, bool delete, PartCategorizer.Icon icon)
+        private void Edit(string title, RUI.Icons.Selectable.Icon icon)
         {
-            List<PartCategorizer.Category> subCategories = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category).subcategories;
-            if (delete)
-                subCategories.Remove(subCategories.Find(m => m.button.categoryName == title));
-            else
+            PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == "");
+            List<PartCategorizer.Category> subCategories = category.subcategories;
+
+            PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == title).button;
+            if (but != null)
             {
-                PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == title).button;
-                if (but != null)
+                but.categoryName = subCategoryTitle;
+                if (icon != PartCategorizer.Instance.iconLoader.iconDictionary["number1"])
                 {
-                    but.categoryName = subCategoryTitle;
-                    if (icon != PartCategorizer.Instance.fallbackIcon)
-                        but.SetIcon(icon);
+                    but.SetIcon(icon);
                 }
             }
         }
@@ -106,30 +103,15 @@ namespace FilterExtensions.ConfigNodes
             if (sC2 == null)
                 return false;
 
-            if (this.category != sC2.category || this.filter != sC2.filter || this.iconName != sC2.iconName
-                || this.oldTitle != sC2.oldTitle || this.subCategoryTitle != sC2.subCategoryTitle)
-                return false;
+            if (this.subCategoryTitle == sC2.subCategoryTitle)
+                return true;
 
-            if (this.filters.Count != sC2.filters.Count)
-                return false;
-
-            foreach (Filter f1 in this.filters)
-            {
-                if (!sC2.filters.Any(f2 => f1.Equals(f2)))
-                    return false;
-            }
-            return true;
+            return false;
         }
 
         public override int GetHashCode()
         {
-            int hash = 0;
-            foreach (Filter f in this.filters)
-            {
-                hash *= f.GetHashCode();
-            }
-            return hash * this.category.GetHashCode() * this.filter.GetHashCode() * this.iconName.GetHashCode()
-                * this.oldTitle.GetHashCode() * this.subCategoryTitle.GetHashCode();
+            return this.subCategoryTitle.GetHashCode();
         }
     }
 }
