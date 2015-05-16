@@ -315,22 +315,30 @@ namespace FilterExtensions
 
         public void setSelectedCategory()
         {
-            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
-            if (Filter != null)
-                Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-
-            Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == categoryDefault);
-            if (Filter != null)
-                Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-            else
+            try
             {
-                Filter = PartCategorizer.Instance.filters[0];
-                Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-            }
+                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
+                if (Filter != null)
+                    Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
 
-            Filter = Filter.subcategories.Find(sC => sC.button.categoryName == subCategoryDefault);
-            if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
-                Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == categoryDefault);
+                if (Filter != null)
+                    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                else
+                {
+                    Filter = PartCategorizer.Instance.filters[0];
+                    if (Filter != null)
+                        Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                }
+
+                Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == subCategoryDefault);
+                if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
+                    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+            }
+            catch
+            {
+                Log("Category refresh failed");
+            }
         }
 
         private void checkAndMarkConflicts()

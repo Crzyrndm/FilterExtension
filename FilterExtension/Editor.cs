@@ -59,7 +59,7 @@ namespace FilterExtensions
                 Core.Instance.namesAndIcons(c);
 
             Core.Instance.setSelectedCategory();
-            // Remove any category with no subCategories (causes major breakages). Removal doesn't actually prevent icon showing (>.<), just breakage
+            // Remove any category with no subCategories (causes major breakages).
             for (int i = 0; i < 4; i++)
                 yield return null;
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
