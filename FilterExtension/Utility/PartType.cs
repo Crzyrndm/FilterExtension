@@ -347,13 +347,19 @@ namespace FilterExtensions.Utility
 
         public static bool checkBulkHeadProfiles(AvailablePart part, string value, bool contains)
         {
+            if (part.bulkheadProfiles == null)
+            {
+                if (value == "srf")
+                    return true;
+                return false;
+            }
+
             string[] values = value.Split(',');
             foreach (string s in part.bulkheadProfiles.Split(','))
             {
                 if (values.Contains(s))
                     return true;
             }
-            // need to add
             return false;
         }
 
