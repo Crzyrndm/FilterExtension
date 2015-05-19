@@ -349,7 +349,7 @@ namespace FilterExtensions.Utility
         {
             if (part.bulkheadProfiles == null)
             {
-                if (value == "srf")
+                if (value.Trim() == "srf")
                     return true;
                 return false;
             }
@@ -357,7 +357,7 @@ namespace FilterExtensions.Utility
             string[] values = value.Split(',');
             foreach (string s in part.bulkheadProfiles.Split(','))
             {
-                if (values.Contains(s))
+                if (values.Any(v => v.Trim() == s.Trim()))
                     return true;
             }
             return false;
