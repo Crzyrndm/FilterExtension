@@ -118,7 +118,7 @@ namespace FilterExtensions.Utility
 
         internal static bool checkName(AvailablePart part, string value)
         {
-            return value.Split(',').Any(s => s.Trim().Equals(part.name, StringComparison.OrdinalIgnoreCase));
+            return value.Split(',').Any(s => s.Trim().ToLower() == part.name.ToLower());
         }
 
         internal static bool checkTitle(AvailablePart part, string value)
