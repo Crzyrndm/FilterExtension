@@ -67,11 +67,6 @@ namespace FilterExtensions.ConfigNodes
         public void initialise(PartCategorizer.Category cat)
         {
             RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            if (icon == null)
-            {
-                Core.Log(this.subCategoryTitle + " no icon found");
-                icon = PartCategorizer.Instance.iconLoader.iconDictionary.First().Value;
-            }
             if (hasFilters)
             {
                 if (cat == null)

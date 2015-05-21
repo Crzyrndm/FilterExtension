@@ -42,6 +42,8 @@ namespace FilterExtensions
         public string categoryDefault;
         public string subCategoryDefault;
 
+        const string fallbackIcon = "stockIcon_fallback";
+
         public static Core Instance // Reminder to self, don't be abusing static
         {
             get
@@ -460,13 +462,13 @@ namespace FilterExtensions
         public static RUI.Icons.Selectable.Icon getIcon(string name)
         {
             if (string.IsNullOrEmpty(name))
-                return null;
+                return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
             if (Instance.iconDict.ContainsKey(name))
                 return Instance.iconDict[name];
             if (PartCategorizer.Instance.iconLoader.iconDictionary.ContainsKey(name))
                 return PartCategorizer.Instance.iconLoader.iconDictionary[name];
-            
-            return null;
+
+            return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
 
         // credit to EvilReeperx for this lifesaving function
