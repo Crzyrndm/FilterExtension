@@ -89,6 +89,7 @@ namespace FilterExtensions
                     testCategory = PartCategorizer.Instance.filters[0].subcategories.First(c => c.button.categoryName == "testCategory");
                     if (btn == null)
                         btn = ApplicationLauncher.Instance.AddModApplication(Toggle, Toggle, null, null, null, null, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH, (Texture2D)null);
+                    StartCoroutine(refresh());
                 }
             }
             for (int i = 0; i < 4; i++)
@@ -99,6 +100,15 @@ namespace FilterExtensions
         void Toggle()
         {
             showWindow = !showWindow;
+        }
+
+        IEnumerator refresh()
+        {
+            while (HighLogic.LoadedScene == GameScenes.EDITOR)
+            {
+                yield return new WaitForSeconds(1f);
+                EditorPartList.Instance.Refresh();
+            }
         }
 
         public void Update()
