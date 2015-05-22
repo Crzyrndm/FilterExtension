@@ -107,7 +107,8 @@ namespace FilterExtensions
             while (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 yield return new WaitForSeconds(1f);
-                EditorPartList.Instance.Refresh();
+                if (showWindow && testCategory.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE)
+                    EditorPartList.Instance.Refresh();
             }
         }
 
