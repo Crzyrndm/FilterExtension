@@ -7,6 +7,30 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
+    public enum CheckType
+    {
+        moduleTitle,
+        moduleName,
+        partName,
+        partTitle,
+        resource,
+        propellant,
+        tech,
+        manufacturer,
+        folder,
+        path,
+        category,
+        size,
+        crew,
+        custom,
+        mass,
+        cost,
+        crashTolerance,
+        maxTemp,
+        profile,
+        check
+    }
+
     public class Check
     {
         public enum Equality
@@ -168,6 +192,104 @@ namespace FilterExtensions.ConfigNodes
                 result = !result;
 
             return result;
+        }
+
+        public static CheckType getType(string type)
+        {
+            switch(type)
+            {
+                case "name":
+                    return CheckType.partName;
+                case "title":
+                    return CheckType.partTitle;
+                case "moduleName":
+                    return CheckType.moduleName;
+                case "moduleTitle":
+                    return CheckType.moduleTitle;
+                case "resource":
+                    return CheckType.resource;
+                case "propellant":
+                    return CheckType.propellant;
+                case "tech":
+                    return CheckType.tech;
+                case "manufacturer":
+                    return CheckType.manufacturer;
+                case "folder":
+                    return CheckType.folder;
+                case "path":
+                    return CheckType.path;
+                case "category":
+                    return CheckType.category;
+                case "size":
+                    return CheckType.size;
+                case "crew":
+                    return CheckType.crew;
+                case "custom":
+                    return CheckType.custom;
+                case "mass":
+                    return CheckType.mass;
+                case "cost":
+                    return CheckType.cost;
+                case "crash":
+                    return CheckType.crashTolerance;
+                case "maxTemp":
+                    return CheckType.maxTemp;
+                case "profile":
+                    return CheckType.profile;
+                case "check":
+                    return CheckType.check;
+                default:
+                    return CheckType.category;
+            }
+        }
+
+        public static string getTypeString(CheckType type)
+        {
+            switch (type)
+            {
+                case CheckType.partName:
+                    return "name";
+                case CheckType.partTitle:
+                    return "title";
+                case CheckType.moduleName:
+                    return "moduleName";
+                case CheckType.moduleTitle:
+                    return "moduleTitle";
+                case CheckType.resource:
+                    return "resource";
+                case CheckType.propellant:
+                    return "propellant";
+                case CheckType.tech:
+                    return "tech";
+                case CheckType.manufacturer:
+                    return "manufacturer";
+                case CheckType.folder:
+                    return "folder";
+                case CheckType.path:
+                    return "path";
+                case CheckType.category:
+                    return "category";
+                case CheckType.size:
+                    return "size";
+                case CheckType.crew:
+                    return "crew";
+                case CheckType.custom:
+                    return "custom";
+                case CheckType.mass:
+                    return "mass";
+                case CheckType.cost:
+                    return "cost";
+                case CheckType.crashTolerance:
+                    return "crash";
+                case CheckType.maxTemp:
+                    return "maxTemp";
+                case CheckType.profile:
+                    return "profile";
+                case CheckType.check:
+                    return "check";
+                default:
+                    return "category";
+            }
         }
 
         public bool Equals(Check c2)

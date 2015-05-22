@@ -21,11 +21,11 @@ namespace FilterExtensions
         public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
-        // renaming categories not defined by FE
+        // renaming categories
         public Dictionary<string, string> Rename = new Dictionary<string, string>();
-        // icons for categories not defined by FE
+        // icons for categories
         public Dictionary<string, string> setIcon = new Dictionary<string, string>();
-        // removing cateogries not defined by FE
+        // removing categories
         public HashSet<string> removeSubCategory = new HashSet<string>();
         // url for each part by internal name
         public Dictionary<string, string> partPathDict = new Dictionary<string, string>();
