@@ -201,7 +201,7 @@ namespace FilterExtensions
                     {
                         if (subCategoriesDict[name].filters.Count == 1 && subCategoriesDict[name].filters[0].checks.Count > 0)
                         {
-                            if (subCategoriesDict[name].filters[0].checks[0].type == "resource" && subCategoriesDict[name].filters[0].checks[0].value == s)
+                            if (subCategoriesDict[name].filters[0].checks[0].type == CheckType.resource && subCategoriesDict[name].filters[0].checks[0].value == s)
                                 continue;
                         }
                         name = "res_" + name;
@@ -315,7 +315,7 @@ namespace FilterExtensions
             return false;
         }
 
-        public void setSelectedCategory()
+        public static void setSelectedCategory()
         {
             try
             {
@@ -323,7 +323,7 @@ namespace FilterExtensions
                 if (Filter != null)
                     Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
 
-                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == categoryDefault);
+                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == instance.categoryDefault);
                 if (Filter != null)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                 else
@@ -333,7 +333,7 @@ namespace FilterExtensions
                         Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                 }
 
-                Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == subCategoryDefault);
+                Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
                 if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
             }
