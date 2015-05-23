@@ -36,9 +36,9 @@ namespace FilterExtensions.Utility
 
         internal static bool checkCategory(AvailablePart part, string value)
         {
-            foreach (string s in value.Split())
+            foreach (string s in value.Split(','))
             {
-                switch (value.Trim())
+                switch (s.Trim())
                 {
                     case "Pods":
                         if (part.category == PartCategories.Pods)
