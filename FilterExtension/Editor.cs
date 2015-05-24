@@ -82,15 +82,18 @@ namespace FilterExtensions
             Core.setSelectedCategory();
         }
 
+        /// <summary>
+        /// checks all subcats not created by FE for visibility of parts set to "category = none"
+        /// </summary>
         void findPartsToBlock()
         {
             // all parts that may not be visible
             List<AvailablePart> partsToCheck = PartLoader.Instance.parts.FindAll(ap => ap.category == PartCategories.none);
-            // Only checking the category which should be Filter by Function
+            // Only checking the category which should be Filter by Function (should I find FbF explcitly?)
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
             // has a reference to all the subcats that FE added to the category
             customCategory customMainCat = Core.Instance.Categories.Find(C => C.categoryName == mainCat.button.categoryName);
-            // loop through the subcategories. Mark FE ones as seen incase of duplication and check the parts in mod categories for visibility
+            // loop through the subcategories. Mark FE ones as seen incase of duplication and check the shortlisted parts against other mods categories for visibility
             HashSet<string> subCatsSeen = new HashSet<string>();
             for (int i = 0; i < mainCat.subcategories.Count; i++)
             {

@@ -47,19 +47,27 @@ namespace FilterExtensions.ConfigNodes
             ConfigNode subcategoryList = node.GetNode("SUBCATEGORIES", 0);
             if (subcategoryList != null)
             {
+                List<string> unorderedSubCats = new List<string>();
                 string[] stringList = subcategoryList.GetValues();
                 string[] subs = new string[1000];
                 for (int i = 0; i < stringList.Length; i++)
                 {
                     string[] indexAndValue = stringList[i].Split(',');
-                    if (indexAndValue.Length >= 2)
+                    if (indexAndValue.Length >= 2) // location and ID
                     {
                         int index;
                         if (int.TryParse(indexAndValue[0], out index))
                             subs[index] = indexAndValue[1].Trim();
                     }
+                    else if (indexAndValue.Length == 1) // just an ID
+                    {
+                        int index;
+                        if (!int.TryParse(indexAndValue[0], out index))
+                            unorderedSubCats.Add(indexAndValue[0]);
+                    }
                 }
                 subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
+                subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats to the end
             }
 
             typeSwitch();
