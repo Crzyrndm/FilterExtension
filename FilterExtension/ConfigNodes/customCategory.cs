@@ -20,12 +20,10 @@ namespace FilterExtensions.ConfigNodes
         public string categoryName { get; set; }
         public string iconName { get; set; }
         public Color colour { get; set; }
-        public string type { get; set; } // procedural categories
-        public string value { get; set; } // mod folder name for mod type categories
         public categoryTypeAndBehaviour behaviour { get; set; }
         public bool all { get; set; } // has an all parts subCategory
         public List<string> subCategories { get; set; } // array of subcategories
-        public List<Check> template { get; set; } // Checks to add to every Filter in a category with the template tag
+        public List<Filter> templates { get; set; } // Checks to add to every Filter in a category with the template tag
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
@@ -36,8 +34,7 @@ namespace FilterExtensions.ConfigNodes
             iconName = node.GetValue("icon");
             colour = convertToColor(node.GetValue("colour"));
 
-            type = node.GetValue("type");
-            value = node.GetValue("value");
+            typeSwitch(node.GetValue("type"), node.GetValue("value"));
 
             makeTemplate(node);
 
@@ -67,10 +64,8 @@ namespace FilterExtensions.ConfigNodes
                     }
                 }
                 subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
-                subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats to the end
+                subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
             }
-
-            typeSwitch();
         }
 
         public void initialise()
@@ -124,11 +119,19 @@ namespace FilterExtensions.ConfigNodes
                     }
 
                     customSubCategory sC = new customSubCategory(Core.Instance.subCategoriesDict[subCategories[i]].toConfigNode());
-                    if (template != null && template.Any())
+                    if (templates != null && templates.Any())
                     {
+                        List<Filter> baseSubCatFilters = new List<Filter>();
                         foreach (Filter f in sC.filters)
+                            baseSubCatFilters.Add(new Filter(f.toConfigNode())); // create independent copies
+                        sC.filters.Clear(); // create them from scratch
+                        foreach (Filter templateFilter in templates)
                         {
-                            f.checks.AddRange(template);
+                            foreach (Filter f in baseSubCatFilters)
+                            {
+                                sC.filters.Add(new Filter(f.toConfigNode()));
+                                sC.filters.Last().checks.AddRange(templateFilter.checks);
+                            }
                         }
                     }
 
@@ -148,7 +151,7 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        private void typeSwitch()
+        private void typeSwitch(string type, string value)
         {
             switch (type)
             {
@@ -208,14 +211,12 @@ namespace FilterExtensions.ConfigNodes
 
         private void makeTemplate(ConfigNode node)
         {
-            ConfigNode filtNode = node.GetNode("FILTER");
-            if (filtNode == null)
+            ConfigNode[] filtNodes = node.GetNodes("FILTER");
+            if (filtNodes == null)
                 return;
-
-            Filter filter = new Filter(filtNode);
-            this.template = filter.checks;
-
-            
+            this.templates = new List<Filter>();
+            foreach (ConfigNode n in filtNodes)
+                this.templates.Add(new Filter(n));
         }
 
         public static Color convertToColor(string hex_ARGB)
