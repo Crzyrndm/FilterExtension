@@ -115,9 +115,7 @@ namespace FilterExtensions.ConfigNodes
         {
             if (part.category == PartCategories.none)
             {
-                if (!(Editor.blackListedParts != null && Editor.blackListedParts.Any()))
-                    return false;
-                else if (Editor.blackListedParts.Contains(part.name))
+                if (Editor.blackListedParts != null && Editor.blackListedParts.Any() && Editor.blackListedParts.Contains(part.name))
                     return false;
             }
 
