@@ -21,11 +21,11 @@ namespace FilterExtensions
         public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
-        // renaming categories not defined by FE
+        // renaming categories
         public Dictionary<string, string> Rename = new Dictionary<string, string>();
-        // icons for categories not defined by FE
+        // icons for categories
         public Dictionary<string, string> setIcon = new Dictionary<string, string>();
-        // removing cateogries not defined by FE
+        // removing categories
         public HashSet<string> removeSubCategory = new HashSet<string>();
         // url for each part by internal name
         public Dictionary<string, string> partPathDict = new Dictionary<string, string>();
@@ -41,6 +41,8 @@ namespace FilterExtensions
         public bool replaceFbM = true;
         public string categoryDefault;
         public string subCategoryDefault;
+
+        const string fallbackIcon = "stockIcon_fallback";
 
         public static Core Instance // Reminder to self, don't be abusing static
         {
@@ -199,7 +201,7 @@ namespace FilterExtensions
                     {
                         if (subCategoriesDict[name].filters.Count == 1 && subCategoriesDict[name].filters[0].checks.Count > 0)
                         {
-                            if (subCategoriesDict[name].filters[0].checks[0].type == "resource" && subCategoriesDict[name].filters[0].checks[0].value == s)
+                            if (subCategoriesDict[name].filters[0].checks[0].type == CheckType.resource && subCategoriesDict[name].filters[0].checks[0].value == s)
                                 continue;
                         }
                         name = "res_" + name;
@@ -313,7 +315,7 @@ namespace FilterExtensions
             return false;
         }
 
-        public void setSelectedCategory()
+        public static void setSelectedCategory()
         {
             try
             {
@@ -321,7 +323,7 @@ namespace FilterExtensions
                 if (Filter != null)
                     Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
 
-                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == categoryDefault);
+                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == instance.categoryDefault);
                 if (Filter != null)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                 else
@@ -331,7 +333,7 @@ namespace FilterExtensions
                         Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                 }
 
-                Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == subCategoryDefault);
+                Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
                 if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
             }
@@ -460,13 +462,13 @@ namespace FilterExtensions
         public static RUI.Icons.Selectable.Icon getIcon(string name)
         {
             if (string.IsNullOrEmpty(name))
-                return null;
+                return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
             if (Instance.iconDict.ContainsKey(name))
                 return Instance.iconDict[name];
             if (PartCategorizer.Instance.iconLoader.iconDictionary.ContainsKey(name))
                 return PartCategorizer.Instance.iconLoader.iconDictionary[name];
-            
-            return null;
+
+            return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
 
         // credit to EvilReeperx for this lifesaving function
