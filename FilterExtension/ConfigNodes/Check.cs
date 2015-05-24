@@ -114,7 +114,12 @@ namespace FilterExtensions.ConfigNodes
         public bool checkPart(AvailablePart part)
         {
             if (part.category == PartCategories.none)
-                return false;
+            {
+                if (Editor.blackListedParts == null)
+                    return true;
+                else if (Editor.blackListedParts.Contains(part.name))
+                    return false;
+            }
 
             bool result = true;
 

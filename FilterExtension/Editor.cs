@@ -18,7 +18,7 @@ namespace FilterExtensions
             StartCoroutine(editorInit());
         }
 
- 
+        public static HashSet<string> blackListedParts;
 
         IEnumerator editorInit()
         {
@@ -57,6 +57,9 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             // edit names and icons of all subcategories
+
+            if (blackListedParts == null)
+                findPartsToBlock();
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 Core.Instance.namesAndIcons(c);
 
@@ -77,6 +80,43 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             Core.setSelectedCategory();
+        }
+
+        void findPartsToBlock()
+        {
+            // all parts that may not be visible
+            List<AvailablePart> partsToCheck = PartLoader.Instance.parts.FindAll(ap => ap.category == PartCategories.none);
+            // Only checking the category which should be Filter by Function
+            PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
+            // has a reference to all the subcats that FE added to the category
+            customCategory customMainCat = Core.Instance.Categories.Find(C => C.categoryName == mainCat.button.categoryName);
+            // loop through the subcategories. Mark FE ones as seen incase of duplication and check the parts in mod categories for visibility
+            HashSet<string> subCatsSeen = new HashSet<string>();
+            for (int i = 0; i < mainCat.subcategories.Count; i++)
+            {
+                PartCategorizer.Category subCat = mainCat.subcategories[i];
+                // if the name is an FE subcat and the category should have that FE subcat and it's not the duplicate of one already seen created by another mod, mark it seen and move on
+                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Contains(subCat.button.categoryName) && !subCatsSeen.Contains(subCat.button.categoryName))
+                    subCatsSeen.Add(subCat.button.categoryName);
+                else // subcat created by another mod
+                {
+                    // can't remove parts from a collection being looped over, need to remember the visible parts
+                    List<AvailablePart> visibleParts = new List<AvailablePart>();
+                    for (int j = 0; j < partsToCheck.Count; j++)
+                    {
+                        AvailablePart AP = partsToCheck[j];
+                        if (subCat.exclusionFilter.FilterCriteria.Invoke(AP)) // if visible
+                            visibleParts.Add(AP);
+                    }
+                    // remove all visible parts from the list to block
+                    foreach (AvailablePart ap in visibleParts)
+                        partsToCheck.Remove(ap);
+                }
+            }
+            // add the blocked parts to a hashset for later lookup
+            blackListedParts = new HashSet<string>();
+            foreach (AvailablePart ap in partsToCheck)
+                blackListedParts.Add(ap.name);
         }
     }
 }
