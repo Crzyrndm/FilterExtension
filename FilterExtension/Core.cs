@@ -56,7 +56,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.1.1");
+            Log("Version 2.2.1");
 
             // settings, rename, iconset, and subCat removals
             getConfigs();
@@ -169,9 +169,7 @@ namespace FilterExtensions
             {
                 customCategory C = new customCategory(node);
                 if (Categories.Find(n => n.categoryName == C.categoryName) == null && C.subCategories != null)
-                {
                     Categories.Add(C);
-                }
             }
 
             //load all subCategory configs
@@ -247,16 +245,6 @@ namespace FilterExtensions
             {
                 List<string> propellants = new List<string>();
                 foreach (Propellant prop in e.propellants)
-                    propellants.Add(prop.name);
-                propellants.Sort();
-
-                if (!stringListComparer(propellants))
-                    propellantCombos.Add(propellants);
-            }
-            foreach (ModuleEnginesFX ex in p.partPrefab.GetModuleEnginesFx())
-            {
-                List<string> propellants = new List<string>();
-                foreach (Propellant prop in ex.propellants)
                     propellants.Add(prop.name);
                 propellants.Sort();
 

@@ -152,32 +152,28 @@ namespace FilterExtensions.Utility
 
         internal static bool checkPropellant(AvailablePart part, string value, bool contains = true)
         {
-            if (part.partPrefab == null || part.partPrefab.Modules == null)
-                return false;
-
             List<List<Propellant>> propellants = new List<List<Propellant>>();
-            
             foreach (ModuleEngines e in part.partPrefab.GetModuleEngines())
                 propellants.Add(e.propellants);
-            foreach (ModuleEnginesFX ex in part.partPrefab.GetModuleEnginesFx())
-                propellants.Add(ex.propellants);
 
-            foreach (List<Propellant> Lp in propellants)
+            if (contains)
             {
-                if (contains)
-                {
-                    foreach (string s in value.Split(','))
-                    {
-                        if (Lp.Any(p => p.name == s.Trim()))
-                            return true;
-                    }
-                }
-                else
-                {
+                foreach (List<Propellant> Lp in propellants)
                     foreach (Propellant p in Lp)
-                        if (!value.Split(',').Contains(p.name))
+                        if (value.Split(',').Any(s => s == p.name))
                             return true;
+            }
+            else
+            {
+                bool result = true;
+                foreach (List<Propellant> Lp in propellants)
+                {
+                    bool tmp = false;
+                    foreach (Propellant p in Lp)
+                        tmp |= !value.Split(',').Contains(p.name); // tmp is true if any propellant is not listed
+                    result &= tmp;
                 }
+                return result;
             }
             return false;
         }
@@ -488,6 +484,7 @@ namespace FilterExtensions.Utility
             return part.GetModules<ModuleEngines>();
         }
 
+        // no longer required, FX now inherits from moduleEngines
         public static List<ModuleEnginesFX> GetModuleEnginesFx(this Part part)
         {
             return part.GetModules<ModuleEnginesFX>();
