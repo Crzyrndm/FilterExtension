@@ -34,8 +34,6 @@ namespace FilterExtensions.ConfigNodes
             iconName = node.GetValue("icon");
             colour = convertToColor(node.GetValue("colour"));
 
-            typeSwitch(node.GetValue("type"), node.GetValue("value"));
-
             makeTemplate(node);
 
             bool.TryParse(node.GetValue("all"), out tmp);
@@ -66,6 +64,7 @@ namespace FilterExtensions.ConfigNodes
                 subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
                 subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
             }
+            typeSwitch(node.GetValue("type"), node.GetValue("value"));
         }
 
         public void initialise()
@@ -117,8 +116,8 @@ namespace FilterExtensions.ConfigNodes
                             continue;
                         }
                     }
-
                     customSubCategory sC = new customSubCategory(Core.Instance.subCategoriesDict[subCategories[i]].toConfigNode());
+                    
                     if (templates != null && templates.Any())
                     {
                         List<Filter> baseSubCatFilters = new List<Filter>();
@@ -134,7 +133,6 @@ namespace FilterExtensions.ConfigNodes
                             }
                         }
                     }
-
                     try
                     {
                         if (Core.checkSubCategoryHasParts(sC, categoryName))
