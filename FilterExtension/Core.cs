@@ -38,6 +38,9 @@ namespace FilterExtensions
         public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
 
         // Config has options to disable the FbM replacement, and the default Category/SC and sort method
+        public bool hideUnpurchased = true;
+        public bool debug = false;
+        public bool setAdvanced = true;
         public bool replaceFbM = true;
         public string categoryDefault;
         public string subCategoryDefault;
@@ -56,9 +59,9 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.2.1");
+            Log("Version 2.2.2");
 
-            // settings, rename, iconset, and subCat removals
+            // settings, rename, icon set, and subCat removals
             getConfigs();
 
             // generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
@@ -73,9 +76,15 @@ namespace FilterExtensions
 
         private void getConfigs()
         {
-            ConfigNode settings = GameDatabase.Instance.GetConfigNode("FilterSettings");
+            ConfigNode settings = GameDatabase.Instance.GetConfigNodes("FilterSettings")[0];
             if (settings != null)
             {
+                if (!bool.TryParse(settings.GetValue("hideUnpurchased"), out hideUnpurchased))
+                    hideUnpurchased = false;
+                if (!bool.TryParse(settings.GetValue("debug"), out debug))
+                    debug = false;
+                if (!bool.TryParse(settings.GetValue("setAdvanced"), out setAdvanced))
+                    setAdvanced = true;
                 if (!bool.TryParse(settings.GetValue("replaceFbM"), out replaceFbM))
                     replaceFbM = true;
                 categoryDefault = settings.GetValue("categoryDefault");
@@ -310,7 +319,7 @@ namespace FilterExtensions
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
                 if (Filter != null)
                     Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-
+                
                 Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == instance.categoryDefault);
                 if (Filter != null)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
@@ -318,16 +327,18 @@ namespace FilterExtensions
                 {
                     Filter = PartCategorizer.Instance.filters[0];
                     if (Filter != null)
+                    {
                         Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                    }
                 }
-
                 Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
                 if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
             }
-            catch
+            catch (Exception e)
             {
                 Log("Category refresh failed");
+                Log(e.InnerException);
             }
         }
 
@@ -436,7 +447,8 @@ namespace FilterExtensions
                         i++;
                     if (i != 1000)
                         name = name + i.ToString();
-                    Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
+                    if (instance.debug)
+                        Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
                 }
 
                 if (!Instance.iconDict.ContainsKey(name))
@@ -474,10 +486,13 @@ namespace FilterExtensions
                 if (sC.checkFilters(p))
                     return true;
 
-            if (!string.IsNullOrEmpty(category))
-                Log(sC.subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
-            else
-                Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
+            if (instance.debug)
+            {
+                if (!string.IsNullOrEmpty(category))
+                    Log(sC.subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
+                else
+                    Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
+            }
             return false;
         }
 

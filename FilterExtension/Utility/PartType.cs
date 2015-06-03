@@ -484,7 +484,7 @@ namespace FilterExtensions.Utility
             return part.GetModules<ModuleEngines>();
         }
 
-        // no longer required, FX now inherits from moduleEngines
+        [Obsolete("FX now inherits from moduleEngines, use GetModuleEngines for all engine types")]
         public static List<ModuleEnginesFX> GetModuleEnginesFx(this Part part)
         {
             return part.GetModules<ModuleEnginesFX>();

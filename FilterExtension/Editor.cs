@@ -24,7 +24,8 @@ namespace FilterExtensions
         {
             while (PartCategorizer.Instance == null)
                 yield return null;
-
+            if (Core.Instance.debug)
+                Core.Log("Starting on Stock Filters");
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
@@ -47,7 +48,8 @@ namespace FilterExtensions
             // frames after the flag is set to wait before initialising. Minimum of two for things to work consistently
             for (int i = 0; i < 4; i++)
                 yield return null;
-
+            if (Core.Instance.debug)
+                Core.Log("Starting on other filters");
             // run everything
             foreach (customCategory c in Core.Instance.Categories)
                 if (!c.stockCategory)
@@ -57,7 +59,8 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             // edit names and icons of all subcategories
-
+            if (Core.Instance.debug)
+                Core.Log("Starting on setting names and icons");
             if (blackListedParts == null)
                 findPartsToBlock();
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
@@ -66,19 +69,22 @@ namespace FilterExtensions
             // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = 0; i < 4; i++)
                 yield return null;
+            if (Core.Instance.debug)
+                Core.Log("Starting on removing categories");
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
-                //Core.Log("removing Category " + cat.button.categoryName);
                 PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
 
-            // reveal categories because why not
-            PartCategorizer.Instance.SetAdvancedMode();
+            if (Core.Instance.setAdvanced)
+                PartCategorizer.Instance.SetAdvancedMode();
 
             for (int i = 0; i < 4; i++)
                 yield return null;
+            if (Core.Instance.debug)
+                Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
         }
 
