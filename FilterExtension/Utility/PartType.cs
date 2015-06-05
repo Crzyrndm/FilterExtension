@@ -36,9 +36,9 @@ namespace FilterExtensions.Utility
 
         internal static bool checkCategory(AvailablePart part, string value)
         {
-            foreach (string s in value.Split())
+            foreach (string s in value.Split(','))
             {
-                switch (value.Trim())
+                switch (s.Trim())
                 {
                     case "Pods":
                         if (part.category == PartCategories.Pods)
@@ -76,6 +76,10 @@ namespace FilterExtensions.Utility
                         if (part.category == PartCategories.Science)
                             return true;
                         break;
+                    case "None":
+                        if (part.category == PartCategories.none)
+                            return true;
+                        break;
                 }
             }
 
@@ -84,6 +88,8 @@ namespace FilterExtensions.Utility
 
         internal static bool checkModuleTitle(AvailablePart part, string value, bool contains = true)
         {
+            if (part.moduleInfos == null)
+                return false;
             if (contains)
             {
                 foreach (string s in value.Split(','))
@@ -105,6 +111,8 @@ namespace FilterExtensions.Utility
 
         internal static bool checkModuleName(AvailablePart part, string value, bool contains = true)
         {
+            if (part.partPrefab == null || part.partPrefab.Modules == null)
+                return false;
             if (contains)
                 return value.Split(',').Any(s => part.partPrefab.Modules.Contains(s.Trim()));
             else
@@ -118,7 +126,7 @@ namespace FilterExtensions.Utility
 
         internal static bool checkName(AvailablePart part, string value)
         {
-            return value.Split(',').Any(s => s.Trim().Equals(part.name, StringComparison.OrdinalIgnoreCase));
+            return value.Split(',').Any(s => s.Trim().ToLower() == part.name.ToLower());
         }
 
         internal static bool checkTitle(AvailablePart part, string value)
@@ -128,6 +136,9 @@ namespace FilterExtensions.Utility
 
         internal static bool checkResource(AvailablePart part, string value, bool contains = true)
         {
+            if (part.partPrefab == null || part.partPrefab.Resources == null)
+                return false;
+
             if (contains)
                 return value.Split(',').Any(s => part.partPrefab.Resources.Contains(s.Trim()));
             else
@@ -142,28 +153,27 @@ namespace FilterExtensions.Utility
         internal static bool checkPropellant(AvailablePart part, string value, bool contains = true)
         {
             List<List<Propellant>> propellants = new List<List<Propellant>>();
-            
             foreach (ModuleEngines e in part.partPrefab.GetModuleEngines())
                 propellants.Add(e.propellants);
-            foreach (ModuleEnginesFX ex in part.partPrefab.GetModuleEnginesFx())
-                propellants.Add(ex.propellants);
 
-            foreach (List<Propellant> Lp in propellants)
+            if (contains)
             {
-                if (contains)
-                {
-                    foreach (string s in value.Split(','))
-                    {
-                        if (Lp.Any(p => p.name == s.Trim()))
-                            return true;
-                    }
-                }
-                else
-                {
+                foreach (List<Propellant> Lp in propellants)
                     foreach (Propellant p in Lp)
-                        if (!value.Split(',').Contains(p.name))
+                        if (value.Split(',').Any(s => s == p.name))
                             return true;
+            }
+            else
+            {
+                bool result = true;
+                foreach (List<Propellant> Lp in propellants)
+                {
+                    bool tmp = false;
+                    foreach (Propellant p in Lp)
+                        tmp |= !value.Split(',').Contains(p.name); // tmp is true if any propellant is not listed
+                    result &= tmp;
                 }
+                return result;
             }
             return false;
         }
@@ -210,6 +220,9 @@ namespace FilterExtensions.Utility
 
         public static bool checkPartSize(AvailablePart part, string value, bool contains, ConfigNodes.Check.Equality equality)
         {
+            if (part.partPrefab == null || part.partPrefab.attachNodes == null)
+                return false;
+
             string[] values = value.Split(',');
             if (equality == ConfigNodes.Check.Equality.Equals)
             {
@@ -252,6 +265,9 @@ namespace FilterExtensions.Utility
 
         public static bool checkCrewCapacity(AvailablePart part, string value, ConfigNodes.Check.Equality equality)
         {
+            if (part.partPrefab == null)
+                return false;
+
             if (equality == ConfigNodes.Check.Equality.Equals)
             {
                 foreach (string s in value.Split(','))
@@ -287,6 +303,9 @@ namespace FilterExtensions.Utility
 
         public static bool checkMass(AvailablePart part, string value, ConfigNodes.Check.Equality equality)
         {
+            if (part.partPrefab == null)
+                return false;
+
             int i;
             if (int.TryParse(value, out i))
             {
@@ -317,6 +336,9 @@ namespace FilterExtensions.Utility
 
         public static bool checkCrashTolerance(AvailablePart part, string value, ConfigNodes.Check.Equality equality)
         {
+            if (part.partPrefab == null)
+                return false;
+
             int i;
             if (int.TryParse(value, out i))
             {
@@ -332,6 +354,9 @@ namespace FilterExtensions.Utility
 
         public static bool checkTemperature(AvailablePart part, string value, ConfigNodes.Check.Equality equality)
         {
+            if (part.partPrefab == null)
+                return false;
+
             int i;
             if (int.TryParse(value, out i))
             {
@@ -347,13 +372,19 @@ namespace FilterExtensions.Utility
 
         public static bool checkBulkHeadProfiles(AvailablePart part, string value, bool contains)
         {
+            if (part.bulkheadProfiles == null)
+            {
+                if (value.Trim() == "srf")
+                    return true;
+                return false;
+            }
+
             string[] values = value.Split(',');
             foreach (string s in part.bulkheadProfiles.Split(','))
             {
-                if (values.Contains(s))
+                if (values.Any(v => v.Trim() == s.Trim()))
                     return true;
             }
-            // need to add
             return false;
         }
 
@@ -402,6 +433,9 @@ namespace FilterExtensions.Utility
 
         public static bool isMultiCoupler(AvailablePart part)
         {
+            if (part.partPrefab == null || part.partPrefab.attachNodes == null)
+                return false;
+
             if (part.partPrefab.attachNodes.Count <= 2 || part.title.Contains("Cargo Bay"))
                 return false;
             float pos = part.partPrefab.attachNodes.Last().position.y;
@@ -413,6 +447,9 @@ namespace FilterExtensions.Utility
 
         public static bool isAdapter(AvailablePart part)
         {
+            if (part.partPrefab == null || part.partPrefab.attachNodes == null)
+                return false;
+
             if (isCommand(part))
                 return false;
             if (part.partPrefab.attachNodes.Count != 2)
@@ -447,6 +484,7 @@ namespace FilterExtensions.Utility
             return part.GetModules<ModuleEngines>();
         }
 
+        [Obsolete("FX now inherits from moduleEngines, use GetModuleEngines for all engine types")]
         public static List<ModuleEnginesFX> GetModuleEnginesFx(this Part part)
         {
             return part.GetModules<ModuleEnginesFX>();

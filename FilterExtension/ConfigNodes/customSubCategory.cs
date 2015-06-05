@@ -67,11 +67,6 @@ namespace FilterExtensions.ConfigNodes
         public void initialise(PartCategorizer.Category cat)
         {
             RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            if (icon == null)
-            {
-                Core.Log(this.subCategoryTitle + " no icon found");
-                icon = PartCategorizer.Instance.iconLoader.iconDictionary.First().Value;
-            }
             if (hasFilters)
             {
                 if (cat == null)
@@ -80,22 +75,6 @@ namespace FilterExtensions.ConfigNodes
             }
             else
                 Core.Log("Invalid subCategory definition");
-        }
-
-        private void Edit(string title, RUI.Icons.Selectable.Icon icon)
-        {
-            PartCategorizer.Category category = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == "");
-            List<PartCategorizer.Category> subCategories = category.subcategories;
-
-            PartCategorizerButton but = subCategories.FirstOrDefault(sC => sC.button.categoryName == title).button;
-            if (but != null)
-            {
-                but.categoryName = subCategoryTitle;
-                if (icon != PartCategorizer.Instance.iconLoader.iconDictionary["number1"])
-                {
-                    but.SetIcon(icon);
-                }
-            }
         }
 
         public bool Equals(customSubCategory sC2)
