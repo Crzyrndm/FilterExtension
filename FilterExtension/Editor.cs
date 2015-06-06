@@ -30,6 +30,10 @@ namespace FilterExtensions
             // If I edit them later everything breaks
             // custom categories can't be created at this point
             // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I clear the category
+            //PartCategorizer a = PartCategorizer.Instance;
+            //Editor thing = instance;
+            //Core refCore = Core.Instance;
+            //HashSet<string> parts = blackListedParts;
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
@@ -86,6 +90,9 @@ namespace FilterExtensions
             if (Core.Instance.debug)
                 Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
+
+            //while (true)
+            //    yield return null;
         }
 
         /// <summary>
