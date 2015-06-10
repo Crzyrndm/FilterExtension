@@ -72,11 +72,13 @@ namespace FilterExtensions
 
             loadIcons();
             checkAndMarkConflicts();
+
+
         }
 
         private void getConfigs()
         {
-            ConfigNode settings = GameDatabase.Instance.GetConfigNodes("FilterSettings")[0];
+            ConfigNode settings = GameDatabase.Instance.GetConfigNodes("FilterSettings").FirstOrDefault();
             if (settings != null)
             {
                 if (!bool.TryParse(settings.GetValue("hideUnpurchased"), out hideUnpurchased))

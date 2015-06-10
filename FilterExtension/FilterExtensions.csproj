@@ -52,6 +52,7 @@
     <Compile Include="ConfigNodes\customCategory.cs" />
     <Compile Include="ConfigNodes\Check.cs" />
     <Compile Include="Core.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Utility\PartType.cs" />
     <Compile Include="ConfigNodes\Filter.cs" />
     <Compile Include="ConfigNodes\customSubCategory.cs" />
@@ -63,7 +64,7 @@
     <PostBuildEvent>"D:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\bin\cli.bat" "D:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe" FilterExtensions.dll
 set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\GameData"
 set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData"
-xcopy %25SOURCE%25 %25DESTINATION%25 /e /c /r /i /u /y</PostBuildEvent>
+xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
