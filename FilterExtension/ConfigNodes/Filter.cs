@@ -29,8 +29,24 @@ namespace FilterExtensions.ConfigNodes
             this.invert = invert;
         }
 
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("FILTER");
+            if (invert)
+                node.AddValue("invert", this.invert.ToString());
+            foreach (Check c in checks)
+                node.AddNode(c.toConfigNode());
+
+            return node;
+        }
+
         internal bool checkFilter(AvailablePart part)
         {
+            if (Core.Instance.hideUnpurchased && Editor.blackListedParts != null)
+            {
+                if (!ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                    return false;
+            }
             foreach (Check c in checks)
             {
                 bool val = c.checkPart(part);
