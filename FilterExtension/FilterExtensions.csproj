@@ -61,8 +61,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"D:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\bin\cli.bat" "D:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe" FilterExtensions.dll
-set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\GameData"
+    <PostBuildEvent>set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\GameData"
 set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData"
 xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y</PostBuildEvent>
   </PropertyGroup>
