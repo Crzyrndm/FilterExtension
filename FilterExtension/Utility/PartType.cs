@@ -7,7 +7,18 @@ namespace FilterExtensions.Utility
 {
     public static class PartType
     {        
-        private static bool categoryCheck(AvailablePart part)
+        public static bool checkSubcategory(AvailablePart part, string value)
+        {
+            foreach (string s in value.Split(','))
+            {
+                string sTrimmed = s.Trim();
+                if (Core.Instance.subCategoriesDict.ContainsKey(sTrimmed) && Core.Instance.subCategoriesDict[sTrimmed].checkFilters(part))
+                    return true;
+            }
+            return false;
+        }
+        
+        public static bool categoryCheck(AvailablePart part)
         {
             if (part.category != PartCategories.none)
                 return false;
@@ -27,7 +38,6 @@ namespace FilterExtensions.Utility
                     val = isMultiCoupler(part);
                     break;
                 default:
-                    Core.Log("incorrect value in custom type check");
                     val = false;
                     break;
             }

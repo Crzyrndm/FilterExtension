@@ -47,21 +47,10 @@ namespace FilterExtensions.ConfigNodes
                 if (!ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
                     return false;
             }
+            bool val = true;
             foreach (Check c in checks)
-            {
-                bool val = c.checkPart(part);
-                if (!val)
-                {
-                    if (invert)
-                        return true; // part failed a check, result inverted
-                    else
-                        return false; // part failed a check
-                }
-            }
-            if (invert)
-                return false; // part passed all checks, result inverted
-            else
-                return true; // part passed all checks, thus meets the filter requirements
+                val &= c.checkPart(part);
+            return invert ? !val : val;
         }
 
         public bool Equals(Filter f2)

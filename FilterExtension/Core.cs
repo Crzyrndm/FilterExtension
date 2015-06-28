@@ -72,8 +72,6 @@ namespace FilterExtensions
 
             loadIcons();
             checkAndMarkConflicts();
-
-
         }
 
         private void getConfigs()
@@ -189,7 +187,7 @@ namespace FilterExtensions
                 customSubCategory sC = new customSubCategory(node);
                 if (sC.hasFilters)
                 {
-                    if (sC.subCategoryTitle != null && checkSubCategoryHasParts(sC))
+                    if (sC.subCategoryTitle != null)
                     {
                         if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if nothing else has the same title
                             subCategoriesDict.Add(sC.subCategoryTitle, sC);

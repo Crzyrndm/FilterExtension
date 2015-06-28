@@ -28,7 +28,8 @@ namespace FilterExtensions.ConfigNodes
         crashTolerance,
         maxTemp,
         profile,
-        check
+        check,
+        subcategory
     }
 
     public class Check
@@ -187,12 +188,17 @@ namespace FilterExtensions.ConfigNodes
                             result = false;
                     }
                     break;
+                case CheckType.subcategory:
+                    result = PartType.checkSubcategory(part, value);
+                    break;
                 default:
                     Core.Log("invalid Check type specified");
                     result = false;
                     break;
             }
             
+
+
             if (invert)
                 result = !result;
 
@@ -243,6 +249,8 @@ namespace FilterExtensions.ConfigNodes
                     return CheckType.profile;
                 case "check":
                     return CheckType.check;
+                case "subcategory":
+                    return CheckType.subcategory;
                 default:
                     return CheckType.category;
             }
@@ -292,6 +300,8 @@ namespace FilterExtensions.ConfigNodes
                     return "profile";
                 case CheckType.check:
                     return "check";
+                case CheckType.subcategory:
+                    return "subcategory";
                 default:
                     return "category";
             }
