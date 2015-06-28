@@ -177,7 +177,8 @@ namespace FilterExtensions
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
                 customCategory C = new customCategory(node);
-                if (Categories.Find(n => n.categoryName == C.categoryName) == null && C.subCategories != null)
+                customCategory CSearch = Categories.FirstOrDefault(n => n.categoryName == C.categoryName);
+                if (CSearch == null && C.subCategories != null)
                     Categories.Add(C);
             }
 
