@@ -205,6 +205,12 @@ namespace FilterExtensions.ConfigNodes
             return result;
         }
 
+        /// <summary>
+        /// set type enum from type string
+        /// NOTE: Needs the enum => string conversion added to function as subcategories are created from confignodes
+        /// </summary>
+        /// <param name="type">type string</param>
+        /// <returns>type enum</returns>
         public static CheckType getType(string type)
         {
             switch(type)
@@ -256,6 +262,12 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
+        /// <summary>
+        /// set type string from type enum
+        /// NOTE: Needs the string => enum conversion added to function
+        /// </summary>
+        /// <param name="type">type enum</param>
+        /// <returns>type string</returns>
         public static string getTypeString(CheckType type)
         {
             switch (type)

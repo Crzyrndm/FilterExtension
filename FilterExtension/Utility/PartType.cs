@@ -295,6 +295,12 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.OfType<ModuleTripLogger>().Any();
                 case "ModuleWheel":
                     return part.partPrefab.Modules.OfType<ModuleWheel>().Any();
+                case "FXModuleAnimateThrottle":
+                    return part.partPrefab.Modules.OfType<FXModuleAnimateThrottle>().Any();
+                case "FXModuleConstrainPosition":
+                    return part.partPrefab.Modules.OfType<FXModuleConstrainPosition>().Any();
+                case "FXModuleLookAtConstraint":
+                    return part.partPrefab.Modules.OfType<FXModuleLookAtConstraint>().Any();
                 default:
                     return false;
             }
