@@ -131,7 +131,7 @@ namespace FilterExtensions.Utility
                 {
                     foreach (string s in value.Split(','))
                     {
-                        if (s.Trim() == module.ClassName)
+                        if (s.Trim() != module.ClassName)
                             return true;
                     }
                 }
