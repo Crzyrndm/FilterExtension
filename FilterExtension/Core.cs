@@ -59,7 +59,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.2.2");
+            Log("Version 2.3.1");
 
             // settings, rename, icon set, and subCat removals
             getConfigs();
@@ -141,7 +141,7 @@ namespace FilterExtensions
             foreach (AvailablePart p in PartLoader.Instance.parts)
             {
                 // don't want dummy parts, roids, etc. (need to make MM configs for mods that use this category)
-                if (p == null || p.category == PartCategories.none)
+                if (p == null)
                     continue;
                 
                 if (string.IsNullOrEmpty(p.partUrl))
@@ -192,7 +192,7 @@ namespace FilterExtensions
                     {
                         if (!subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if nothing else has the same title
                             subCategoriesDict.Add(sC.subCategoryTitle, sC);
-                        else if (subCategoriesDict.ContainsKey(sC.subCategoryTitle)) // if something does have the same title
+                        else // if something does have the same title
                             subCategoriesDict[sC.subCategoryTitle].filters.AddRange(sC.filters);
                     }
                 }

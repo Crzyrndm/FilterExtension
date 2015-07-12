@@ -26,7 +26,7 @@ namespace FilterExtensions.Utility
                 return true;
         }
 
-        internal static bool checkCustom(AvailablePart part, string value)
+        public static bool checkCustom(AvailablePart part, string value)
         {
             bool val;
             switch (value)
@@ -44,7 +44,7 @@ namespace FilterExtensions.Utility
             return val;
         }
 
-        internal static bool checkCategory(AvailablePart part, string value)
+        public static bool checkCategory(AvailablePart part, string value)
         {
             foreach (string s in value.Split(','))
             {
@@ -96,7 +96,7 @@ namespace FilterExtensions.Utility
             return false;
         }
 
-        internal static bool checkModuleTitle(AvailablePart part, string value, bool contains = true)
+        public static bool checkModuleTitle(AvailablePart part, string value, bool contains = true)
         {
             if (part.moduleInfos == null)
                 return false;
@@ -119,7 +119,7 @@ namespace FilterExtensions.Utility
             return false;
         }
 
-        internal static bool checkModuleName(AvailablePart part, string value, bool contains = true)
+        public static bool checkModuleName(AvailablePart part, string value, bool contains = true)
         {
             if (part.partPrefab == null || part.partPrefab.Modules == null)
                 return false;
@@ -139,7 +139,7 @@ namespace FilterExtensions.Utility
             }
         }
 
-        internal static bool checkModuleNameType(AvailablePart part, string value)
+        public static bool checkModuleNameType(AvailablePart part, string value)
         {
             switch (value)
             {
@@ -306,17 +306,17 @@ namespace FilterExtensions.Utility
             }
         }
 
-        internal static bool checkName(AvailablePart part, string value)
+        public static bool checkName(AvailablePart part, string value)
         {
             return value.Split(',').Any(s => s.Trim().ToLower() == part.name.ToLower());
         }
 
-        internal static bool checkTitle(AvailablePart part, string value)
+        public static bool checkTitle(AvailablePart part, string value)
         {
             return value.Split(',').Any(s => part.title.ToLower().Contains(s.Trim().ToLower()));
         }
 
-        internal static bool checkResource(AvailablePart part, string value, bool contains = true)
+        public static bool checkResource(AvailablePart part, string value, bool contains = true)
         {
             if (part.partPrefab == null || part.partPrefab.Resources == null)
                 return false;
@@ -332,7 +332,7 @@ namespace FilterExtensions.Utility
             }
         }
 
-        internal static bool checkPropellant(AvailablePart part, string value, bool contains = true)
+        public static bool checkPropellant(AvailablePart part, string value, bool contains = true)
         {
             List<List<Propellant>> propellants = new List<List<Propellant>>();
             foreach (ModuleEngines e in part.partPrefab.GetModuleEngines())
@@ -360,23 +360,23 @@ namespace FilterExtensions.Utility
             return false;
         }
 
-        internal static bool checkTech(AvailablePart part, string value)
+        public static bool checkTech(AvailablePart part, string value)
         {
             return value.Split(',').Any(s => part.TechRequired == s.Trim());
         }
 
-        internal static bool checkManufacturer(AvailablePart part, string value)
+        public static bool checkManufacturer(AvailablePart part, string value)
         {
             return value.Split(',').Any(s => part.manufacturer == s.Trim());
         }
 
-        internal static bool checkFolder(AvailablePart part, string value)
+        public static bool checkFolder(AvailablePart part, string value)
         {
             string[] values = value.Split(',');
             return checkFolder(part, values);
         }
 
-        internal static bool checkFolder(AvailablePart part, string[] values)
+        public static bool checkFolder(AvailablePart part, string[] values)
         {
             if (Core.Instance.partPathDict.ContainsKey(part.name))
             {
@@ -386,13 +386,13 @@ namespace FilterExtensions.Utility
             return false;
         }
 
-        internal static bool checkPath(AvailablePart part, string value)
+        public static bool checkPath(AvailablePart part, string value)
         {
             string[] values = value.Replace('\\', '/').Split(',');
             return checkPath(part, values);
         }
 
-        internal static bool checkPath(AvailablePart part, string[] values)
+        public static bool checkPath(AvailablePart part, string[] values)
         {
             if (Core.Instance.partPathDict.ContainsKey(part.name))
                 return values.Any(s => Core.Instance.partPathDict[part.name].StartsWith(s.Trim(), StringComparison.InvariantCultureIgnoreCase));

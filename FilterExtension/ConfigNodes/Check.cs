@@ -56,8 +56,7 @@ namespace FilterExtensions.ConfigNodes
             bool.TryParse(node.GetValue("invert"), out tmp);
             invert = tmp;
 
-            bool success = bool.TryParse(node.GetValue("contains"), out tmp);
-            if (success)
+            if (bool.TryParse(node.GetValue("contains"), out tmp))
                 contains = tmp;
             else
                 contains = true;
