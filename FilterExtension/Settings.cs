@@ -15,12 +15,9 @@ namespace FilterExtensions
         public void Start()
         {
             showWindow = false;
-            if (btnLauncher != null)
-                return;
-
-            btnLauncher = ApplicationLauncher.Instance.AddModApplication(() => showWindow = !showWindow, () => showWindow = !showWindow,
-                                                                        null, null, null, null,
-                                                                        ApplicationLauncher.AppScenes.SPACECENTER,
+            if (btnLauncher == null)
+                btnLauncher = ApplicationLauncher.Instance.AddModApplication(() => showWindow = !showWindow, () => showWindow = !showWindow,
+                                                                        null, null, null, null, ApplicationLauncher.AppScenes.SPACECENTER,
                                                                         GameDatabase.Instance.GetTexture("000_FilterExtensions/Icons/FilterCreator", false));
         }
 
