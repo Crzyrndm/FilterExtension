@@ -47,18 +47,16 @@ namespace FilterExtensions.ConfigNodes
                 string[] subs = new string[1000];
                 for (int i = 0; i < stringList.Length; i++)
                 {
-                    string[] indexAndValue = stringList[i].Split(',');
-                    if (indexAndValue.Length >= 2) // location and ID
+                    string[] indexAndValue = stringList[i].Split(',').Select(s => s.Trim()).ToArray();
+                    int index;
+                    if (int.TryParse(indexAndValue[0], out index)) // has position index
                     {
-                        int index;
-                        if (int.TryParse(indexAndValue[0], out index))
-                            subs[index] = indexAndValue[1].Trim();
+                        if (indexAndValue.Length >= 2)
+                            subs[index] = indexAndValue[1];
                     }
-                    else if (indexAndValue.Length == 1) // just an ID
+                    else // no valid position index
                     {
-                        int index;
-                        if (!int.TryParse(indexAndValue[0], out index))
-                            unorderedSubCats.Add(indexAndValue[0]);
+                        unorderedSubCats.Add(indexAndValue[0]);
                     }
                 }
                 subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
@@ -89,66 +87,68 @@ namespace FilterExtensions.ConfigNodes
                 category.displayType = EditorPartList.State.PartsList;
                 category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
             }
-            else
+            else if (!PartCategorizer.Instance.filters.TryGetValue(c => c.button.categoryName == categoryName, out category))
             {
-                category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryName);
-                if (category == null)
-                {
-                    Core.Log("No Stock category of this name was found: " + categoryName);
-                    return;
-                }
+                Core.Log("No stock category of this name was found: " + categoryName);
+                return;
             }
             
             for (int i = 0; i < subCategories.Count; i++)
             {
-                if (!string.IsNullOrEmpty(subCategories[i]) && Core.Instance.subCategoriesDict.ContainsKey(subCategories[i]))
+                string subcategoryName = subCategories[i];
+                customSubCategory subcategory = null;
+                if (string.IsNullOrEmpty(subcategoryName) || !Core.Instance.subCategoriesDict.TryGetValue(subcategoryName, out subcategory))
+                    continue;
+
+                List<string> conflictsList;
+                if (Core.Instance.conflictsDict.TryGetValue(subcategoryName, out conflictsList))
                 {
-                    if (Core.Instance.conflictsDict.ContainsKey(subCategories[i]))
+                    // all of the possible conflicts that are also subcategories of this category
+                    List<string> conflicts = conflictsList.Intersect(subCategories).ToList();
+                    // if there are any conflicts that show up in the subcategories list before this one
+                    if (conflicts.Any(c => subCategories.IndexOf(c) < i))
                     {
-                        List<string> conflicts = Core.Instance.conflictsDict[subCategories[i]].Intersect(subCategories).ToList();
-                        
-                        if (conflicts.Any(c => subCategories.IndexOf(c) < i))
+                        string conflictList = "";
+                        foreach (string s in conflicts)
+                            conflictList += "\r\n" + s;
+                        Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories" + conflictList);
+                        continue;
+                    }
+                }
+
+                customSubCategory sC = new customSubCategory(subcategory.toConfigNode());    
+                if (templates != null && templates.Any())
+                {
+                    List<Filter> baseSubCatFilters = new List<Filter>();
+                    foreach (Filter f in sC.filters)
+                        baseSubCatFilters.Add(new Filter(f)); // create independent copies
+                    sC.filters.Clear(); // create them from scratch
+                    foreach (Filter templateFilter in templates)
+                    {
+                        foreach (Filter f in baseSubCatFilters)
                         {
-                            string conflictList = "";
-                            foreach (string s in conflicts)
-                                conflictList += "\r\n" + s;
-                            Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories" + conflictList);
-                            continue;
+                            sC.filters.Add(new Filter(f));
+                            sC.filters.Last().checks.AddRange(templateFilter.checks);
                         }
                     }
-                    customSubCategory sC = new customSubCategory(Core.Instance.subCategoriesDict[subCategories[i]].toConfigNode());
-                    
-                    if (templates != null && templates.Any())
-                    {
-                        List<Filter> baseSubCatFilters = new List<Filter>();
-                        foreach (Filter f in sC.filters)
-                            baseSubCatFilters.Add(new Filter(f.toConfigNode())); // create independent copies
-                        sC.filters.Clear(); // create them from scratch
-                        foreach (Filter templateFilter in templates)
-                        {
-                            foreach (Filter f in baseSubCatFilters)
-                            {
-                                sC.filters.Add(new Filter(f.toConfigNode()));
-                                sC.filters.Last().checks.AddRange(templateFilter.checks);
-                            }
-                        }
-                    }
-                    try
-                    {
-                        if (Core.checkSubCategoryHasParts(sC, categoryName))
-                            sC.initialise(category);
-                    }
-                    catch (Exception ex)
-                    {
-                        // extended logging for errors
-                        Core.Log(subCategories[i] + " failed to initialise");
-                        Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
-                        Core.Log(ex.StackTrace);
-                    }
+                }
+
+                try
+                {
+                    if (Core.checkSubCategoryHasParts(sC, categoryName))
+                        sC.initialise(category);
+                }
+                catch (Exception ex)
+                {
+                    // extended logging for errors
+                    Core.Log(subCategories[i] + " failed to initialise");
+                    Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
+                    Core.Log(ex.StackTrace);
                 }
             }
         }
 
+        #warning Need another type which runs after other mods for editing thier categories
         private void typeSwitch(string type, string value)
         {
             switch (type)
@@ -172,23 +172,24 @@ namespace FilterExtensions.ConfigNodes
         private void generateEngineTypes()
         {
             List<string> engines = new List<string>();
-            foreach (List<string> ls in Core.Instance.propellantCombos)
+            for (int i = 0; i < Core.Instance.propellantCombos.Count; i++ )
             {
+                List<string> ls = Core.Instance.propellantCombos[i];
                 List<Check> checks = new List<Check>();
                 string props = "";
-                foreach (string s in ls)
+                for (int j = 0; j < ls.Count; j++)
                 {
                     if (props != "")
                         props += ",";
-                    props += s;
+                    props += ls[j];
                 }
-                foreach (string s in props.Split(','))
-                    checks.Add(new Check("propellant", s.Trim()));
+                foreach (string s in props.Split(',').Select(str => str.Trim()))
+                    checks.Add(new Check("propellant", s));
                 checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
                 string name = props.Replace(',', '/'); // can't use ',' as a delimiter in the procedural name/icon switch function
                 string icon = name;
-                Core.Instance.proceduralNameandIcon(ref name, ref icon);
+                Core.Instance.SetNameAndIcon(ref name, ref icon);
 
                 if (!Core.Instance.subCategoriesDict.ContainsKey(name))
                 {
@@ -234,7 +235,7 @@ namespace FilterExtensions.ConfigNodes
                     c.b = (float)byte.Parse(hex_ARGB.Substring(6, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
                     return c;
                 }
-                else if (hex_ARGB.Length == 6)
+                else // if (hex_ARGB.Length == 6)
                 {
                     Color c = new Color();
                     c.a = 1;

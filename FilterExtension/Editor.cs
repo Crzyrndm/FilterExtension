@@ -7,6 +7,7 @@ using UnityEngine;
 namespace FilterExtensions
 {
     using ConfigNodes;
+    using Utility;
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     class Editor : MonoBehaviour
@@ -18,6 +19,9 @@ namespace FilterExtensions
             StartCoroutine(editorInit());
         }
 
+        /// <summary>
+        /// names of all parts that shouldn't be visible to the player
+        /// </summary>
         public static HashSet<string> blackListedParts;
 
         IEnumerator editorInit()
@@ -29,11 +33,11 @@ namespace FilterExtensions
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
-            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I clear the category
+            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I may clear the category
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
-                customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
-                if (cat != null && cat.hasSubCategories() && cat.stockCategory)
+                customCategory cat;
+                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat) && cat.hasSubCategories() && cat.stockCategory)
                 {
                     if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
                         C.subcategories.Clear();
@@ -52,8 +56,10 @@ namespace FilterExtensions
                 Core.Log("Starting on other filters");
             // run everything
             foreach (customCategory c in Core.Instance.Categories)
+            {
                 if (!c.stockCategory)
                     c.initialise();
+            }
 
             // wait again so icon edits don't occur immediately and cause breakages
             for (int i = 0; i < 4; i++)
@@ -78,6 +84,7 @@ namespace FilterExtensions
                 PartCategorizer.Instance.filters.Remove(cat);
             }
 
+            // make the categories visible
             if (Core.Instance.setAdvanced)
                 PartCategorizer.Instance.SetAdvancedMode();
 
@@ -86,9 +93,6 @@ namespace FilterExtensions
             if (Core.Instance.debug)
                 Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
-
-            //while (true)
-            //    yield return null;
         }
 
         /// <summary>

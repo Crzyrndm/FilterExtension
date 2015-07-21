@@ -64,6 +64,22 @@ namespace FilterExtensions.ConfigNodes
             return false; // part passed no filter(s), not compatible with this subcategory
         }
 
+        /// <summary>
+        /// called by subcategory check type, has depth loop protection
+        /// </summary>
+        /// <param name="part"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        public bool checkFilters(AvailablePart part, int depth)
+        {
+            foreach (Filter f in filters)
+            {
+                if (f.checkFilter(part, depth))
+                    return true;
+            }
+            return false; // part passed no filter(s), not compatible with this subcategory
+        }
+
         public void initialise(PartCategorizer.Category cat)
         {
             RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
@@ -75,6 +91,31 @@ namespace FilterExtensions.ConfigNodes
             }
             else
                 Core.Log("Invalid subCategory definition");
+        }
+
+        /// <summary>
+        /// check to see if any checks in a subcategory match a given check
+        /// </summary>
+        /// <param name="subcategory"></param>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
+        /// <param name="contains"></param>
+        /// <param name="equality"></param>
+        /// <param name="invert"></param>
+        /// <returns>true if there is a matching check in the category</returns>
+        public static bool checkForCheckMatch(customSubCategory subcategory, CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
+        {
+            for (int j = 0; j < subcategory.filters.Count; j++)
+            {
+                Filter f = subcategory.filters[j];
+                for (int k = 0; k < f.checks.Count; k++)
+                {
+                    Check c = f.checks[k];
+                    if (c.type == type && c.value == value && c.invert == invert && c.contains == contains && c.equality == equality)
+                        return true;
+                }
+            }
+            return false;
         }
 
         public bool Equals(customSubCategory sC2)
