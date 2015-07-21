@@ -59,7 +59,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.3.1");
+            Log("Version 2.4.0");
 
             getConfigs();
             getPartData();
@@ -523,7 +523,6 @@ namespace FilterExtensions
                 return icon;
             if (PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 return icon;
-
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
 
