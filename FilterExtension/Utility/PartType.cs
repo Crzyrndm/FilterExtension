@@ -29,20 +29,17 @@ namespace FilterExtensions.Utility
 
         public static bool checkCustom(AvailablePart part, string value)
         {
-            bool val;
             switch (value)
             {
                 case "adapter":
-                    val = isAdapter(part);
-                    break;
+                    return isAdapter(part);
                 case "multicoupler":
-                    val = isMultiCoupler(part);
-                    break;
+                    return isMultiCoupler(part);
+                case "purchased":
+                    return ResearchAndDevelopment.PartModelPurchased(part);
                 default:
-                    val = false;
-                    break;
+                    return false;
             }
-            return val;
         }
 
         public static bool checkCategory(AvailablePart part, string value)

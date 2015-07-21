@@ -10,22 +10,24 @@ namespace FilterExtensions.ConfigNodes
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
         public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        public bool unPurchasedOverride { get; set; } // allow unpurchased parts to be visible even if the global setting hides them
 
         public bool hasFilters
         {
             get
             {
-                return filters.Count > 0;
+                return filters.Any();
             }
         }
 
         public customSubCategory(ConfigNode node)
         {
             subCategoryTitle = node.GetValue("name");
-            if (string.IsNullOrEmpty(subCategoryTitle))
-                subCategoryTitle = node.GetValue("title");
-
             iconName = node.GetValue("icon");
+
+            bool tmp;
+            bool.TryParse(node.GetValue("showUnPurchased"), out tmp);
+            unPurchasedOverride = tmp;
 
             filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
@@ -56,6 +58,14 @@ namespace FilterExtensions.ConfigNodes
 
         public bool checkFilters(AvailablePart part)
         {
+            if (Editor.blackListedParts != null)
+            {
+                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                    return false;
+                if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                    return false;
+            }
+
             foreach (Filter f in filters)
             {
                 if (f.checkFilter(part))
@@ -72,6 +82,14 @@ namespace FilterExtensions.ConfigNodes
         /// <returns></returns>
         public bool checkFilters(AvailablePart part, int depth)
         {
+            if (Editor.blackListedParts != null)
+            {
+                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                    return false;
+                if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                    return false;
+            }
+
             foreach (Filter f in filters)
             {
                 if (f.checkFilter(part, depth))

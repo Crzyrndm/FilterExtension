@@ -53,28 +53,22 @@ namespace FilterExtensions.ConfigNodes
 
         internal bool checkFilter(AvailablePart part)
         {
-            if (Core.Instance.hideUnpurchased && Editor.blackListedParts != null)
+            for (int i = 0; i < checks.Count; i++)
             {
-                if (!ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
-                    return false;
+                if (!checks[i].checkPart(part))
+                    return invert ? true : false;
             }
-            bool val = true;
-            foreach (Check c in checks)
-                val &= c.checkPart(part);
-            return invert ? !val : val;
+            return invert ? false : true;
         }
 
         internal bool checkFilter(AvailablePart part, int depth)
         {
-            if (Core.Instance.hideUnpurchased && Editor.blackListedParts != null)
+            for (int i = 0; i < checks.Count; i++)
             {
-                if (!ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
-                    return false;
+                if (!checks[i].checkPart(part, depth))
+                    return invert ? true : false;
             }
-            bool val = true;
-            foreach (Check c in checks)
-                val &= c.checkPart(part, depth);
-            return invert ? !val : val;
+            return invert ? false : true;
         }
 
         /// <summary>

@@ -126,14 +126,7 @@ namespace FilterExtensions.ConfigNodes
 
         public bool checkPart(AvailablePart part, int depth = 0)
         {
-            if (part.category == PartCategories.none)
-            {
-                if (Editor.blackListedParts != null && Editor.blackListedParts.Contains(part.name))
-                    return false;
-            }
-
             bool result = true;
-
             switch (type)
             {
                 case CheckType.moduleTitle: // check by module title
@@ -209,11 +202,8 @@ namespace FilterExtensions.ConfigNodes
                     break;
             }
             
-
-
             if (invert)
-                result = !result;
-
+                return !result;
             return result;
         }
 
