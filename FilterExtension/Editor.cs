@@ -68,7 +68,31 @@ namespace FilterExtensions
             if (Core.Instance.debug)
                 Core.Log("Starting on setting names and icons");
             if (blackListedParts == null)
+            {
                 findPartsToBlock();
+                // not known until now which parts are never visible so some empty subcategories will be present
+                for (int i = 0; i < PartCategorizer.Instance.filters.Count; i++)
+                {
+                    List<PartCategorizer.Category> subCatsToDelete = new List<PartCategorizer.Category>();
+                    PartCategorizer.Category C = PartCategorizer.Instance.filters[i];
+                    if (C == null)
+                        continue;
+                    for (int j = 0; j < C.subcategories.Count; j++)
+                    {
+                        PartCategorizer.Category sub = C.subcategories[j];
+                        if (sub == null)
+                            continue;
+                        
+                        if (!PartLoader.Instance.parts.Any(p => sub.exclusionFilter.FilterCriteria.Invoke(p)))
+                            subCatsToDelete.Add(sub);
+                    }
+                    for (int j = 0; j < subCatsToDelete.Count; j++)
+                    {
+                        PartCategorizer.Category sub = subCatsToDelete[j];
+                        C.subcategories.Remove(sub);
+                    }
+                }
+            }
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 Core.Instance.namesAndIcons(c);
 
@@ -112,7 +136,7 @@ namespace FilterExtensions
             {
                 PartCategorizer.Category subCat = mainCat.subcategories[i];
                 // if the name is an FE subcat and the category should have that FE subcat and it's not the duplicate of one already seen created by another mod, mark it seen and move on
-                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Contains(subCat.button.categoryName) && !subCatsSeen.Contains(subCat.button.categoryName))
+                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Any(subItem => string.Equals(subItem.subcategoryName, subCat.button.categoryName, StringComparison.CurrentCulture)) && !subCatsSeen.Contains(subCat.button.categoryName))
                     subCatsSeen.Add(subCat.button.categoryName);
                 else // subcat created by another mod
                 {

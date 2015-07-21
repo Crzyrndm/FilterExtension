@@ -22,7 +22,7 @@ namespace FilterExtensions.ConfigNodes
         public Color colour { get; set; }
         public categoryTypeAndBehaviour behaviour { get; set; }
         public bool all { get; set; } // has an all parts subCategory
-        public List<string> subCategories { get; set; } // array of subcategories
+        public List<subCategoryItem> subCategories { get; set; } // array of subcategories
         public List<Filter> templates { get; set; } // Checks to add to every Filter in a category with the template tag
 
         private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
@@ -40,27 +40,43 @@ namespace FilterExtensions.ConfigNodes
             this.all = tmp;
             
             ConfigNode subcategoryList = node.GetNode("SUBCATEGORIES", 0);
+            subCategories = new List<subCategoryItem>();
             if (subcategoryList != null)
             {
-                List<string> unorderedSubCats = new List<string>();
+                List<subCategoryItem> unorderedSubCats = new List<subCategoryItem>();
                 string[] stringList = subcategoryList.GetValues();
-                string[] subs = new string[1000];
+                subCategoryItem[] subs = new subCategoryItem[1000];
                 for (int i = 0; i < stringList.Length; i++)
                 {
                     string[] indexAndValue = stringList[i].Split(',').Select(s => s.Trim()).ToArray();
+
+                    subCategoryItem newSubItem = new subCategoryItem();
                     int index;
                     if (int.TryParse(indexAndValue[0], out index)) // has position index
                     {
                         if (indexAndValue.Length >= 2)
-                            subs[index] = indexAndValue[1];
+                            newSubItem.subcategoryName = indexAndValue[1];
+                        if (string.IsNullOrEmpty(newSubItem.subcategoryName))
+                            continue;
+
+                        if (indexAndValue.Length >= 3 && string.Equals(indexAndValue[2], "dont template", StringComparison.CurrentCultureIgnoreCase))
+                            newSubItem.applyTemplate = false;
+                        subs[index] = newSubItem;
                     }
                     else // no valid position index
                     {
-                        unorderedSubCats.Add(indexAndValue[0]);
+                        newSubItem.subcategoryName = indexAndValue[0];
+                        if (string.IsNullOrEmpty(newSubItem.subcategoryName))
+                            continue;
+
+                        if (indexAndValue.Length >= 2 && string.Equals(indexAndValue[1], "dont template", StringComparison.CurrentCultureIgnoreCase))
+                            newSubItem.applyTemplate = false;
+                        unorderedSubCats.Add(newSubItem);
                     }
                 }
                 subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
                 subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
+                subCategories.RemoveAll(s => s == null);
             }
             typeSwitch(node.GetValue("type"), node.GetValue("value"));
         }
@@ -92,21 +108,28 @@ namespace FilterExtensions.ConfigNodes
                 Core.Log("No stock category of this name was found: " + categoryName);
                 return;
             }
+
+            List<string> subcategoryNames = new List<string>();
+            for (int i = 0; i < subCategories.Count; i++ )
+                subcategoryNames.Add(subCategories[i].subcategoryName);
             
             for (int i = 0; i < subCategories.Count; i++)
             {
-                string subcategoryName = subCategories[i];
+                subCategoryItem subcategoryItem = subCategories[i];
+                if (subcategoryItem == null)
+                    continue;
+
                 customSubCategory subcategory = null;
-                if (string.IsNullOrEmpty(subcategoryName) || !Core.Instance.subCategoriesDict.TryGetValue(subcategoryName, out subcategory))
+                if (string.IsNullOrEmpty(subcategoryItem.subcategoryName) || !Core.Instance.subCategoriesDict.TryGetValue(subcategoryItem.subcategoryName, out subcategory))
                     continue;
 
                 List<string> conflictsList;
-                if (Core.Instance.conflictsDict.TryGetValue(subcategoryName, out conflictsList))
+                if (Core.Instance.conflictsDict.TryGetValue(subcategoryItem.subcategoryName, out conflictsList))
                 {
                     // all of the possible conflicts that are also subcategories of this category
-                    List<string> conflicts = conflictsList.Intersect(subCategories).ToList();
+                    List<string> conflicts = conflictsList.Intersect(subcategoryNames).ToList();
                     // if there are any conflicts that show up in the subcategories list before this one
-                    if (conflicts.Any(c => subCategories.IndexOf(c) < i))
+                    if (conflicts.Any(c => subcategoryNames.IndexOf(c) < i))
                     {
                         string conflictList = "";
                         foreach (string s in conflicts)
@@ -116,8 +139,8 @@ namespace FilterExtensions.ConfigNodes
                     }
                 }
 
-                customSubCategory sC = new customSubCategory(subcategory.toConfigNode());    
-                if (templates != null && templates.Any())
+                customSubCategory sC = new customSubCategory(subcategory.toConfigNode());
+                if (subcategoryItem.applyTemplate && templates != null && templates.Any())
                 {
                     List<Filter> baseSubCatFilters = new List<Filter>();
                     foreach (Filter f in sC.filters)
@@ -148,7 +171,7 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        #warning Need another type which runs after other mods for editing thier categories
+        #warning Need another type which runs after other mods for editing their categories
         private void typeSwitch(string type, string value)
         {
             switch (type)
@@ -171,7 +194,7 @@ namespace FilterExtensions.ConfigNodes
 
         private void generateEngineTypes()
         {
-            List<string> engines = new List<string>();
+            List<subCategoryItem> engines = new List<subCategoryItem>();
             for (int i = 0; i < Core.Instance.propellantCombos.Count; i++ )
             {
                 List<string> ls = Core.Instance.propellantCombos[i];
@@ -200,7 +223,8 @@ namespace FilterExtensions.ConfigNodes
                     sC.filters.Add(f);
                     Core.Instance.subCategoriesDict.Add(name, sC);
                 }
-                engines.Add(name);
+                if (!string.IsNullOrEmpty(name))
+                    engines.Add(new subCategoryItem(name));
             }
             if (subCategories != null)
                 subCategories.AddUniqueRange(engines);
@@ -285,6 +309,42 @@ namespace FilterExtensions.ConfigNodes
             {
                 return this.behaviour == categoryTypeAndBehaviour.StockAdd || this.behaviour == categoryTypeAndBehaviour.StockReplace;
             }
+        }
+    }
+
+    public class subCategoryItem : IEquatable<subCategoryItem>
+    {
+        public string subcategoryName { get; set; }
+        public bool applyTemplate { get; set; }
+
+        public subCategoryItem()
+        {
+            applyTemplate = true;
+        }
+        public subCategoryItem(string name, bool useTemplate = true)
+        {
+            subcategoryName = name;
+            applyTemplate = useTemplate;
+        }
+
+        public bool Equals(subCategoryItem sub)
+        {
+            if (ReferenceEquals(null, sub))
+                return false;
+            if (ReferenceEquals(this, sub))
+                return true;
+
+            return subcategoryName.Equals(sub.subcategoryName);
+        }
+
+        public override int GetHashCode()
+        {
+            return subcategoryName.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return subcategoryName;
         }
     }
 }

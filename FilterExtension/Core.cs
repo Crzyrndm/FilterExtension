@@ -63,10 +63,7 @@ namespace FilterExtensions
 
             getConfigs();
             getPartData();
-            
-            // load all category configs
             processFilterDefinitions();
-
             loadIcons();
             checkAndMarkConflicts();
         }
@@ -198,7 +195,7 @@ namespace FilterExtensions
                 if (!Categories.Any(n => n.categoryName == C.categoryName))
                     Categories.Add(C);
             }
-
+            
             //load all subCategory configs
             nodes = GameDatabase.Instance.GetConfigNodes("SUBCATEGORY");
             for (int i = 0; i < nodes.Length; i++)
@@ -214,7 +211,7 @@ namespace FilterExtensions
                 else // if nothing else has the same title
                     subCategoriesDict.Add(sC.subCategoryTitle, sC);
             }
-
+            
             customCategory Cat = Categories.Find(C => C.categoryName == "Filter by Resource");
             if (Cat != null)
             {
@@ -241,31 +238,35 @@ namespace FilterExtensions
                         sC.filters.Add(f);
                         subCategoriesDict.Add(name, sC);
                     }
-                    Cat.subCategories.AddUnique(name);
+                    if (!string.IsNullOrEmpty(name))
+                        Cat.subCategories.AddUnique(new subCategoryItem(name));
                 }
             }
 
             for (int i = 0; i < Categories.Count; i++)
             {
                 customCategory C = Categories[i];
-
-                if (!C.all)
+                if (C == null || !C.all)
                     continue;
+
                 List<Filter> filterList = new List<Filter>();
                 if (C.subCategories != null)
                 {
                     for (int j = 0; j < C.subCategories.Count; j++)
                     {
-                        string s = C.subCategories[j];
+                        subCategoryItem s = C.subCategories[j];
+                        if (s == null)
+                            continue;
+
                         customSubCategory subcategory;
-                        if (!string.IsNullOrEmpty(s) && subCategoriesDict.TryGetValue(s, out subcategory))
+                        if (subCategoriesDict.TryGetValue(s.subcategoryName, out subcategory))
                             filterList.AddUniqueRange(subcategory.filters);
                     }
                 }
                 customSubCategory newSub = new customSubCategory("All parts in " + C.categoryName, C.iconName);
                 newSub.filters = filterList;
                 subCategoriesDict.Add(newSub.subCategoryTitle, newSub);
-                C.subCategories.Insert(0, newSub.subCategoryTitle);
+                C.subCategories.Insert(0, new subCategoryItem(newSub.subCategoryTitle));
             }
         }
 
@@ -334,7 +335,10 @@ namespace FilterExtensions
                 Categories.Add(new customCategory(filterByManufacturer));
             }
             else
-                fbm.subCategories.AddUniqueRange(modNames); // append the mod names
+            {
+                for (int i = 0; i < modNames.Count; i++)
+                    fbm.subCategories.AddUnique(new subCategoryItem(modNames[i])); // append the mod names
+            }
         }
 
         /// <summary>
@@ -557,7 +561,7 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// if a subcategory doesn't have any parts, it shouldn't be used
+        /// if a subcategory doesn't have any parts, it shouldn't be used. Doesn't account for the blackListed parts the first time the editor is entered
         /// </summary>
         /// <param name="sC">the subcat to check</param>
         /// <param name="category">the category for logging purposes</param>
