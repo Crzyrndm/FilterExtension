@@ -28,7 +28,8 @@ namespace FilterExtensions.ConfigNodes
         crashTolerance,
         maxTemp,
         profile,
-        check
+        check,
+        subcategory
     }
 
     public class Check
@@ -55,8 +56,7 @@ namespace FilterExtensions.ConfigNodes
             bool.TryParse(node.GetValue("invert"), out tmp);
             invert = tmp;
 
-            bool success = bool.TryParse(node.GetValue("contains"), out tmp);
-            if (success)
+            if (bool.TryParse(node.GetValue("contains"), out tmp))
                 contains = tmp;
             else
                 contains = true;
@@ -187,18 +187,29 @@ namespace FilterExtensions.ConfigNodes
                             result = false;
                     }
                     break;
+                case CheckType.subcategory:
+                    result = PartType.checkSubcategory(part, value);
+                    break;
                 default:
                     Core.Log("invalid Check type specified");
                     result = false;
                     break;
             }
             
+
+
             if (invert)
                 result = !result;
 
             return result;
         }
 
+        /// <summary>
+        /// set type enum from type string
+        /// NOTE: Needs the enum => string conversion added to function as subcategories are created from confignodes
+        /// </summary>
+        /// <param name="type">type string</param>
+        /// <returns>type enum</returns>
         public static CheckType getType(string type)
         {
             switch(type)
@@ -243,11 +254,19 @@ namespace FilterExtensions.ConfigNodes
                     return CheckType.profile;
                 case "check":
                     return CheckType.check;
+                case "subcategory":
+                    return CheckType.subcategory;
                 default:
                     return CheckType.category;
             }
         }
 
+        /// <summary>
+        /// set type string from type enum
+        /// NOTE: Needs the string => enum conversion added to function
+        /// </summary>
+        /// <param name="type">type enum</param>
+        /// <returns>type string</returns>
         public static string getTypeString(CheckType type)
         {
             switch (type)
@@ -292,6 +311,8 @@ namespace FilterExtensions.ConfigNodes
                     return "profile";
                 case CheckType.check:
                     return "check";
+                case CheckType.subcategory:
+                    return "subcategory";
                 default:
                     return "category";
             }

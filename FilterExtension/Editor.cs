@@ -86,6 +86,9 @@ namespace FilterExtensions
             if (Core.Instance.debug)
                 Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
+
+            //while (true)
+            //    yield return null;
         }
 
         /// <summary>
