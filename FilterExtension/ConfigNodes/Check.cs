@@ -84,12 +84,25 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        public Check(string type, string value, bool invert = false, bool contains = true)
+        public Check(Check c)
+        {
+            type = c.type;
+            value = c.value;
+            invert = c.invert;
+            contains = c.contains;
+
+            checks = new List<Check>();
+            for (int i = 0; i < c.checks.Count; i++)
+                checks.Add(new Check(c.checks[i]));
+        }
+
+        public Check(string type, string value, bool invert = false, bool contains = true, Equality compare = Equality.Equals)
         {
             this.type = getType(type);
             this.value = value;
             this.invert = invert;
             this.contains = contains;
+            equality = compare;
             this.checks = new List<Check>();
         }
 
@@ -111,16 +124,9 @@ namespace FilterExtensions.ConfigNodes
             return node;
         }
 
-        public bool checkPart(AvailablePart part)
+        public bool checkPart(AvailablePart part, int depth = 0)
         {
-            if (part.category == PartCategories.none)
-            {
-                if (Editor.blackListedParts != null && Editor.blackListedParts.Contains(part.name))
-                    return false;
-            }
-
             bool result = true;
-
             switch (type)
             {
                 case CheckType.moduleTitle: // check by module title
@@ -181,14 +187,14 @@ namespace FilterExtensions.ConfigNodes
                     result = PartType.checkBulkHeadProfiles(part, value, contains);
                     break;
                 case CheckType.check:
-                    foreach (Check c in checks)
+                    for (int i = 0; i < checks.Count; i++ )
                     {
-                        if (!c.checkPart(part))
+                        if (!checks[i].checkPart(part))
                             result = false;
                     }
                     break;
                 case CheckType.subcategory:
-                    result = PartType.checkSubcategory(part, value);
+                    result = PartType.checkSubcategory(part, value, depth);
                     break;
                 default:
                     Core.Log("invalid Check type specified");
@@ -196,11 +202,8 @@ namespace FilterExtensions.ConfigNodes
                     break;
             }
             
-
-
             if (invert)
-                result = !result;
-
+                return !result;
             return result;
         }
 
@@ -354,7 +357,7 @@ namespace FilterExtensions.ConfigNodes
         {
             if (c2 == null)
                 return false;
-            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks)
+            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks && this.equality == c2.equality)
                 return true;
             else
                 return false;
@@ -363,7 +366,7 @@ namespace FilterExtensions.ConfigNodes
         public override int GetHashCode()
         {
             int checks = this.checks.Any() ? this.checks.GetHashCode() : 1;
-            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * checks;
+            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * this.equality.GetHashCode() * checks;
         }
     }
 }

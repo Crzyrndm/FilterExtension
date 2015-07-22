@@ -23,6 +23,17 @@ namespace FilterExtensions.ConfigNodes
             invert = tmp;
         }
 
+        public Filter(Filter f)
+        {
+            checks = new List<Check>();
+            for (int i = 0; i < f.checks.Count; i++)
+            {
+                checks.Add(new Check(f.checks[i]));
+            }
+
+            invert = f.invert;
+        }
+
         public Filter(bool invert)
         {
             checks = new List<Check>();
@@ -42,15 +53,41 @@ namespace FilterExtensions.ConfigNodes
 
         internal bool checkFilter(AvailablePart part)
         {
-            if (Core.Instance.hideUnpurchased && Editor.blackListedParts != null)
+            for (int i = 0; i < checks.Count; i++)
             {
-                if (!ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                if (!checks[i].checkPart(part))
+                    return invert ? true : false;
+            }
+            return invert ? false : true;
+        }
+
+        internal bool checkFilter(AvailablePart part, int depth)
+        {
+            for (int i = 0; i < checks.Count; i++)
+            {
+                if (!checks[i].checkPart(part, depth))
+                    return invert ? true : false;
+            }
+            return invert ? false : true;
+        }
+
+        /// <summary>
+        /// compare subcategory filter lists, returning true for matches
+        /// </summary>
+        /// <param name="fLA"></param>
+        /// <param name="fLB"></param>
+        /// <returns></returns>
+        public static bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
+        {
+            if (fLA.Count != fLB.Count && fLA.Count != 0)
+                return false;
+
+            foreach (Filter fA in fLA)
+            {
+                if (!fLB.Any(fB => fB.Equals(fA)))
                     return false;
             }
-            bool val = true;
-            foreach (Check c in checks)
-                val &= c.checkPart(part);
-            return invert ? !val : val;
+            return true;
         }
 
         public bool Equals(Filter f2)

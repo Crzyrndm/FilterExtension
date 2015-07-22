@@ -10,22 +10,24 @@ namespace FilterExtensions.ConfigNodes
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
         public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        public bool unPurchasedOverride { get; set; } // allow unpurchased parts to be visible even if the global setting hides them
 
         public bool hasFilters
         {
             get
             {
-                return filters.Count > 0;
+                return filters.Any();
             }
         }
 
         public customSubCategory(ConfigNode node)
         {
             subCategoryTitle = node.GetValue("name");
-            if (string.IsNullOrEmpty(subCategoryTitle))
-                subCategoryTitle = node.GetValue("title");
-
             iconName = node.GetValue("icon");
+
+            bool tmp;
+            bool.TryParse(node.GetValue("showUnPurchased"), out tmp);
+            unPurchasedOverride = tmp;
 
             filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
@@ -56,9 +58,41 @@ namespace FilterExtensions.ConfigNodes
 
         public bool checkFilters(AvailablePart part)
         {
+            if (Editor.blackListedParts != null)
+            {
+                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                    return false;
+                if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                    return false;
+            }
+
             foreach (Filter f in filters)
             {
                 if (f.checkFilter(part))
+                    return true;
+            }
+            return false; // part passed no filter(s), not compatible with this subcategory
+        }
+
+        /// <summary>
+        /// called by subcategory check type, has depth loop protection
+        /// </summary>
+        /// <param name="part"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        public bool checkFilters(AvailablePart part, int depth)
+        {
+            if (Editor.blackListedParts != null)
+            {
+                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                    return false;
+                if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                    return false;
+            }
+
+            foreach (Filter f in filters)
+            {
+                if (f.checkFilter(part, depth))
                     return true;
             }
             return false; // part passed no filter(s), not compatible with this subcategory
@@ -75,6 +109,31 @@ namespace FilterExtensions.ConfigNodes
             }
             else
                 Core.Log("Invalid subCategory definition");
+        }
+
+        /// <summary>
+        /// check to see if any checks in a subcategory match a given check
+        /// </summary>
+        /// <param name="subcategory"></param>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
+        /// <param name="contains"></param>
+        /// <param name="equality"></param>
+        /// <param name="invert"></param>
+        /// <returns>true if there is a matching check in the category</returns>
+        public static bool checkForCheckMatch(customSubCategory subcategory, CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
+        {
+            for (int j = 0; j < subcategory.filters.Count; j++)
+            {
+                Filter f = subcategory.filters[j];
+                for (int k = 0; k < f.checks.Count; k++)
+                {
+                    Check c = f.checks[k];
+                    if (c.type == type && c.value == value && c.invert == invert && c.contains == contains && c.equality == equality)
+                        return true;
+                }
+            }
+            return false;
         }
 
         public bool Equals(customSubCategory sC2)
