@@ -21,7 +21,7 @@ namespace FilterExtensions.Utility
             foreach (string s in value.Split(',').Select(str => str.Trim()))
             {
                 FilterExtensions.ConfigNodes.customSubCategory subcategory;
-                if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkFilters(part, depth))
+                if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkFilters(part, depth + 1))
                     return true;
             }
             return false;
@@ -90,7 +90,6 @@ namespace FilterExtensions.Utility
                         break;
                 }
             }
-
             return false;
         }
 

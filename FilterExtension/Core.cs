@@ -42,8 +42,8 @@ namespace FilterExtensions
         public bool debug = false;
         public bool setAdvanced = true;
         public bool replaceFbM = true;
-        public string categoryDefault;
-        public string subCategoryDefault;
+        public string categoryDefault = "";
+        public string subCategoryDefault = "";
 
         const string fallbackIcon = "stockIcon_fallback";
 

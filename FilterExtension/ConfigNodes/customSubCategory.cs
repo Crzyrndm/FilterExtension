@@ -26,7 +26,7 @@ namespace FilterExtensions.ConfigNodes
             iconName = node.GetValue("icon");
 
             bool tmp;
-            bool.TryParse(node.GetValue("showUnPurchased"), out tmp);
+            bool.TryParse(node.GetValue("showUnpurchased"), out tmp);
             unPurchasedOverride = tmp;
 
             filters = new List<Filter>();
@@ -49,6 +49,7 @@ namespace FilterExtensions.ConfigNodes
 
             node.AddValue("name", this.subCategoryTitle);
             node.AddValue("icon", this.iconName);
+            node.AddValue("showUnpurchased", this.unPurchasedOverride);
 
             foreach (Filter f in this.filters)
                 node.AddNode(f.toConfigNode());
@@ -65,7 +66,6 @@ namespace FilterExtensions.ConfigNodes
                 if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
                     return false;
             }
-
             foreach (Filter f in filters)
             {
                 if (f.checkFilter(part))

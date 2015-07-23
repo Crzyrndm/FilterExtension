@@ -13,6 +13,7 @@ namespace FilterExtensions
     class Editor : MonoBehaviour
     {
         public static Editor instance;
+        public bool ready = false;
         void Start()
         {
             instance = this;
@@ -71,27 +72,27 @@ namespace FilterExtensions
             {
                 findPartsToBlock();
                 // not known until now which parts are never visible so some empty subcategories will be present
-                for (int i = 0; i < PartCategorizer.Instance.filters.Count; i++)
-                {
-                    List<PartCategorizer.Category> subCatsToDelete = new List<PartCategorizer.Category>();
-                    PartCategorizer.Category C = PartCategorizer.Instance.filters[i];
-                    if (C == null)
-                        continue;
-                    for (int j = 0; j < C.subcategories.Count; j++)
-                    {
-                        PartCategorizer.Category sub = C.subcategories[j];
-                        if (sub == null)
-                            continue;
-                        
-                        if (!PartLoader.Instance.parts.Any(p => sub.exclusionFilter.FilterCriteria.Invoke(p)))
-                            subCatsToDelete.Add(sub);
-                    }
-                    for (int j = 0; j < subCatsToDelete.Count; j++)
-                    {
-                        PartCategorizer.Category sub = subCatsToDelete[j];
-                        C.subcategories.Remove(sub);
-                    }
-                }
+                //for (int i = 0; i < PartCategorizer.Instance.filters.Count; i++)
+                //{
+                //    PartCategorizer.Category C = PartCategorizer.Instance.filters[i];
+                //    if (C == null)
+                //        continue;
+                //    int j = 0;
+                //    while (j < C.subcategories.Count)
+                //    {
+                //        PartCategorizer.Category sub = C.subcategories[j];
+                //        if (sub == null)
+                //        {
+                //            j++;
+                //            continue;
+                //        }
+
+                //        if (!PartLoader.Instance.parts.Any(p => sub.exclusionFilter.FilterCriteria.Invoke(p)))
+                //            C.subcategories.RemoveAt(j);
+                //        else
+                //            j++;
+                //    }
+                //}
             }
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 Core.Instance.namesAndIcons(c);
@@ -117,6 +118,8 @@ namespace FilterExtensions
             if (Core.Instance.debug)
                 Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
+
+            ready = true;
         }
 
         /// <summary>
@@ -140,17 +143,15 @@ namespace FilterExtensions
                     subCatsSeen.Add(subCat.button.categoryName);
                 else // subcat created by another mod
                 {
-                    // can't remove parts from a collection being looped over, need to remember the visible parts
-                    List<AvailablePart> visibleParts = new List<AvailablePart>();
-                    for (int j = 0; j < partsToCheck.Count; j++)
+                    int j = 0;
+                    while (j < partsToCheck.Count)
                     {
                         AvailablePart AP = partsToCheck[j];
                         if (subCat.exclusionFilter.FilterCriteria.Invoke(AP)) // if visible
-                            visibleParts.Add(AP);
+                            partsToCheck.RemoveAt(j);
+                        else
+                            j++;
                     }
-                    // remove all visible parts from the list to block
-                    foreach (AvailablePart ap in visibleParts)
-                        partsToCheck.Remove(ap);
                 }
             }
             // add the blocked parts to a hashset for later lookup
