@@ -169,7 +169,7 @@ namespace FilterExtensions.ConfigNodes
                     result = PartType.checkCrewCapacity(part, value, equality);
                     break;
                 case CheckType.custom: // for when things get tricky
-                    result = PartType.checkCustom(part, value);
+                    result = Editor.instance.ready ? PartType.checkCustom(part, value) : !invert;
                     break;
                 case CheckType.mass:
                     result = PartType.checkMass(part, value, equality);
