@@ -43,6 +43,22 @@ namespace FilterExtensions.ConfigNodes
             this.iconName = icon;
         }
 
+        /// <summary>
+        /// called in the editor when creating the subcategory
+        /// </summary>
+        /// <param name="cat">The category to add this subcategory to</param>
+        public void initialise(PartCategorizer.Category cat)
+        {
+            if (cat == null)
+                return;
+            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
+            PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
+        }
+
+        /// <summary>
+        /// used mostly for purpose of creating a deep copy
+        /// </summary>
+        /// <returns></returns>
         public ConfigNode toConfigNode()
         {
             ConfigNode node = new ConfigNode("SUBCATEGORY");
@@ -57,38 +73,21 @@ namespace FilterExtensions.ConfigNodes
             return node;
         }
 
-        public bool checkFilters(AvailablePart part)
-        {
-            if (Editor.blackListedParts != null)
-            {
-                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
-                    return false;
-                if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
-                    return false;
-            }
-            foreach (Filter f in filters)
-            {
-                if (f.checkFilter(part))
-                    return true;
-            }
-            return false; // part passed no filter(s), not compatible with this subcategory
-        }
-
         /// <summary>
-        /// called by subcategory check type, has depth loop protection
+        /// called by subcategory check type, has depth limit protection
         /// </summary>
         /// <param name="part"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        public bool checkFilters(AvailablePart part, int depth)
+        public bool checkFilters(AvailablePart part, int depth = 0)
         {
             if (Editor.blackListedParts != null)
             {
                 if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
                     return false;
-                if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
-                    return false;
             }
+            if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                return false;
 
             foreach (Filter f in filters)
             {
@@ -96,19 +95,6 @@ namespace FilterExtensions.ConfigNodes
                     return true;
             }
             return false; // part passed no filter(s), not compatible with this subcategory
-        }
-
-        public void initialise(PartCategorizer.Category cat)
-        {
-            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            if (hasFilters)
-            {
-                if (cat == null)
-                    return;
-                PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
-            }
-            else
-                Core.Log("Invalid subCategory definition");
         }
 
         /// <summary>
