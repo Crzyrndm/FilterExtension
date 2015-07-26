@@ -27,6 +27,8 @@ namespace FilterExtensions
 
         IEnumerator editorInit()
         {
+            ready = false;
+
             while (PartCategorizer.Instance == null)
                 yield return null;
             if (Core.Instance.debug)
@@ -38,11 +40,10 @@ namespace FilterExtensions
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat;
-                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat) && cat.hasSubCategories() && cat.stockCategory)
+                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat))
                 {
-                    if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
-                        C.subcategories.Clear();
-                    cat.initialise();
+                    if (cat.hasSubCategories() && (cat.behaviour == categoryTypeAndBehaviour.StockReplace || cat.behaviour == categoryTypeAndBehaviour.StockAdd))
+                        cat.initialise();
                 }
             }
             // custom categories
@@ -54,11 +55,11 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Core.Instance.debug)
-                Core.Log("Starting on other filters");
+                Core.Log("Starting on general categories");
             // run everything
             foreach (customCategory c in Core.Instance.Categories)
             {
-                if (!c.stockCategory)
+                if (c.behaviour == categoryTypeAndBehaviour.None || c.behaviour == categoryTypeAndBehaviour.Engines)
                     c.initialise();
             }
 
@@ -67,33 +68,20 @@ namespace FilterExtensions
                 yield return null;
             // edit names and icons of all subcategories
             if (Core.Instance.debug)
-                Core.Log("Starting on setting names and icons");
+                Core.Log("Starting on late categories");
             if (blackListedParts == null)
             {
+                #warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
                 findPartsToBlock();
-                // not known until now which parts are never visible so some empty subcategories will be present
-                //for (int i = 0; i < PartCategorizer.Instance.filters.Count; i++)
-                //{
-                //    PartCategorizer.Category C = PartCategorizer.Instance.filters[i];
-                //    if (C == null)
-                //        continue;
-                //    int j = 0;
-                //    while (j < C.subcategories.Count)
-                //    {
-                //        PartCategorizer.Category sub = C.subcategories[j];
-                //        if (sub == null)
-                //        {
-                //            j++;
-                //            continue;
-                //        }
-
-                //        if (!PartLoader.Instance.parts.Any(p => sub.exclusionFilter.FilterCriteria.Invoke(p)))
-                //            C.subcategories.RemoveAt(j);
-                //        else
-                //            j++;
-                //    }
-                //}
             }
+
+            // this is to be used for altering subcategories in a category added by another mod
+            foreach (customCategory c in Core.Instance.Categories)
+            {
+                if (c.behaviour == categoryTypeAndBehaviour.ModAdd || c.behaviour == categoryTypeAndBehaviour.ModReplace)
+                    c.initialise();
+            }
+
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 Core.Instance.namesAndIcons(c);
 
@@ -146,8 +134,7 @@ namespace FilterExtensions
                     int j = 0;
                     while (j < partsToCheck.Count)
                     {
-                        AvailablePart AP = partsToCheck[j];
-                        if (subCat.exclusionFilter.FilterCriteria.Invoke(AP)) // if visible
+                        if (subCat.exclusionFilter.FilterCriteria.Invoke(partsToCheck[j])) // if visible
                             partsToCheck.RemoveAt(j);
                         else
                             j++;
