@@ -7,21 +7,28 @@ using UnityEngine;
 namespace FilterExtensions
 {
     using ConfigNodes;
+    using Utility;
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     class Editor : MonoBehaviour
     {
         public static Editor instance;
+        public bool ready = false;
         void Start()
         {
             instance = this;
             StartCoroutine(editorInit());
         }
 
+        /// <summary>
+        /// names of all parts that shouldn't be visible to the player
+        /// </summary>
         public static HashSet<string> blackListedParts;
 
         IEnumerator editorInit()
         {
+            ready = false;
+
             while (PartCategorizer.Instance == null)
                 yield return null;
             if (Core.Instance.debug)
@@ -29,15 +36,14 @@ namespace FilterExtensions
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
-            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I clear the category
+            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I may clear the category
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
-                customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
-                if (cat != null && cat.hasSubCategories() && cat.stockCategory)
+                customCategory cat;
+                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat))
                 {
-                    if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
-                        C.subcategories.Clear();
-                    cat.initialise();
+                    if (cat.hasSubCategories() && (cat.behaviour == categoryTypeAndBehaviour.StockReplace || cat.behaviour == categoryTypeAndBehaviour.StockAdd))
+                        cat.initialise();
                 }
             }
             // custom categories
@@ -49,20 +55,33 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Core.Instance.debug)
-                Core.Log("Starting on other filters");
+                Core.Log("Starting on general categories");
             // run everything
             foreach (customCategory c in Core.Instance.Categories)
-                if (!c.stockCategory)
+            {
+                if (c.behaviour == categoryTypeAndBehaviour.None || c.behaviour == categoryTypeAndBehaviour.Engines)
                     c.initialise();
+            }
 
             // wait again so icon edits don't occur immediately and cause breakages
             for (int i = 0; i < 4; i++)
                 yield return null;
             // edit names and icons of all subcategories
             if (Core.Instance.debug)
-                Core.Log("Starting on setting names and icons");
+                Core.Log("Starting on late categories");
             if (blackListedParts == null)
+            {
+                #warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
                 findPartsToBlock();
+            }
+
+            // this is to be used for altering subcategories in a category added by another mod
+            foreach (customCategory c in Core.Instance.Categories)
+            {
+                if (c.behaviour == categoryTypeAndBehaviour.ModAdd || c.behaviour == categoryTypeAndBehaviour.ModReplace)
+                    c.initialise();
+            }
+
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 Core.Instance.namesAndIcons(c);
 
@@ -78,6 +97,7 @@ namespace FilterExtensions
                 PartCategorizer.Instance.filters.Remove(cat);
             }
 
+            // make the categories visible
             if (Core.Instance.setAdvanced)
                 PartCategorizer.Instance.SetAdvancedMode();
 
@@ -87,8 +107,7 @@ namespace FilterExtensions
                 Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
 
-            //while (true)
-            //    yield return null;
+            ready = true;
         }
 
         /// <summary>
@@ -108,21 +127,18 @@ namespace FilterExtensions
             {
                 PartCategorizer.Category subCat = mainCat.subcategories[i];
                 // if the name is an FE subcat and the category should have that FE subcat and it's not the duplicate of one already seen created by another mod, mark it seen and move on
-                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Contains(subCat.button.categoryName) && !subCatsSeen.Contains(subCat.button.categoryName))
+                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Any(subItem => string.Equals(subItem.subcategoryName, subCat.button.categoryName, StringComparison.CurrentCulture)) && !subCatsSeen.Contains(subCat.button.categoryName))
                     subCatsSeen.Add(subCat.button.categoryName);
                 else // subcat created by another mod
                 {
-                    // can't remove parts from a collection being looped over, need to remember the visible parts
-                    List<AvailablePart> visibleParts = new List<AvailablePart>();
-                    for (int j = 0; j < partsToCheck.Count; j++)
+                    int j = 0;
+                    while (j < partsToCheck.Count)
                     {
-                        AvailablePart AP = partsToCheck[j];
-                        if (subCat.exclusionFilter.FilterCriteria.Invoke(AP)) // if visible
-                            visibleParts.Add(AP);
+                        if (subCat.exclusionFilter.FilterCriteria.Invoke(partsToCheck[j])) // if visible
+                            partsToCheck.RemoveAt(j);
+                        else
+                            j++;
                     }
-                    // remove all visible parts from the list to block
-                    foreach (AvailablePart ap in visibleParts)
-                        partsToCheck.Remove(ap);
                 }
             }
             // add the blocked parts to a hashset for later lookup

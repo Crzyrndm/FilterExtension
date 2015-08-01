@@ -10,22 +10,24 @@ namespace FilterExtensions.ConfigNodes
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
         public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        public bool unPurchasedOverride { get; set; } // allow unpurchased parts to be visible even if the global setting hides them
 
         public bool hasFilters
         {
             get
             {
-                return filters.Count > 0;
+                return filters.Any();
             }
         }
 
         public customSubCategory(ConfigNode node)
         {
             subCategoryTitle = node.GetValue("name");
-            if (string.IsNullOrEmpty(subCategoryTitle))
-                subCategoryTitle = node.GetValue("title");
-
             iconName = node.GetValue("icon");
+
+            bool tmp;
+            bool.TryParse(node.GetValue("showUnpurchased"), out tmp);
+            unPurchasedOverride = tmp;
 
             filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
@@ -41,12 +43,29 @@ namespace FilterExtensions.ConfigNodes
             this.iconName = icon;
         }
 
+        /// <summary>
+        /// called in the editor when creating the subcategory
+        /// </summary>
+        /// <param name="cat">The category to add this subcategory to</param>
+        public void initialise(PartCategorizer.Category cat)
+        {
+            if (cat == null)
+                return;
+            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
+            PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
+        }
+
+        /// <summary>
+        /// used mostly for purpose of creating a deep copy
+        /// </summary>
+        /// <returns></returns>
         public ConfigNode toConfigNode()
         {
             ConfigNode node = new ConfigNode("SUBCATEGORY");
 
             node.AddValue("name", this.subCategoryTitle);
             node.AddValue("icon", this.iconName);
+            node.AddValue("showUnpurchased", this.unPurchasedOverride);
 
             foreach (Filter f in this.filters)
                 node.AddNode(f.toConfigNode());
@@ -54,27 +73,53 @@ namespace FilterExtensions.ConfigNodes
             return node;
         }
 
-        public bool checkFilters(AvailablePart part)
+        /// <summary>
+        /// called by subcategory check type, has depth limit protection
+        /// </summary>
+        /// <param name="part"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        public bool checkFilters(AvailablePart part, int depth = 0)
         {
+            if (Editor.blackListedParts != null)
+            {
+                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                    return false;
+            }
+            if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                return false;
+
             foreach (Filter f in filters)
             {
-                if (f.checkFilter(part))
+                if (f.checkFilter(part, depth))
                     return true;
             }
             return false; // part passed no filter(s), not compatible with this subcategory
         }
 
-        public void initialise(PartCategorizer.Category cat)
+        /// <summary>
+        /// check to see if any checks in a subcategory match a given check
+        /// </summary>
+        /// <param name="subcategory"></param>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
+        /// <param name="contains"></param>
+        /// <param name="equality"></param>
+        /// <param name="invert"></param>
+        /// <returns>true if there is a matching check in the category</returns>
+        public static bool checkForCheckMatch(customSubCategory subcategory, CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
         {
-            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            if (hasFilters)
+            for (int j = 0; j < subcategory.filters.Count; j++)
             {
-                if (cat == null)
-                    return;
-                PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
+                Filter f = subcategory.filters[j];
+                for (int k = 0; k < f.checks.Count; k++)
+                {
+                    Check c = f.checks[k];
+                    if (c.type == type && c.value == value && c.invert == invert && c.contains == contains && c.equality == equality)
+                        return true;
+                }
             }
-            else
-                Core.Log("Invalid subCategory definition");
+            return false;
         }
 
         public bool Equals(customSubCategory sC2)

@@ -20,7 +20,7 @@ namespace FilterExtensions
                                                                         null, null, null, null, ApplicationLauncher.AppScenes.SPACECENTER,
                                                                         GameDatabase.Instance.GetTexture("000_FilterExtensions/Icons/FilterCreator", false));
         }
-
+        
         public void OnDestroy()
         {
             ConfigNode settingsNode = new ConfigNode("FilterSettings");
@@ -34,6 +34,7 @@ namespace FilterExtensions
             ConfigNode nodeToWrite = new ConfigNode();
             nodeToWrite.AddNode(settingsNode);
 
+            #warning Need to move the save location inside PluginData so MM can't see it, cache it, and then recache it when settings are changed (or maybe just change the extension. Same effect though)
             nodeToWrite.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + "GameData/000_FilterExtensions/Settings.cfg");
         }
 
