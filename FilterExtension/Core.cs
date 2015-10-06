@@ -59,7 +59,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.4.0");
+            Log("Version 2.4.1");
 
             getConfigs();
             getPartData();

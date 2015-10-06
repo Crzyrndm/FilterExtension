@@ -12,7 +12,9 @@ namespace FilterExtensions.ConfigNodes
         None,
         Engines,
         StockAdd,
-        StockReplace
+        StockReplace,
+        ModAdd,
+        ModReplace
     }
 
     public class customCategory : IEquatable<customCategory>
@@ -39,14 +41,17 @@ namespace FilterExtensions.ConfigNodes
             bool.TryParse(node.GetValue("all"), out tmp);
             this.all = tmp;
             
-            ConfigNode subcategoryList = node.GetNode("SUBCATEGORIES", 0);
+            ConfigNode[] subcategoryList = node.GetNodes("SUBCATEGORIES");
             subCategories = new List<subCategoryItem>();
             if (subcategoryList != null)
             {
                 List<subCategoryItem> unorderedSubCats = new List<subCategoryItem>();
-                string[] stringList = subcategoryList.GetValues();
+                List<string> stringList = new List<string>();
+                for (int i = 0; i < subcategoryList.Length; i++)
+                    stringList.AddRange(subcategoryList[i].GetValues());
+                
                 subCategoryItem[] subs = new subCategoryItem[1000];
-                for (int i = 0; i < stringList.Length; i++)
+                for (int i = 0; i < stringList.Count; i++)
                 {
                     string[] indexAndValue = stringList[i].Split(',').Select(s => s.Trim()).ToArray();
 
@@ -94,7 +99,7 @@ namespace FilterExtensions.ConfigNodes
                 return;
             }
             PartCategorizer.Category category;
-            if (!stockCategory)
+            if (behaviour == categoryTypeAndBehaviour.None || behaviour == categoryTypeAndBehaviour.Engines)
             {
                 RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
                 PartCategorizer.AddCustomFilter(categoryName, icon, colour);
@@ -103,10 +108,18 @@ namespace FilterExtensions.ConfigNodes
                 category.displayType = EditorPartList.State.PartsList;
                 category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
             }
-            else if (!PartCategorizer.Instance.filters.TryGetValue(c => c.button.categoryName == categoryName, out category))
+            else 
             {
-                Core.Log("No stock category of this name was found: " + categoryName);
-                return;
+                if (!PartCategorizer.Instance.filters.TryGetValue(c => c.button.categoryName == categoryName, out category))
+                {
+                    Core.Log("No category of this name was found to manipulate: " + categoryName);
+                    return;
+                }
+                else
+                {
+                    if (behaviour == categoryTypeAndBehaviour.StockReplace || behaviour == categoryTypeAndBehaviour.ModReplace)
+                        category.subcategories.Clear();
+                }
             }
 
             List<string> subcategoryNames = new List<string>();
@@ -171,7 +184,6 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        #warning Need another type which runs after other mods for editing their categories
         private void typeSwitch(string type, string value)
         {
             switch (type)
@@ -185,6 +197,12 @@ namespace FilterExtensions.ConfigNodes
                         behaviour = categoryTypeAndBehaviour.StockReplace;
                     else
                         behaviour = categoryTypeAndBehaviour.StockAdd;
+                    break;
+                case "mod":
+                    if (value == "replace")
+                        behaviour = categoryTypeAndBehaviour.ModReplace;
+                    else
+                        behaviour = categoryTypeAndBehaviour.ModAdd;
                     break;
                 default:
                     behaviour = categoryTypeAndBehaviour.None;
@@ -237,9 +255,9 @@ namespace FilterExtensions.ConfigNodes
             ConfigNode[] filtNodes = node.GetNodes("FILTER");
             if (filtNodes == null)
                 return;
-            this.templates = new List<Filter>();
+            templates = new List<Filter>();
             foreach (ConfigNode n in filtNodes)
-                this.templates.Add(new Filter(n));
+                templates.Add(new Filter(n));
         }
 
         public static Color convertToColor(string hex_ARGB)
@@ -274,7 +292,7 @@ namespace FilterExtensions.ConfigNodes
 
         public bool hasSubCategories()
         {
-            return (this.subCategories != null && this.subCategories.Any());
+            return (subCategories != null && subCategories.Any());
         }
 
         public override bool Equals(object obj)
@@ -301,14 +319,6 @@ namespace FilterExtensions.ConfigNodes
         public override int GetHashCode()
         {
             return categoryName.GetHashCode();
-        }
-
-        public bool stockCategory
-        {
-            get
-            {
-                return this.behaviour == categoryTypeAndBehaviour.StockAdd || this.behaviour == categoryTypeAndBehaviour.StockReplace;
-            }
         }
     }
 
