@@ -56,7 +56,8 @@ namespace FilterExtensions
                 yield return null;
             if (Core.Instance.debug)
                 Core.Log("Starting on general categories");
-            // run everything
+            
+            // all FE categories
             foreach (customCategory c in Core.Instance.Categories)
             {
                 if (c.behaviour == categoryTypeAndBehaviour.None || c.behaviour == categoryTypeAndBehaviour.Engines)
@@ -66,9 +67,10 @@ namespace FilterExtensions
             // wait again so icon edits don't occur immediately and cause breakages
             for (int i = 0; i < 4; i++)
                 yield return null;
-            // edit names and icons of all subcategories
             if (Core.Instance.debug)
                 Core.Log("Starting on late categories");
+
+            // generate the set of parts to block
             if (blackListedParts == null)
             {
                 #warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
@@ -82,6 +84,7 @@ namespace FilterExtensions
                     c.initialise();
             }
 
+            // 
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 Core.Instance.namesAndIcons(c);
 

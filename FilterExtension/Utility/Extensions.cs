@@ -9,7 +9,7 @@ namespace FilterExtensions.Utility
     public static class Extensions
     {
         /// <summary>
-        /// adds the <key, value> set to the Dictionary if the key is unique
+        /// adds the (key, value) set to the Dictionary if the key is unique
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="U"></typeparam>

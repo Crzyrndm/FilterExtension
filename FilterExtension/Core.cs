@@ -433,7 +433,7 @@ namespace FilterExtensions
         /// </summary>
         public void namesAndIcons(PartCategorizer.Category category)
         {
-            List<string> toRemove = new List<string>();
+            HashSet<string> toRemove = new HashSet<string>();
             foreach (PartCategorizer.Category c in category.subcategories)
             {
                 if (removeSubCategory.Contains(c.button.categoryName))
@@ -499,11 +499,8 @@ namespace FilterExtensions
                         Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
                 }
 
-                if (!Instance.iconDict.ContainsKey(name))
-                {
-                    RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
-                    Instance.iconDict.Add(icon.name, icon);
-                }
+                RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
+                Instance.iconDict.TryAdd(icon.name, icon);
             }
             Destroy(selectedTex);
         }
@@ -519,9 +516,7 @@ namespace FilterExtensions
                 return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
 
             RUI.Icons.Selectable.Icon icon;
-            if (Instance.iconDict.TryGetValue(name, out icon))
-                return icon;
-            if (PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
+            if (Instance.iconDict.TryGetValue(name, out icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 return icon;
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
