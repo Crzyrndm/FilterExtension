@@ -502,7 +502,6 @@ namespace FilterExtensions
                 RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
                 Instance.iconDict.TryAdd(icon.name, icon);
             }
-            Destroy(selectedTex);
         }
 
         /// <summary>
