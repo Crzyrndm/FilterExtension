@@ -115,7 +115,7 @@ namespace FilterExtensions.ConfigNodes
                 for (int k = 0; k < f.checks.Count; k++)
                 {
                     Check c = f.checks[k];
-                    if (c.type == type && c.value == value && c.invert == invert && c.contains == contains && c.equality == equality)
+                    if (c.type == type && c.value.Contains(value) && c.value.Length == 1 && c.invert == invert && c.contains == contains && c.equality == equality)
                         return true;
                 }
             }

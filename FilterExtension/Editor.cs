@@ -46,6 +46,7 @@ namespace FilterExtensions
                         cat.initialise();
                 }
             }
+
             // custom categories
             // wait until the part menu is initialised
             while (!PartCategorizer.Ready)
