@@ -10,13 +10,14 @@ namespace FilterExtensions.ConfigNodes
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
         public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        public List<Filter> template { get; set; } // from the category, checked seperately
         public bool unPurchasedOverride { get; set; } // allow unpurchased parts to be visible even if the global setting hides them
 
         public bool hasFilters
         {
             get
             {
-                return filters.Any();
+                return filters.Any() || template.Any();
             }
         }
 
@@ -34,11 +35,13 @@ namespace FilterExtensions.ConfigNodes
             {
                 filters.Add(new Filter(subNode));
             }
+            template = new List<Filter>();
         }
 
         public customSubCategory(string name, string icon)
         {
             filters = new List<Filter>();
+            template = new List<Filter>();
             this.subCategoryTitle = name;
             this.iconName = icon;
         }
@@ -88,13 +91,7 @@ namespace FilterExtensions.ConfigNodes
             }
             if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
                 return false;
-
-            foreach (Filter f in filters)
-            {
-                if (f.checkFilter(part, depth))
-                    return true;
-            }
-            return false; // part passed no filter(s), not compatible with this subcategory
+            return ((!template.Any() || template.Any(t => t.checkFilter(part, depth))) && filters.Any(f => f.checkFilter(part, depth))); // part passed a template if present, and a subcategory filter
         }
 
         /// <summary>

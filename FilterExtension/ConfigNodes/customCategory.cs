@@ -153,21 +153,8 @@ namespace FilterExtensions.ConfigNodes
                 }
 
                 customSubCategory sC = new customSubCategory(subcategory.toConfigNode());
-                if (subcategoryItem.applyTemplate && templates != null && templates.Any())
-                {
-                    List<Filter> baseSubCatFilters = new List<Filter>();
-                    foreach (Filter f in sC.filters)
-                        baseSubCatFilters.Add(new Filter(f)); // create independent copies
-                    sC.filters.Clear(); // create them from scratch
-                    foreach (Filter templateFilter in templates)
-                    {
-                        foreach (Filter f in baseSubCatFilters)
-                        {
-                            sC.filters.Add(new Filter(f));
-                            sC.filters.Last().checks.AddRange(templateFilter.checks);
-                        }
-                    }
-                }
+                if (subcategoryItem.applyTemplate)
+                    sC.template = templates;
 
                 try
                 {
