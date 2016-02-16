@@ -41,7 +41,7 @@ namespace FilterExtensions.ConfigNodes
             GreaterThan
         }
         public CheckType type { get; set; }
-        public string value { get; set; }
+        public string[] value { get; set; }
         public bool invert { get; set; }
         public bool contains { get; set; }
         public Equality equality { get; set; }
@@ -50,7 +50,14 @@ namespace FilterExtensions.ConfigNodes
         public Check(ConfigNode node)
         {
             type = getType(node.GetValue("type"));
-            value = node.GetValue("value");
+
+            string tmpVal = node.GetValue("value");
+            if (tmpVal != null)
+            {
+                value = tmpVal.Split(',');
+                for (int i = 0; i < this.value.Length; ++i)
+                    value[i] = value[i].Trim();
+            }
 
             bool tmp;
             bool.TryParse(node.GetValue("invert"), out tmp);
@@ -60,7 +67,7 @@ namespace FilterExtensions.ConfigNodes
                 contains = tmp;
             else
                 contains = true;
-            
+
             checks = new List<Check>();
             if (type == CheckType.check)
             {
@@ -87,7 +94,7 @@ namespace FilterExtensions.ConfigNodes
         public Check(Check c)
         {
             type = c.type;
-            value = c.value;
+            value = (string[])c.value.Clone();
             invert = c.invert;
             contains = c.contains;
 
@@ -99,7 +106,10 @@ namespace FilterExtensions.ConfigNodes
         public Check(string type, string value, bool invert = false, bool contains = true, Equality compare = Equality.Equals)
         {
             this.type = getType(type);
-            this.value = value;
+            this.value = value.Split(',');
+            for (int i = 0; i < this.value.Length; ++i)
+                this.value[i] = this.value[i].Trim();
+
             this.invert = invert;
             this.contains = contains;
             equality = compare;
@@ -110,7 +120,9 @@ namespace FilterExtensions.ConfigNodes
         {
             ConfigNode node = new ConfigNode("CHECK");
             node.AddValue("type", getTypeString(type));
-            node.AddValue("value", this.value);
+
+            if (value != null)
+                node.AddValue("value", string.Join(",", value));
             if (invert)
                 node.AddValue("invert", this.invert.ToString());
             if (!contains && checkUsesContains())

@@ -17,6 +17,7 @@ namespace FilterExtensions.ConfigNodes
             {
                 checks.Add(new Check(subNode));
             }
+            checks.RemoveAll(c => c.value == null);
 
             bool tmp;
             bool.TryParse(node.GetValue("invert"), out tmp);
@@ -28,7 +29,8 @@ namespace FilterExtensions.ConfigNodes
             checks = new List<Check>();
             for (int i = 0; i < f.checks.Count; i++)
             {
-                checks.Add(new Check(f.checks[i]));
+                if (f.checks[i].value != null)
+                    checks.Add(new Check(f.checks[i]));
             }
 
             invert = f.invert;
