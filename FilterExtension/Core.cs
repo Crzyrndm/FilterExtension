@@ -33,9 +33,11 @@ namespace FilterExtensions
         public List<List<string>> propellantCombos = new List<List<string>>();
         // entry for each unique resource
         public List<string> resources = new List<string>();
-
         // Dictionary of icons created on entering the main menu
         public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
+        // Dictionary of all filtering part modules by part name
+        public Dictionary<string, PartModuleFilter> filterModules = new Dictionary<string, PartModuleFilter>();
+
 
         // Config has options to disable the FbM replacement, and the default Category/SC and sort method
         public bool hideUnpurchased = true;
@@ -59,7 +61,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.4.1");
+            Log("Version 2.5.0");
 
             getConfigs();
             getPartData();
@@ -154,26 +156,28 @@ namespace FilterExtensions
                     RepairAvailablePartUrl(p);
                 
                 // if the url is still borked, can't associate a mod to the part
-                if (string.IsNullOrEmpty(p.partUrl))
-                    continue;
-                
-                // list of GameData folders
-                modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
-
-                // associate the path to the part
-                if (!partPathDict.ContainsKey(p.name))
-                    partPathDict.Add(p.name, p.partUrl);
-                else
-                    Log(p.name + " duplicated part key in part path dictionary");
-
-                if (PartType.isEngine(p))
-                    processEnginePropellants(p);
-
-                if (p.partPrefab.Resources != null)
+                if (!string.IsNullOrEmpty(p.partUrl))
                 {
-                    foreach (PartResource r in p.partPrefab.Resources)
-                        resources.AddUnique(r.resourceName);
+                    // list of GameData folders
+                    modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
+
+                    // associate the path to the part
+                    if (!partPathDict.ContainsKey(p.name))
+                        partPathDict.Add(p.name, p.partUrl);
+                    else
+                        Log(p.name + " duplicated part key in part path dictionary");
+
+                    if (PartType.isEngine(p))
+                        processEnginePropellants(p);
+
+                    if (p.partPrefab.Resources != null)
+                    {
+                        foreach (PartResource r in p.partPrefab.Resources)
+                            resources.AddUnique(r.resourceName);
+                    }
                 }
+                if (p.partPrefab.Modules.Contains("PartModuleFilter"))
+                    filterModules.Add(p.name, (PartModuleFilter)p.partPrefab.Modules["PartModuleFilter"]);
             }
             
             if (replaceFbM)

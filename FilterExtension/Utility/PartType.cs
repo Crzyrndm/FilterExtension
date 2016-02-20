@@ -123,14 +123,14 @@ namespace FilterExtensions.Utility
             if (part.partPrefab == null || part.partPrefab.Modules == null)
                 return false;
             if (contains)
-                return value.Any(s => part.partPrefab.Modules.Contains(s) || checkModuleNameType(part, s));
+                return value.Any(s => checkModuleNameType(part, s) || part.partPrefab.Modules.Contains(s));
             else
             {
                 foreach (PartModule module in part.partPrefab.Modules)
                 {
                     foreach (string s in value)
                     {
-                        if (s != module.ClassName)
+                        if (s != module.ClassName.Replace('.', '_'))
                             return true;
                     }
                 }
