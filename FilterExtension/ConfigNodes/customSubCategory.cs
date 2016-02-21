@@ -91,6 +91,16 @@ namespace FilterExtensions.ConfigNodes
             }
             if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
                 return false;
+
+            PartModuleFilter pmf;
+            if (Core.Instance.filterModules.TryGetValue(part.name, out pmf))
+            {
+                if (pmf.CheckForForceAdd(subCategoryTitle))
+                    return true;
+                if (pmf.CheckForForceBlock(subCategoryTitle))
+                    return false;
+            }
+
             return ((!template.Any() || template.Any(t => t.checkFilter(part, depth))) && filters.Any(f => f.checkFilter(part, depth))); // part passed a template if present, and a subcategory filter
         }
 
