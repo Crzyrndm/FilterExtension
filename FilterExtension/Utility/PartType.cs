@@ -41,7 +41,7 @@ namespace FilterExtensions.Utility
                         testVal = isMultiCoupler(part);
                         break;
                     case "purchased":
-                        testVal = ResearchAndDevelopment.PartModelPurchased(part);
+                        testVal = !Editor.instance.ready || ResearchAndDevelopment.PartModelPurchased(part);
                         break;
                 }
                 if (testVal)
@@ -106,16 +106,9 @@ namespace FilterExtensions.Utility
             if (part.moduleInfos == null)
                 return false;
             if (contains)
-                value.Any(s => part.moduleInfos.Any(m => s == m.moduleName));
+                return part.moduleInfos.Any(m => value.Contains(m.moduleName));
             else
-            {
-                foreach (AvailablePart.ModuleInfo i in part.moduleInfos)
-                {
-                    if (!value.Contains(i.moduleName))
-                        return true;
-                }
-            }
-            return false;
+                return part.moduleInfos.Any(m => !value.Contains(m.moduleName));
         }
 
         public static bool checkModuleName(AvailablePart part, string[] value, bool contains = true)
@@ -125,17 +118,7 @@ namespace FilterExtensions.Utility
             if (contains)
                 return value.Any(s => checkModuleNameType(part, s) || part.partPrefab.Modules.Contains(s));
             else
-            {
-                foreach (PartModule module in part.partPrefab.Modules)
-                {
-                    foreach (string s in value)
-                    {
-                        if (s != module.ClassName.Replace('.', '_'))
-                            return true;
-                    }
-                }
-                return false;
-            }
+                return value.Any(s => !checkModuleNameType(part, s) && !part.partPrefab.Modules.Contains(s));
         }
 
         public static bool checkModuleNameType(AvailablePart part, string value)
@@ -361,12 +344,12 @@ namespace FilterExtensions.Utility
 
         public static bool checkTech(AvailablePart part, string[] value)
         {
-            return value.Any(s => part.TechRequired == s);
+            return value.Contains(part.TechRequired);
         }
 
         public static bool checkManufacturer(AvailablePart part, string[] value)
         {
-            return value.Any(s => part.manufacturer == s);
+            return value.Contains(part.manufacturer);
         }
 
         public static bool checkFolder(AvailablePart part, string[] value)
@@ -374,8 +357,8 @@ namespace FilterExtensions.Utility
             string path;
             if (Core.Instance.partPathDict.TryGetValue(part.name, out path))
             {
-                string folder = path.Split(new char[] { '\\', '/' })[0];
-                return value.Any(s => s == folder);
+                string folder = path.Split(new char[] { '\\', '/' }, 2)[0];
+                return value.Contains(folder);
             }
             return false;
         }

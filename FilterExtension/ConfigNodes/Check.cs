@@ -77,12 +77,12 @@ namespace FilterExtensions.ConfigNodes
                 }
             }
 
-            switch (node.GetValue("equality"))
+            switch (node.GetValue("equality").ToLower())
             {
-                case "LessThan":
+                case "lessthan":
                     equality = Equality.LessThan;
                     break;
-                case "GreaterThan":
+                case "greaterthan":
                     equality = Equality.GreaterThan;
                     break;
                 default:
@@ -105,7 +105,7 @@ namespace FilterExtensions.ConfigNodes
 
         public Check(string type, string value, bool invert = false, bool contains = true, Equality compare = Equality.Equals)
         {
-            this.type = getType(type);
+            this.type = getType(type.ToLowerInvariant());
             this.value = value.Split(',');
             for (int i = 0; i < this.value.Length; ++i)
                 this.value[i] = this.value[i].Trim();
@@ -181,7 +181,7 @@ namespace FilterExtensions.ConfigNodes
                     result = PartType.checkCrewCapacity(part, value, equality);
                     break;
                 case CheckType.custom: // for when things get tricky
-                    result = Editor.instance.ready ? PartType.checkCustom(part, value) : !invert;
+                    result = PartType.checkCustom(part, value);
                     break;
                 case CheckType.mass:
                     result = PartType.checkMass(part, value, equality);
@@ -233,9 +233,9 @@ namespace FilterExtensions.ConfigNodes
                     return CheckType.partName;
                 case "title":
                     return CheckType.partTitle;
-                case "moduleName":
+                case "modulename":
                     return CheckType.moduleName;
-                case "moduleTitle":
+                case "moduletitle":
                     return CheckType.moduleTitle;
                 case "resource":
                     return CheckType.resource;
@@ -263,7 +263,7 @@ namespace FilterExtensions.ConfigNodes
                     return CheckType.cost;
                 case "crash":
                     return CheckType.crashTolerance;
-                case "maxTemp":
+                case "maxtemp":
                     return CheckType.maxTemp;
                 case "profile":
                     return CheckType.profile;
@@ -291,9 +291,9 @@ namespace FilterExtensions.ConfigNodes
                 case CheckType.partTitle:
                     return "title";
                 case CheckType.moduleName:
-                    return "moduleName";
+                    return "modulename";
                 case CheckType.moduleTitle:
-                    return "moduleTitle";
+                    return "moduletitle";
                 case CheckType.resource:
                     return "resource";
                 case CheckType.propellant:
@@ -321,7 +321,7 @@ namespace FilterExtensions.ConfigNodes
                 case CheckType.crashTolerance:
                     return "crash";
                 case CheckType.maxTemp:
-                    return "maxTemp";
+                    return "maxtemp";
                 case CheckType.profile:
                     return "profile";
                 case CheckType.check:
