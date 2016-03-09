@@ -1,16 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using UnityEngine;
 
 namespace FilterExtensions
 {
+    using Utility;
+
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     class Settings : MonoBehaviour
     {
         Rect settingsRect = new Rect(Screen.width / 2, Screen.height / 2, 400, 0);
         static bool showWindow;
         private static ApplicationLauncherButton btnLauncher;
+
+        public const string RelativeSettingsPath = "GameData/000_FilterExtensions/PluginData/";
+
+        public static bool hideUnpurchased = true;
+        public static bool debug = false;
+        public static bool setAdvanced = true;
+        public static bool replaceFbM = true;
+        public static string categoryDefault = "";
+        public static string subCategoryDefault = "";
 
         public void Start()
         {
@@ -19,23 +31,13 @@ namespace FilterExtensions
                 btnLauncher = ApplicationLauncher.Instance.AddModApplication(() => showWindow = !showWindow, () => showWindow = !showWindow,
                                                                         null, null, null, null, ApplicationLauncher.AppScenes.SPACECENTER,
                                                                         GameDatabase.Instance.GetTexture("000_FilterExtensions/Icons/FilterCreator", false));
+
+            LoadSettings();
         }
         
         public void OnDestroy()
         {
-            ConfigNode settingsNode = new ConfigNode("FilterSettings");
-            settingsNode.AddValue("hideUnpurchased", Core.Instance.hideUnpurchased);
-            settingsNode.AddValue("debug", Core.Instance.debug);
-            settingsNode.AddValue("setAdvanced", Core.Instance.setAdvanced);
-            settingsNode.AddValue("replaceFbM", Core.Instance.replaceFbM);
-            settingsNode.AddValue("categoryDefault", Core.Instance.categoryDefault);
-            settingsNode.AddValue("subCategoryDefault", Core.Instance.subCategoryDefault);
-
-            ConfigNode nodeToWrite = new ConfigNode();
-            nodeToWrite.AddNode(settingsNode);
-
-            #warning Need to move the save location inside PluginData so MM can't see it, cache it, and then recache it when settings are changed (or maybe just change the extension. Same effect though)
-            nodeToWrite.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + "GameData/000_FilterExtensions/Settings.cfg");
+            SaveSettings();
         }
 
         public void OnGUI()
@@ -46,22 +48,53 @@ namespace FilterExtensions
             settingsRect = GUILayout.Window(6548792, settingsRect, drawWindow, "Filter Extensions Settings");
         }
 
+        public static void LoadSettings()
+        {
+            if (File.Exists(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg"))
+            {
+                ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg");
+                if (settings != null)
+                {
+                    bool.TryParse(settings.GetValue("hideUnpurchased"), out hideUnpurchased);
+                    bool.TryParse(settings.GetValue("debug"), out debug);
+                    if (!bool.TryParse(settings.GetValue("setAdvanced"), out setAdvanced))
+                        setAdvanced = true;
+                    if (!bool.TryParse(settings.GetValue("replaceFbM"), out replaceFbM))
+                        replaceFbM = true;
+                    categoryDefault = settings.GetValue("categoryDefault");
+                    if (categoryDefault == null)
+                        categoryDefault = string.Empty;
+                    subCategoryDefault = settings.GetValue("subCategoryDefault");
+                    if (subCategoryDefault == null)
+                        subCategoryDefault = string.Empty;
+                }
+            }
+        }
+
+        public static void SaveSettings()
+        {
+            ConfigNode settingsNode = new ConfigNode("FilterSettings");
+            settingsNode.AddValue("hideUnpurchased", hideUnpurchased);
+            settingsNode.AddValue("debug", debug);
+            settingsNode.AddValue("setAdvanced", setAdvanced);
+            settingsNode.AddValue("replaceFbM", replaceFbM);
+            settingsNode.AddValue("categoryDefault", categoryDefault);
+            settingsNode.AddValue("subCategoryDefault", subCategoryDefault);
+
+            if (!Directory.Exists(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath))
+                Directory.CreateDirectory(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath);
+            settingsNode.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg");
+        }
+
         private void drawWindow(int id)
         {
-            Core.Instance.debug = GUILayout.Toggle(Core.Instance.debug, "Enable logging");
-            Core.Instance.setAdvanced = GUILayout.Toggle(Core.Instance.setAdvanced, "Default to Advanced mode");
-            Core.Instance.hideUnpurchased = GUILayout.Toggle(Core.Instance.hideUnpurchased, "Hide unpurchased parts");
-            Core.Instance.replaceFbM = GUILayout.Toggle(Core.Instance.replaceFbM, "Sort parts by folder in manufacturer tab (requires restart)");
+            debug = GUILayout.Toggle(debug, "Enable logging");
+            setAdvanced = GUILayout.Toggle(setAdvanced, "Default to Advanced mode");
+            hideUnpurchased = GUILayout.Toggle(hideUnpurchased, "Hide unpurchased parts");
+            replaceFbM = GUILayout.Toggle(replaceFbM, "Sort parts by folder in manufacturer tab (requires restart)");
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Default Category");
-            Core.Instance.categoryDefault = GUILayout.TextField(Core.Instance.categoryDefault);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Default Sub-category");
-            Core.Instance.subCategoryDefault = GUILayout.TextField(Core.Instance.subCategoryDefault);
-            GUILayout.EndHorizontal();
+            GUIUtils.DrawLabelPlusBox("Default Category", ref categoryDefault);
+            GUIUtils.DrawLabelPlusBox("Default Sub-category", ref subCategoryDefault);
 
             GUI.DragWindow();
         }

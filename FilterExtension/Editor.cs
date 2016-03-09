@@ -31,7 +31,7 @@ namespace FilterExtensions
 
             while (PartCategorizer.Instance == null)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Starting on Stock Filters");
             // stock filters
             // If I edit them later everything breaks
@@ -55,7 +55,7 @@ namespace FilterExtensions
             // frames after the flag is set to wait before initialising. Minimum of two for things to work consistently
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Starting on general categories");
             
             // all FE categories
@@ -68,7 +68,7 @@ namespace FilterExtensions
             // wait again so icon edits don't occur immediately and cause breakages
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Starting on late categories");
 
             // generate the set of parts to block
@@ -92,7 +92,7 @@ namespace FilterExtensions
             // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Starting on removing categories");
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
@@ -102,12 +102,12 @@ namespace FilterExtensions
             }
 
             // make the categories visible
-            if (Core.Instance.setAdvanced)
+            if (Settings.setAdvanced)
                 PartCategorizer.Instance.SetAdvancedMode();
 
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Refreshing parts list");
             Core.setSelectedCategory();
 
