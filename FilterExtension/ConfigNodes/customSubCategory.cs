@@ -89,7 +89,7 @@ namespace FilterExtensions.ConfigNodes
                 if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
                     return false;
             }
-            if (!unPurchasedOverride && Core.Instance.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+            if (!unPurchasedOverride && Settings.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
                 return false;
 
             PartModuleFilter pmf;

@@ -40,12 +40,7 @@ namespace FilterExtensions
 
 
         // Config has options to disable the FbM replacement, and the default Category/SC and sort method
-        public bool hideUnpurchased = true;
-        public bool debug = false;
-        public bool setAdvanced = true;
-        public bool replaceFbM = true;
-        public string categoryDefault = "";
-        public string subCategoryDefault = "";
+
 
         const string fallbackIcon = "stockIcon_fallback";
 
@@ -75,18 +70,7 @@ namespace FilterExtensions
         /// </summary>
         private void getConfigs()
         {
-            ConfigNode settings = GameDatabase.Instance.GetConfigNodes("FilterSettings").FirstOrDefault();
-            if (settings != null)
-            {
-                bool.TryParse(settings.GetValue("hideUnpurchased"), out hideUnpurchased);
-                bool.TryParse(settings.GetValue("debug"), out debug);
-                if (!bool.TryParse(settings.GetValue("setAdvanced"), out setAdvanced))
-                    setAdvanced = true;
-                if (!bool.TryParse(settings.GetValue("replaceFbM"), out replaceFbM))
-                    replaceFbM = true;
-                categoryDefault = settings.GetValue("categoryDefault");
-                subCategoryDefault = settings.GetValue("subCategoryDefault");
-            }
+            Settings.LoadSettings();
 
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("FilterRename");
             for (int i = 0; i < nodes.Length; i++)
@@ -179,8 +163,8 @@ namespace FilterExtensions
                 if (p.partPrefab.Modules.Contains("PartModuleFilter"))
                     filterModules.Add(p.name, (PartModuleFilter)p.partPrefab.Modules["PartModuleFilter"]);
             }
-            
-            if (replaceFbM)
+
+            if (Settings.replaceFbM)
                 processFilterByManufacturer(modNames);
         }
 
@@ -371,8 +355,8 @@ namespace FilterExtensions
                 PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
                 if (Filter != null)
                     Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-                
-                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == instance.categoryDefault);
+
+                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
                 if (Filter != null)
                     Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
                 else
@@ -499,7 +483,7 @@ namespace FilterExtensions
                         i++;
                     if (i != 1000)
                         name = name + i.ToString();
-                    if (instance.debug)
+                    if (Settings.debug)
                         Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
                 }
 
@@ -571,7 +555,7 @@ namespace FilterExtensions
                     return true;
             }
 
-            if (instance.debug)
+            if (Settings.debug)
             {
                 if (!string.IsNullOrEmpty(category))
                     Log(sC.subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
