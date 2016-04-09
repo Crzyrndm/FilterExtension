@@ -45,8 +45,7 @@ namespace FilterExtensions.ConfigNodes
         public ConfigNode toConfigNode()
         {
             ConfigNode node = new ConfigNode("FILTER");
-            if (invert)
-                node.AddValue("invert", this.invert.ToString());
+            node.AddValue("invert", this.invert.ToString());
             foreach (Check c in checks)
                 node.AddNode(c.toConfigNode());
 

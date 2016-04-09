@@ -7,6 +7,7 @@ using UnityEngine;
 namespace FilterExtensions
 {
     using Utility;
+    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     class Settings : MonoBehaviour

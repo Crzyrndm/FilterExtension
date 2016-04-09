@@ -1,19 +1,29 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
+using System.Linq;
 
 
 namespace FilterExtensions
 {
+    using ConfigNodes;
     using UnityEngine;
     using Utility;
-    using ConfigNodes;
+
+    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
+        public static readonly Version version = new Version(2, 5, 0, 0);
+        
         private static Core instance;
+        public static Core Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
         public List<customCategory> Categories = new List<customCategory>();
@@ -44,19 +54,11 @@ namespace FilterExtensions
 
         const string fallbackIcon = "stockIcon_fallback";
 
-        public static Core Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
-
         void Awake()
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.5.0");
+            Log(string.Empty);
 
             getConfigs();
             getPartData();
@@ -79,14 +81,9 @@ namespace FilterExtensions
                 string[] names = node.GetValues("name");
                 for (int j = 0; j < names.Length; j++)
                 {
-                    string s = names[j];
-                    if (s.Split().Length >= 2)
-                    {
-                        string nameToReplace = s.Split(',')[0].Trim();
-                        string newName = s.Split(',')[1].Trim();
-                        if (!Rename.ContainsKey(nameToReplace))
-                            Rename.Add(nameToReplace, newName);
-                    }
+                    string[] s = names[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
+                    if (s.Length >= 2 && !Rename.ContainsKey(s[0]))
+                            Rename.Add(s[0], s[1]);
                 }
             }
 
@@ -97,14 +94,9 @@ namespace FilterExtensions
                 string[] icons = node.GetValues("icon");
                 for (int j = 0; j < icons.Length; j++)
                 {
-                    string s = icons[j];
-                    if (s.Split().Length >= 2)
-                    {
-                        string categoryName = s.Split(',')[0].Trim();
-                        string icon = s.Split(',')[1].Trim();
-                        if (!setIcon.ContainsKey(categoryName))
-                            setIcon.Add(categoryName, icon);
-                    }
+                    string[] s = icons[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
+                    if (s.Length >= 2 && !setIcon.ContainsKey(s[0]))
+                        setIcon.Add(s[0], s[1]);
                 }
             }
 
@@ -163,6 +155,7 @@ namespace FilterExtensions
                 if (p.partPrefab.Modules.Contains("PartModuleFilter"))
                     filterModules.Add(p.name, (PartModuleFilter)p.partPrefab.Modules["PartModuleFilter"]);
             }
+            generateEngineTypes();
 
             if (Settings.replaceFbM)
                 processFilterByManufacturer(modNames);
@@ -279,6 +272,41 @@ namespace FilterExtensions
         }
 
         /// <summary>
+        /// create the subcategories for each unique propellant combination found
+        /// </summary>
+        private void generateEngineTypes()
+        {
+            List<subCategoryItem> engines = new List<subCategoryItem>();
+            for (int i = 0; i < propellantCombos.Count; i++)
+            {
+                string[] ls = propellantCombos[i].ToArray();
+                string propList = string.Join(",", ls);
+
+                List<Check> checks = new List<Check>();
+                Array.ForEach(ls, s => checks.Add(new Check("propellant", s)));
+
+                checks.Add(new Check("propellant", propList, true, false)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
+
+                string name = propList; // rename function needs to be parsed from
+                string icon = propList;
+                SetNameAndIcon(ref name, ref icon);
+                Core.Log(name);
+
+                if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
+                {
+                    customSubCategory sC = new customSubCategory(name, icon);
+
+                    Filter f = new Filter(false);
+                    f.checks = checks;
+                    sC.filters.Add(f);
+                    subCategoriesDict.Add(name, sC);
+
+                    Log(sC.toConfigNode());
+                }
+            }
+        }
+
+        /// <summary>
         /// create the subcategories for filter by manufacturer by discovered GameData folder
         /// </summary>
         /// <param name="modNames"></param>
@@ -352,19 +380,19 @@ namespace FilterExtensions
         {
             try
             {
-                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
+                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
                 if (Filter != null)
-                    Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                    Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.False, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
 
                 Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
                 if (Filter != null)
-                    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                    Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
                 else
                 {
                     Filter = PartCategorizer.Instance.filters[0];
                     if (Filter != null)
                     {
-                        Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+                        Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
                     }
                 }
 
@@ -484,7 +512,7 @@ namespace FilterExtensions
                     if (i != 1000)
                         name = name + i.ToString();
                     if (Settings.debug)
-                        Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
+                        Log(string.Format("Duplicated texture name \"{0}\" at:\r\n{1}\r\n New reference is: {2}", t.name.Split(new char[] { '/', '\\' }).Last(), t.name, name));
                 }
 
                 RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
@@ -580,12 +608,17 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// Debug.Log with FE id inserted
+        /// Debug.Log with FE id/version inserted
         /// </summary>
         /// <param name="o"></param>
         internal static void Log(object o)
         {
-            Debug.Log("[Filter Extensions] " + o);
+            Debug.Log(string.Format("[Filter Extensions {0}]: {1}", version, o));
+        }
+
+        internal static void Log(string format, params object[] o)
+        {
+            Debug.Log(string.Format("[Filter Extensions {0}]: ", version) + string.Format(format, o));
         }
     }
 }

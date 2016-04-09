@@ -6,6 +6,7 @@ using UnityEngine;
 namespace FilterExtensions.ConfigNodes
 {
     using Utility;
+    using KSP.UI.Screens;
 
     public enum categoryTypeAndBehaviour
     {
@@ -176,8 +177,13 @@ namespace FilterExtensions.ConfigNodes
             switch (type)
             {
                 case "engine":
-                    generateEngineTypes();
                     behaviour = categoryTypeAndBehaviour.Engines;
+                    foreach (List<string> combo in Core.Instance.propellantCombos)
+                    {
+                        string dummy = string.Empty, subcatName = string.Join(",", combo.ToArray());
+                        Core.Instance.SetNameAndIcon(ref subcatName, ref dummy);
+                        subCategories.AddUnique(new subCategoryItem(subcatName));
+                    }
                     break;
                 case "stock":
                     if (value == "replace")
@@ -195,46 +201,6 @@ namespace FilterExtensions.ConfigNodes
                     behaviour = categoryTypeAndBehaviour.None;
                     break;
             }
-        }
-
-        private void generateEngineTypes()
-        {
-            List<subCategoryItem> engines = new List<subCategoryItem>();
-            for (int i = 0; i < Core.Instance.propellantCombos.Count; i++ )
-            {
-                List<string> ls = Core.Instance.propellantCombos[i];
-                List<Check> checks = new List<Check>();
-                string props = "";
-                for (int j = 0; j < ls.Count; j++)
-                {
-                    if (props != "")
-                        props += ",";
-                    props += ls[j];
-                }
-                foreach (string s in props.Split(',').Select(str => str.Trim()))
-                    checks.Add(new Check("propellant", s));
-                checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
-
-                string name = props.Replace(',', '/'); // can't use ',' as a delimiter in the procedural name/icon switch function
-                string icon = name;
-                Core.Instance.SetNameAndIcon(ref name, ref icon);
-
-                if (!Core.Instance.subCategoriesDict.ContainsKey(name))
-                {
-                    customSubCategory sC = new customSubCategory(name, icon);
-
-                    Filter f = new Filter(false);
-                    f.checks = checks;
-                    sC.filters.Add(f);
-                    Core.Instance.subCategoriesDict.Add(name, sC);
-                }
-                if (!string.IsNullOrEmpty(name))
-                    engines.Add(new subCategoryItem(name));
-            }
-            if (subCategories != null)
-                subCategories.AddUniqueRange(engines);
-            else
-                subCategories = engines;
         }
 
         private void makeTemplate(ConfigNode node)

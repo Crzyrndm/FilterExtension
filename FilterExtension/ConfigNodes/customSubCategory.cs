@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
+    using KSP.UI.Screens;
     public class customSubCategory
     {
         public string subCategoryTitle { get; set; } // title of this subcategory
@@ -66,9 +67,9 @@ namespace FilterExtensions.ConfigNodes
         {
             ConfigNode node = new ConfigNode("SUBCATEGORY");
 
-            node.AddValue("name", this.subCategoryTitle);
-            node.AddValue("icon", this.iconName);
-            node.AddValue("showUnpurchased", this.unPurchasedOverride);
+            node.AddValue("name", subCategoryTitle);
+            node.AddValue("icon", iconName);
+            node.AddValue("showUnpurchased", unPurchasedOverride);
 
             foreach (Filter f in this.filters)
                 node.AddNode(f.toConfigNode());

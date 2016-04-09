@@ -8,6 +8,7 @@ namespace FilterExtensions
 {
     using ConfigNodes;
     using Utility;
+    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     class Editor : MonoBehaviour
@@ -97,7 +98,7 @@ namespace FilterExtensions
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
-                PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
+                PartCategorizer.Instance.scrollListMain.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
 

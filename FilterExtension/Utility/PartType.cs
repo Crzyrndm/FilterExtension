@@ -304,7 +304,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (contains)
-                return value.Any(s => part.partPrefab.Resources.Contains(s));
+                return value.Any(s => part.partPrefab.Resources.Contains(s) && part.partPrefab.Resources[s].maxAmount > 0);
             else
             {
                 foreach (PartResource r in part.partPrefab.Resources)
@@ -316,30 +316,32 @@ namespace FilterExtensions.Utility
 
         public static bool checkPropellant(AvailablePart part, string[] value, bool contains = true)
         {
-            List<List<Propellant>> propellants = new List<List<Propellant>>();
-            foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
-                propellants.Add(e.propellants);
-
             if (contains)
             {
-                foreach (List<Propellant> Lp in propellants)
-                    foreach (Propellant p in Lp)
-                        if (value.Any(s => s == p.name))
-                            return true;
+                foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
+                {
+                    if (e.propellants.Any(p => value.Contains(p.name)))
+                    {
+                        return true;
+                    }
+                }
+                return false;
             }
             else
             {
-                bool result = true;
-                foreach (List<Propellant> Lp in propellants)
+                // return false only if every propellant across all combos is in the list
+                foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
                 {
-                    bool tmp = false;
-                    foreach (Propellant p in Lp)
-                        tmp |= !value.Contains(p.name); // tmp is true if any propellant is not listed
-                    result &= tmp;
+                    if (e.propellants.Any(p => !value.Contains(p.name)))
+                    {
+                        Core.Log(part.name);
+                        Core.Log("values: " + string.Join(",", value));
+                        e.propellants.ForEach(p => Core.Log(p.name));
+                        return true;
+                    }
                 }
-                return result;
+                return false;
             }
-            return false;
         }
 
         public static bool checkTech(AvailablePart part, string[] value)

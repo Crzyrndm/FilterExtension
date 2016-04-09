@@ -49,46 +49,49 @@ namespace FilterExtensions.ConfigNodes
 
         public Check(ConfigNode node)
         {
-            type = getType(node.GetValue("type"));
-
             string tmpVal = node.GetValue("value");
             if (tmpVal != null)
             {
-                value = tmpVal.Split(',');
-                for (int i = 0; i < this.value.Length; ++i)
+                value = tmpVal.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < value.Length; ++i)
                     value[i] = value[i].Trim();
             }
-
+            
             bool tmp;
             bool.TryParse(node.GetValue("invert"), out tmp);
             invert = tmp;
 
-            if (bool.TryParse(node.GetValue("contains"), out tmp))
+            if (node.HasValue("contains") && !bool.TryParse(node.GetValue("contains"), out tmp))
                 contains = tmp;
             else
                 contains = true;
-
+            
             checks = new List<Check>();
+            type = getType(node.GetValue("type"));
             if (type == CheckType.check)
             {
                 foreach (ConfigNode subNode in node.GetNodes("CHECK"))
-                {
                     checks.Add(new Check(subNode));
-                }
             }
 
-            switch (node.GetValue("equality").ToLower())
+            tmpVal = node.GetValue("equality");
+            if (!string.IsNullOrEmpty(tmpVal))
             {
-                case "lessthan":
-                    equality = Equality.LessThan;
-                    break;
-                case "greaterthan":
-                    equality = Equality.GreaterThan;
-                    break;
-                default:
-                    equality = Equality.Equals;
-                    break;
+                switch (tmpVal.ToUpperInvariant())
+                {
+                    case "LESSTHAN":
+                        equality = Equality.LessThan;
+                        break;
+                    case "GREATERTHAN":
+                        equality = Equality.GreaterThan;
+                        break;
+                    default:
+                        equality = Equality.Equals;
+                        break;
+                }
             }
+            else
+                equality = Equality.Equals;
         }
 
         public Check(Check c)
@@ -103,17 +106,17 @@ namespace FilterExtensions.ConfigNodes
                 checks.Add(new Check(c.checks[i]));
         }
 
-        public Check(string type, string value, bool invert = false, bool contains = true, Equality compare = Equality.Equals)
+        public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)
         {
-            this.type = getType(type.ToLowerInvariant());
-            this.value = value.Split(',');
-            for (int i = 0; i < this.value.Length; ++i)
-                this.value[i] = this.value[i].Trim();
+            type = getType(Type.ToLowerInvariant());
+            value = Value.Split(',');
+            for (int i = 0; i < value.Length; ++i)
+                value[i] = value[i].Trim();
 
-            this.invert = invert;
-            this.contains = contains;
-            equality = compare;
-            this.checks = new List<Check>();
+            invert = Invert;
+            contains = Contains;
+            equality = Compare;
+            checks = new List<Check>();
         }
 
         public ConfigNode toConfigNode()
@@ -123,12 +126,9 @@ namespace FilterExtensions.ConfigNodes
 
             if (value != null)
                 node.AddValue("value", string.Join(",", value));
-            if (invert)
-                node.AddValue("invert", this.invert.ToString());
-            if (!contains && checkUsesContains())
-                node.AddValue("contains", this.contains.ToString());
-            if (equality != Equality.Equals && checkUsesEquality())
-                node.AddValue("equality", this.equality.ToString());
+            node.AddValue("invert", this.invert.ToString());
+            node.AddValue("contains", this.contains.ToString());
+            node.AddValue("equality", this.equality.ToString());
 
             foreach (Check c in this.checks)
                 node.AddNode(c.toConfigNode());
@@ -138,6 +138,7 @@ namespace FilterExtensions.ConfigNodes
 
         public bool checkPart(AvailablePart part, int depth = 0)
         {
+            Core.Log(toConfigNode());
             bool result = true;
             switch (type)
             {
