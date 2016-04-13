@@ -26,7 +26,10 @@ namespace FilterExtensions.Utility
             }
             return false;
         }
-
+        
+        /// <summary>
+        /// steamlined/combined checks on parts, or checks that don't need extra options
+        /// </summary>
         public static bool checkCustom(AvailablePart part, string[] value)
         {
             bool testVal = false;
@@ -49,7 +52,11 @@ namespace FilterExtensions.Utility
             }
             return false;
         }
-
+        
+        /// <summary>
+        /// checks the stock part category
+        /// </summary>
+        #warning function needs a rewrite. checking against the part multiple times is not intuitive
         public static bool checkCategory(AvailablePart part, string[] value)
         {
             foreach (string s in value)
@@ -100,7 +107,10 @@ namespace FilterExtensions.Utility
             }
             return false;
         }
-
+        
+        /// <summary>
+        /// check the user visible names of each part module against a string list
+        /// </summary>
         public static bool checkModuleTitle(AvailablePart part, string[] value, bool contains = true)
         {
             if (part.moduleInfos == null)
@@ -110,7 +120,10 @@ namespace FilterExtensions.Utility
             else
                 return part.moduleInfos.Any(m => !value.Contains(m.moduleName));
         }
-
+        
+        /// <summary>
+        /// check the part module type against a string list
+        /// </summary>
         public static bool checkModuleName(AvailablePart part, string[] value, bool contains = true)
         {
             if (part.partPrefab == null || part.partPrefab.Modules == null)
@@ -120,7 +133,10 @@ namespace FilterExtensions.Utility
             else
                 return value.Any(s => !checkModuleNameType(part, s) && !part.partPrefab.Modules.Contains(s));
         }
-
+        
+        /// <summary>
+        /// provides a typed check for stock modules which then allows for inheritance to work
+        /// </summary>
         public static bool checkModuleNameType(AvailablePart part, string value)
         {
             switch (value)
@@ -288,16 +304,25 @@ namespace FilterExtensions.Utility
             }
         }
 
+        /// <summary>
+        /// check the part name/id exactly matches one in the list
+        /// </summary>
         public static bool checkName(AvailablePart part, string[] value)
         {
             return value.Contains(part.name.Replace('.', '_'), new CaseInsensitiveComparer());
         }
-
+        
+        /// <summary>
+        /// check the user viewable part title contains any of the listed values for a partial match
+        /// </summary>
         public static bool checkTitle(AvailablePart part, string[] value)
         {
             return value.Any(s => part.title.ToLower().Contains(s.ToLower()));
         }
 
+        /// <summary>
+        /// check the resources the part holds
+        /// </summary>
         public static bool checkResource(AvailablePart part, string[] value, bool contains = true)
         {
             if (part.partPrefab == null || part.partPrefab.Resources == null)
@@ -314,6 +339,9 @@ namespace FilterExtensions.Utility
             }
         }
 
+        /// <summary>
+        /// check the propellants this engine uses
+        /// </summary>
         public static bool checkPropellant(AvailablePart part, string[] value, bool contains = true)
         {
             if (contains)
@@ -344,16 +372,25 @@ namespace FilterExtensions.Utility
             }
         }
 
+        /// <summary>
+        /// check the tech required to unlock the part outside sandbox
+        /// </summary>
         public static bool checkTech(AvailablePart part, string[] value)
         {
             return value.Contains(part.TechRequired);
         }
 
+        /// <summary>
+        /// check against the manufacturer of the part
+        /// </summary>
         public static bool checkManufacturer(AvailablePart part, string[] value)
         {
             return value.Contains(part.manufacturer);
         }
 
+        /// <summary>
+        /// checks against the root GameData folder name for a part.
+        /// </summary>
         public static bool checkFolder(AvailablePart part, string[] value)
         {
             string path;
@@ -365,6 +402,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// check against the full path from GameData to the part. eg Squad/Parts
+        /// </summary>
         public static bool checkPath(AvailablePart part, string[] value)
         {
             string path;
@@ -374,6 +414,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// checks against the attach node sizes on the part
+        /// </summary>
         public static bool checkPartSize(AvailablePart part, string[] value, bool contains, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null || part.partPrefab.attachNodes == null)
@@ -418,6 +461,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// check against the number of crew this part can hold
+        /// </summary>
         public static bool checkCrewCapacity(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
@@ -456,6 +502,11 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// check the part mass against a list of values
+        /// </summary>
+        #warning takes a value array, but only checks the first one
+        #warning why the heck is this an integer conversion?
         public static bool checkMass(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
@@ -474,6 +525,11 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// check the part cost against a string list
+        /// </summary>
+        #warning takes a value array, but only checks the first one
+        #warning cost doesn't have to be an integer...
         public static bool checkCost(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             int i;
@@ -489,6 +545,11 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// check the impact speed at which the part will explode
+        /// </summary>
+        #warning takes a value array, but only checks the first one
+        #warning why all the int conversions...?
         public static bool checkCrashTolerance(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
@@ -507,6 +568,11 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// compares against the part max temp
+        /// </summary>
+        #warning takes a value array, but only checks the first one
+        #warning int conversion may actually be valid here, but needs verification
         public static bool checkTemperature(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
@@ -525,6 +591,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// bulkhead profiles used to id part shapes for stock editor. parts with no profiles get dumped in srf
+        /// </summary>
         public static bool checkBulkHeadProfiles(AvailablePart part, string[] value, bool contains)
         {
             if (part.bulkheadProfiles == null)
@@ -542,6 +611,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// checks if the part can be used to control a vessel
+        /// </summary>
         public static bool isCommand(AvailablePart part)
         {
             if (isMannedPod(part))
@@ -553,6 +625,9 @@ namespace FilterExtensions.Utility
             return false;
         }
         
+        /// <summary>
+        /// checks if the part is an engine
+        /// </summary>
         public static bool isEngine(AvailablePart part)
         {
             if (part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleEngines>() != null)
@@ -560,6 +635,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// checks if the part can be used to control a vessel and holds crew
+        /// </summary>
         public static bool isMannedPod(AvailablePart part)
         {
             if (part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCommand>() != null && part.partPrefab.CrewCapacity > 0)
@@ -567,6 +645,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// checks if the part can be used to control a vessel and doesn't hold crew
+        /// </summary>
         public static bool isDrone(AvailablePart part)
         {
             if (part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCommand>() != null && part.partPrefab.CrewCapacity == 0)
@@ -574,6 +655,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// checks if the part has multiple bottom attach nodes
+        /// </summary>
         public static bool isMultiCoupler(AvailablePart part)
         {
             if (part.partPrefab == null || part.partPrefab.attachNodes == null)
@@ -588,6 +672,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// checks if the part has two attach nodes and they are different sizes
+        /// </summary>
         public static bool isAdapter(AvailablePart part)
         {
             if (part.partPrefab == null || part.partPrefab.attachNodes == null)
@@ -602,6 +689,9 @@ namespace FilterExtensions.Utility
             return false;
         }
 
+        /// <summary>
+        /// get a list of partmodules of type T
+        /// </summary>
         public static List<T> GetModules<T>(this Part part) where T : PartModule
         {
             List<T> moduleList = new List<T>();
@@ -613,7 +703,10 @@ namespace FilterExtensions.Utility
             }
             return moduleList;
         }
-
+        
+        /// <summary>
+        /// get the first module of type T
+        /// </summary>
         public static T GetModule<T>(this Part part) where T : PartModule
         {
             for (int i = 0; i < part.Modules.Count; i++ )
@@ -625,6 +718,10 @@ namespace FilterExtensions.Utility
             return null;
         }
 
+        /// <summary>
+        /// used for string contains where we don't care about the string case
+        /// </summary>
+        #warning gethashcode can be written better (without a toLower...)
         class CaseInsensitiveComparer : IEqualityComparer<string>
         {
             public bool Equals(string s1, string s2)
