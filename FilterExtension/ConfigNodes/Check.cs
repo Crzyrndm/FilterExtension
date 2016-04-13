@@ -50,7 +50,7 @@ namespace FilterExtensions.ConfigNodes
         public Check(ConfigNode node)
         {
             string tmpVal = node.GetValue("value");
-            if (tmpVal != null)
+            if (!string.IsNullOrEmpty(tmpVal))
             {
                 value = tmpVal.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < value.Length; ++i)
@@ -58,8 +58,8 @@ namespace FilterExtensions.ConfigNodes
             }
             
             bool tmp;
-            bool.TryParse(node.GetValue("invert"), out tmp);
-            invert = tmp;
+            if (node.HasValue("invert") && bool.TryParse(node.GetValue("invert"), out tmp))
+                invert = tmp;
 
             if (node.HasValue("contains") && !bool.TryParse(node.GetValue("contains"), out tmp))
                 contains = tmp;
@@ -138,7 +138,6 @@ namespace FilterExtensions.ConfigNodes
 
         public bool checkPart(AvailablePart part, int depth = 0)
         {
-            Core.Log(toConfigNode());
             bool result = true;
             switch (type)
             {

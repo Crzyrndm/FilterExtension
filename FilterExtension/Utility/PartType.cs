@@ -5,15 +5,14 @@ using UnityEngine;
 
 namespace FilterExtensions.Utility
 {
+    using ModuleWheels;
+    
     public static class PartType
     {
+        private static CaseInsensitiveComparer comparer = new CaseInsensitiveComparer();
         /// <summary>
         /// check the part against another subcategory. Hard limited to a depth of 10
         /// </summary>
-        /// <param name="part"></param>
-        /// <param name="value"></param>
-        /// <param name="depth"></param>
-        /// <returns></returns>
         public static bool checkSubcategory(AvailablePart part, string[] value, int depth)
         {
             if (depth > 10)
@@ -56,57 +55,57 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// checks the stock part category
         /// </summary>
-        #warning function needs a rewrite. checking against the part multiple times is not intuitive
         public static bool checkCategory(AvailablePart part, string[] value)
         {
-            foreach (string s in value)
+            switch (part.category)
             {
-                switch (s)
-                {
-                    case "Pods":
-                        if (part.category == PartCategories.Pods)
-                            return true;
-                        break;
-                    case "Engines":
-                        if (part.category == PartCategories.Engine)
-                            return true;
-                        else if (part.category == PartCategories.Propulsion && PartType.isEngine(part))
-                            return true;
-                        break;
-                    case "Fuel Tanks":
-                        if (part.category == PartCategories.FuelTank)
-                            return true;
-                        else if (part.category == PartCategories.Propulsion && !PartType.isEngine(part))
-                            return true;
-                        break;
-                    case "Command and Control":
-                        if (part.category == PartCategories.Control)
-                            return true;
-                        break;
-                    case "Structural":
-                        if (part.category == PartCategories.Structural)
-                            return true;
-                        break;
-                    case "Aerodynamics":
-                        if (part.category == PartCategories.Aero)
-                            return true;
-                        break;
-                    case "Utility":
-                        if (part.category == PartCategories.Utility)
-                            return true;
-                        break;
-                    case "Science":
-                        if (part.category == PartCategories.Science)
-                            return true;
-                        break;
-                    case "None":
-                        if (part.category == PartCategories.none)
-                            return true;
-                        break;
-                }
+                case PartCategories.Pods:
+                    if (value.Contains("Pods", comparer))
+                        return true;
+                    break;
+                case PartCategories.Propulsion:
+                    if (value.Contains("Engines", comparer) && isEngine(part))
+                        return true;
+                    if (value.Contains("Fuel Tanks", comparer) && !isEngine(part))
+                        return true;
+                    break;
+                case PartCategories.Engine:
+                    if (value.Contains("Engines", comparer))
+                        return true;
+                    break;
+                case PartCategories.FuelTank:
+                    if (value.Contains("Fuel Tanks", comparer))
+                        return true;
+                    break;
+                case PartCategories.Control:
+                    if (value.Contains("Command and Control", comparer))
+                        return true;
+                    break;
+                case PartCategories.Structural:
+                    if (value.Contains("Structural", comparer))
+                        return true;
+                    break;
+                case PartCategories.Aero:
+                    if (value.Contains("Aerodynamics", comparer))
+                        return true;
+                    break;
+                case PartCategories.Utility:
+                    if (value.Contains("Utility", comparer))
+                        return true;
+                    break;
+                case PartCategories.Science:
+                    if (value.Contains("Science", comparer))
+                        return true;
+                    break;
+                case PartCategories.none:
+                    if (value.Contains("None", comparer))
+                        return true;
+                    break;
             }
             return false;
         }
+
+
         
         /// <summary>
         /// check the user visible names of each part module against a string list
@@ -116,9 +115,9 @@ namespace FilterExtensions.Utility
             if (part.moduleInfos == null)
                 return false;
             if (contains)
-                return part.moduleInfos.Any(m => value.Contains(m.moduleName));
+                return part.moduleInfos.Any(m => value.Contains(m.moduleName, comparer));
             else
-                return part.moduleInfos.Any(m => !value.Contains(m.moduleName));
+                return part.moduleInfos.Any(m => !value.Contains(m.moduleName, comparer));
         }
         
         /// <summary>
@@ -145,8 +144,6 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAblator>() != null;
                 case "ModuleActiveRadiator":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleActiveRadiator>() != null;
-                case "ModuleAdvancedLandingGear":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAdvancedLandingGear>() != null;
                 case "ModuleAerodynamicLift":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAerodynamicLift>() != null;
                 case "ModuleAeroSurface":
@@ -185,6 +182,8 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleConductionMultiplier>() != null;
                 case "ModuleControlSurface":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleControlSurface>() != null;
+                case "ModuleCoreHeat":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCoreHeat>() != null;
                 case "ModuleDataTransmitter":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDataTransmitter>() != null;
                 case "ModuleDecouple":
@@ -227,12 +226,6 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleJointMotorTest>() != null;
                 case "ModuleJointPivot":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleJointPivot>() != null;
-                case "ModuleLandingGear":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleLandingGear>() != null;
-                case "ModuleLandingGearFixed":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleLandingGearFixed>() != null;
-                case "ModuleLandingLeg":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleLandingLeg>() != null;
                 case "ModuleLiftingSurface":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleLiftingSurface>() != null;
                 case "ModuleLight":
@@ -283,22 +276,44 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleScienceLab>() != null;
                 case "ModuleSeeThroughObject":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSeeThroughObject>() != null;
-                case "ModuleSteering":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSteering>() != null;
+                case "ModuleStatusLight":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleStatusLight>() != null;
                 case "ModuleSurfaceFX":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSurfaceFX>() != null;
                 case "ModuleTestSubject":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleTestSubject>() != null;
+                case "ModuleToggleCrossfeed":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleToggleCrossfeed>() != null;
                 case "ModuleTripLogger":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleTripLogger>() != null;
-                case "ModuleWheel":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheel>() != null;
+                case "ModuleWheelBase":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelBase>() != null;
                 case "FXModuleAnimateThrottle":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<FXModuleAnimateThrottle>() != null;
                 case "FXModuleConstrainPosition":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<FXModuleConstrainPosition>() != null;
                 case "FXModuleLookAtConstraint":
                     return part.partPrefab.Modules.FirstOfTypeOrDefault<FXModuleLookAtConstraint>() != null;
+                case "ModuleWheelBogey":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelBogey>() != null;
+                case "ModuleWheelBrakes":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelBrakes>() != null;
+                case "ModuleWheelDamage":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelDamage>() != null;
+                case "ModuleWheelDeployment":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelDeployment>() != null;
+                case "ModuleWheelLock":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelLock>() != null;
+                case "ModuleWheelMotor":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelMotor>() != null;
+                case "ModuleWheelMotorSteering":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelMotorSteering>() != null;
+                case "ModuleWheelSteering":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelSteering>() != null;
+                case "ModuleWheelSubmodule":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelSubmodule>() != null;
+                case "ModuleWheelSuspension":
+                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelSuspension>() != null;
                 default:
                     return false;
             }
@@ -309,7 +324,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkName(AvailablePart part, string[] value)
         {
-            return value.Contains(part.name.Replace('.', '_'), new CaseInsensitiveComparer());
+            return value.Contains(part.name.Replace('.', '_'), comparer);
         }
         
         /// <summary>
@@ -317,7 +332,8 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkTitle(AvailablePart part, string[] value)
         {
-            return value.Any(s => part.title.ToLower().Contains(s.ToLower()));
+            
+            return value.Any(s => part.title.IndexOf(s, StringComparison.InvariantCultureIgnoreCase) != -1);
         }
 
         /// <summary>
@@ -331,12 +347,7 @@ namespace FilterExtensions.Utility
             if (contains)
                 return value.Any(s => part.partPrefab.Resources.Contains(s) && part.partPrefab.Resources[s].maxAmount > 0);
             else
-            {
-                foreach (PartResource r in part.partPrefab.Resources)
-                    if (!value.Contains(r.resourceName))
-                        return true;
-                return false;
-            }
+                return value.Any(s => !part.partPrefab.Resources.Contains(s) || part.partPrefab.Resources[s].maxAmount <= 0);
         }
 
         /// <summary>
@@ -344,32 +355,12 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkPropellant(AvailablePart part, string[] value, bool contains = true)
         {
-            if (contains)
+            foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
             {
-                foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
-                {
-                    if (e.propellants.Any(p => value.Contains(p.name)))
-                    {
-                        return true;
-                    }
-                }
-                return false;
+                if (contains && e.propellants.Any(p => value.Contains(p.name)) || (!contains && e.propellants.Any(p => !value.Contains(p.name))))
+                    return true;
             }
-            else
-            {
-                // return false only if every propellant across all combos is in the list
-                foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
-                {
-                    if (e.propellants.Any(p => !value.Contains(p.name)))
-                    {
-                        Core.Log(part.name);
-                        Core.Log("values: " + string.Join(",", value));
-                        e.propellants.ForEach(p => Core.Log(p.name));
-                        return true;
-                    }
-                }
-                return false;
-            }
+            return false;
         }
 
         /// <summary>
@@ -395,10 +386,7 @@ namespace FilterExtensions.Utility
         {
             string path;
             if (Core.Instance.partPathDict.TryGetValue(part.name, out path))
-            {
-                string folder = path.Split(new char[] { '\\', '/' }, 2)[0];
-                return value.Contains(folder);
-            }
+                return value.Contains(path.Substring(0, path.IndexOfAny(new char[] { '\\', '/' })));
             return false;
         }
 
@@ -427,33 +415,33 @@ namespace FilterExtensions.Utility
                 foreach (AttachNode node in part.partPrefab.attachNodes)
                 {
                     if (contains)
-                        if (value.Contains(node.size.ToString()))
-                            return true;
-                        else
-                            if (!value.Contains(node.size.ToString()))
-                                return true;
-                }
-            }
-            else if (equality == ConfigNodes.Check.Equality.GreaterThan)
-            {
-                int i;
-                if (int.TryParse(value[0], out i))
-                {
-                    foreach (AttachNode node in part.partPrefab.attachNodes)
                     {
-                        if (node.size > i)
+                        if (value.Contains(node.size.ToString(), comparer))
+                            return true;
+                    }
+                    else
+                    {
+                        if (!value.Contains(node.size.ToString(), comparer))
                             return true;
                     }
                 }
             }
-            else
+            else // only compare against the first value here
             {
+                if (value.Length > 1)
+                    Core.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+
                 int i;
                 if (int.TryParse(value[0], out i))
                 {
-                    foreach (AttachNode node in part.partPrefab.attachNodes)
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan)
                     {
-                        if (node.size < i)
+                        part.partPrefab.attachNodes.Any(n => n.size > i);
+                            return true;
+                    }
+                    else if (equality == ConfigNodes.Check.Equality.LessThan)
+                    {
+                        part.partPrefab.attachNodes.Any(n => n.size < i);
                             return true;
                     }
                 }
@@ -470,33 +458,25 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
+                return value.Contains(part.partPrefab.CrewCapacity.ToString(), comparer);
+            else // only compare against the first value here
             {
-                foreach (string s in value)
+                if (value.Length > 1)
+                    Core.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+
+                int i;
+                if (int.TryParse(value[0], out i))
                 {
-                    int i;
-                    if (int.TryParse(s, out i))
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan)
                     {
-                        if (Math.Max(i, 0) == part.partPrefab.CrewCapacity)
+                        if (part.partPrefab.CrewCapacity > i)
                             return true;
                     }
-                }
-            }
-            else if (equality == ConfigNodes.Check.Equality.GreaterThan)
-            {
-                int i;
-                if (int.TryParse(value[0], out i))
-                {
-                    if (part.partPrefab.CrewCapacity > i)
-                        return true;
-                }
-            }
-            else
-            {
-                int i;
-                if (int.TryParse(value[0], out i))
-                {
-                    if (part.partPrefab.CrewCapacity < i)
-                        return true;
+                    else if (equality == ConfigNodes.Check.Equality.LessThan)
+                    {
+                        if (part.partPrefab.CrewCapacity < i)
+                            return true;
+                    }
                 }
             }
             return false;
@@ -505,22 +485,23 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part mass against a list of values
         /// </summary>
-        #warning takes a value array, but only checks the first one
-        #warning why the heck is this an integer conversion?
         public static bool checkMass(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
                 return false;
 
-            int i;
-            if (int.TryParse(value[0], out i))
+            if (equality == ConfigNodes.Check.Equality.Equals)
+                value.Contains(part.partPrefab.mass.ToString(), comparer);
+            else
             {
-                if (equality == ConfigNodes.Check.Equality.Equals && part.partPrefab.mass == i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.mass > i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.mass < i)
-                    return true;
+                double d;
+                if (double.TryParse(value[0], out d))
+                {
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.mass > d)
+                        return true;
+                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.mass < d)
+                        return true;
+                }
             }
             return false;
         }
@@ -528,19 +509,20 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part cost against a string list
         /// </summary>
-        #warning takes a value array, but only checks the first one
-        #warning cost doesn't have to be an integer...
         public static bool checkCost(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
-            int i;
-            if (int.TryParse(value[0], out i))
+            if (equality == ConfigNodes.Check.Equality.Equals)
+                value.Contains(part.cost.ToString(), comparer);
+            else
             {
-                if (equality == ConfigNodes.Check.Equality.Equals && part.cost == i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.GreaterThan && part.cost > i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.LessThan && part.cost < i)
-                    return true;
+                double d;
+                if (double.TryParse(value[0], out d))
+                {
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.cost > d)
+                        return true;
+                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.cost < d)
+                        return true;
+                }
             }
             return false;
         }
@@ -548,22 +530,23 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the impact speed at which the part will explode
         /// </summary>
-        #warning takes a value array, but only checks the first one
-        #warning why all the int conversions...?
         public static bool checkCrashTolerance(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
                 return false;
 
-            int i;
-            if (int.TryParse(value[0], out i))
+            if (equality == ConfigNodes.Check.Equality.Equals)
+                value.Contains(part.partPrefab.crashTolerance.ToString(), comparer);
+            else
             {
-                if (equality == ConfigNodes.Check.Equality.Equals && part.partPrefab.crashTolerance == i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.crashTolerance > i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.crashTolerance < i)
-                    return true;
+                double d;
+                if (double.TryParse(value[0], out d))
+                {
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.crashTolerance > d)
+                        return true;
+                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.crashTolerance < d)
+                        return true;
+                }
             }
             return false;
         }
@@ -571,22 +554,23 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// compares against the part max temp
         /// </summary>
-        #warning takes a value array, but only checks the first one
-        #warning int conversion may actually be valid here, but needs verification
         public static bool checkTemperature(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (part.partPrefab == null)
                 return false;
 
-            int i;
-            if (int.TryParse(value[0], out i))
+            if (equality == ConfigNodes.Check.Equality.Equals)
+                value.Contains(part.partPrefab.maxTemp.ToString(), comparer);
+            else
             {
-                if (equality == ConfigNodes.Check.Equality.Equals && part.partPrefab.maxTemp == i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.maxTemp > i)
-                    return true;
-                if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.maxTemp < i)
-                    return true;
+                double d;
+                if (double.TryParse(value[0], out d))
+                {
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.maxTemp > d)
+                        return true;
+                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.maxTemp < d)
+                        return true;
+                }
             }
             return false;
         }
@@ -597,15 +581,13 @@ namespace FilterExtensions.Utility
         public static bool checkBulkHeadProfiles(AvailablePart part, string[] value, bool contains)
         {
             if (part.bulkheadProfiles == null)
-            {
-                if (value.Contains("srf"))
-                    return true;
-                return false;
-            }
+                return value.Contains("srf");
 
             foreach (string s in part.bulkheadProfiles.Split(','))
             {
-                if (value.Any(v => v == s.Trim()))
+                if (contains && value.Contains(s.Trim()))
+                    return true;
+                if (!contains && !value.Contains(s.Trim()))
                     return true;
             }
             return false;
@@ -721,17 +703,16 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// used for string contains where we don't care about the string case
         /// </summary>
-        #warning gethashcode can be written better (without a toLower...)
         class CaseInsensitiveComparer : IEqualityComparer<string>
         {
             public bool Equals(string s1, string s2)
             {
-                return string.Equals(s1, s2, StringComparison.InvariantCultureIgnoreCase);
+                return string.Equals(s1, s2, StringComparison.OrdinalIgnoreCase);
             }
 
             public int GetHashCode(string s)
             {
-                return s.ToLower().GetHashCode();
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(s);
             }
         }
     }
