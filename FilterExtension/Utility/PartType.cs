@@ -78,7 +78,7 @@ namespace FilterExtensions.Utility
                         return true;
                     break;
                 case PartCategories.Control:
-                    if (value.Contains("Command and Control", comparer))
+                    if (value.Contains("Control", comparer))
                         return true;
                     break;
                 case PartCategories.Structural:
@@ -333,7 +333,7 @@ namespace FilterExtensions.Utility
         public static bool checkTitle(AvailablePart part, string[] value)
         {
             
-            return value.Any(s => part.title.IndexOf(s, StringComparison.InvariantCultureIgnoreCase) != -1);
+            return value.Any(s => part.title.IndexOf(s, StringComparison.OrdinalIgnoreCase) != -1);
         }
 
         /// <summary>
@@ -397,7 +397,7 @@ namespace FilterExtensions.Utility
         {
             string path;
             if (Core.Instance.partPathDict.TryGetValue(part.name, out path))
-                return value.Any(s => path.StartsWith(s, StringComparison.InvariantCultureIgnoreCase));
+                return value.Any(s => path.StartsWith(s, StringComparison.OrdinalIgnoreCase));
 
             return false;
         }
@@ -491,7 +491,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                value.Contains(part.partPrefab.mass.ToString(), comparer);
+                return value.Contains(part.partPrefab.mass.ToString(), comparer);
             else
             {
                 double d;
@@ -512,7 +512,7 @@ namespace FilterExtensions.Utility
         public static bool checkCost(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (equality == ConfigNodes.Check.Equality.Equals)
-                value.Contains(part.cost.ToString(), comparer);
+                return value.Contains(part.cost.ToString(), comparer);
             else
             {
                 double d;
@@ -536,15 +536,15 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                value.Contains(part.partPrefab.crashTolerance.ToString(), comparer);
+                return value.Contains(part.partPrefab.crashTolerance.ToString());
             else
             {
-                double d;
-                if (double.TryParse(value[0], out d))
+                float f;
+                if (float.TryParse(value[0], out f))
                 {
-                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.crashTolerance > d)
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.crashTolerance > f)
                         return true;
-                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.crashTolerance < d)
+                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.crashTolerance < f)
                         return true;
                 }
             }
@@ -560,7 +560,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                value.Contains(part.partPrefab.maxTemp.ToString(), comparer);
+                return value.Contains(part.partPrefab.maxTemp.ToString(), comparer);
             else
             {
                 double d;
