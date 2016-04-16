@@ -9,7 +9,7 @@ namespace FilterExtensions.Utility
     
     public static class PartType
     {
-        private static CaseInsensitiveComparer comparer = new CaseInsensitiveComparer();
+        public static CaseInsensitiveComparer comparer = new CaseInsensitiveComparer();
         /// <summary>
         /// check the part against another subcategory. Hard limited to a depth of 10
         /// </summary>
@@ -110,14 +110,14 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the user visible names of each part module against a string list
         /// </summary>
-        public static bool checkModuleTitle(AvailablePart part, string[] value, bool contains = true)
+        public static bool checkModuleTitle(AvailablePart part, string[] values, bool contains = true)
         {
             if (part.moduleInfos == null)
                 return false;
             if (contains)
-                return part.moduleInfos.Any(m => value.Contains(m.moduleName, comparer));
+                return part.moduleInfos.Any(m => values.Contains(m.moduleName, comparer));
             else
-                return part.moduleInfos.Any(m => !value.Contains(m.moduleName, comparer));
+                return part.moduleInfos.Any(m => !values.Contains(m.moduleName, comparer));
         }
         
         /// <summary>
@@ -141,179 +141,177 @@ namespace FilterExtensions.Utility
             switch (value)
             {
                 case "ModuleAblator":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAblator>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAblator>();
                 case "ModuleActiveRadiator":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleActiveRadiator>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleActiveRadiator>();
                 case "ModuleAerodynamicLift":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAerodynamicLift>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAerodynamicLift>();
                 case "ModuleAeroSurface":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAeroSurface>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAeroSurface>();
                 case "ModuleAlternator":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAlternator>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAlternator>();
                 case "ModuleAnalysisResource":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAnalysisResource>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAnalysisResource>();
                 case "ModuleAnchoredDecoupler":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAnchoredDecoupler>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAnchoredDecoupler>();
                 case "ModuleAnimateGeneric":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAnimateGeneric>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAnimateGeneric>();
                 case "ModuleAnimateHeat":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAnimateHeat>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAnimateHeat>();
                 case "ModuleAnimationGroup":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAnimationGroup>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAnimationGroup>();
                 case "ModuleAnimatorLandingGear":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAnimatorLandingGear>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAnimatorLandingGear>();
                 case "ModuleAsteroid":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAsteroid>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAsteroid>();
                 case "ModuleAsteroidAnalysis":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAsteroidAnalysis>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAsteroidAnalysis>();
                 case "ModuleAsteroidDrill":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAsteroidDrill>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAsteroidDrill>();
                 case "ModuleAsteroidInfo":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAsteroidInfo>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAsteroidInfo>();
                 case "ModuleAsteroidResource":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleAsteroidResource>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleAsteroidResource>();
                 case "ModuleBiomeScanner":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleBiomeScanner>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleBiomeScanner>();
                 case "ModuleCargoBay":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCargoBay>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleCargoBay>();
                 case "ModuleCommand":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCommand>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleCommand>();
                 case "ModuleConductionMultiplier":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleConductionMultiplier>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleConductionMultiplier>();
                 case "ModuleControlSurface":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleControlSurface>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleControlSurface>();
                 case "ModuleCoreHeat":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCoreHeat>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleCoreHeat>();
                 case "ModuleDataTransmitter":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDataTransmitter>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDataTransmitter>();
                 case "ModuleDecouple":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDecouple>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDecouple>();
                 case "ModuleDeployableRadiator":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDeployableRadiator>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDeployableRadiator>();
                 case "ModuleDeployableSolarPanel":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDeployableSolarPanel>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDeployableSolarPanel>();
                 case "ModuleDisplaceTweak":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDisplaceTweak>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDisplaceTweak>();
                 case "ModuleDockingNode":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDockingNode>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDockingNode>();
                 case "ModuleDragModifier":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleDragModifier>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleDragModifier>();
                 case "ModuleEffectTest":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleEffectTest>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleEffectTest>();
                 case "ModuleEngines":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleEngines>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleEngines>();
                 case "ModuleEnginesFX":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleEnginesFX>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleEnginesFX>();
                 case "ModuleEnviroSensor":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleEnviroSensor>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleEnviroSensor>();
                 case "ModuleFuelJettison":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleFuelJettison>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleFuelJettison>();
                 case "ModuleGenerator":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleGenerator>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleGenerator>();
                 case "ModuleGimbal":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleGimbal>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleGimbal>();
                 case "ModuleGPS":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleGPS>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleGPS>();
                 case "ModuleGrappleNode":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleGrappleNode>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleGrappleNode>();
                 case "ModuleHighDefCamera":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleHighDefCamera>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleHighDefCamera>();
                 case "ModuleJettison":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleJettison>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleJettison>();
                 case "ModuleJointMotor":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleJointMotor>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleJointMotor>();
                 case "ModuleJointMotorTest":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleJointMotorTest>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleJointMotorTest>();
                 case "ModuleJointPivot":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleJointPivot>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleJointPivot>();
                 case "ModuleLiftingSurface":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleLiftingSurface>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleLiftingSurface>();
                 case "ModuleLight":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleLight>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleLight>();
                 case "ModuleOrbitalScanner":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleOrbitalScanner>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleOrbitalScanner>();
                 case "ModuleOrbitalSurveyor":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleOrbitalSurveyor>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleOrbitalSurveyor>();
                 case "ModuleOverheatDisplay":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleOverheatDisplay>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleOverheatDisplay>();
                 case "ModuleParachute":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleParachute>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleParachute>();
                 case "ModulePhysicMaterial":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModulePhysicMaterial>() != null;
+                    return part.partPrefab.Modules.Contains<ModulePhysicMaterial>();
                 case "ModuleProceduralFairing":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleProceduralFairing>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleProceduralFairing>();
                 case "ModuleRCS":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleRCS>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleRCS>();
                 case "ModuleReactionWheel":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleReactionWheel>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleReactionWheel>();
                 case "ModuleRemoteController":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleRemoteController>() != null;
-                case "ModuleResource":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleResource>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleRemoteController>();
                 case "ModuleResourceConverter":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleResourceConverter>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleResourceConverter>();
                 case "ModuleResourceHarvester":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleResourceHarvester>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleResourceHarvester>();
                 case "ModuleResourceIntake":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleResourceIntake>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleResourceIntake>();
                 case "ModuleResourceScanner":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleResourceScanner>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleResourceScanner>();
                 case "ModuleRotatingJoint":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleRotatingJoint>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleRotatingJoint>();
                 case "ModuleSampleCollector":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSampleCollector>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleSampleCollector>();
                 case "ModuleSampleContainer":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSampleContainer>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleSampleContainer>();
                 case "ModuleSAS":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSAS>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleSAS>();
                 case "ModuleScienceContainer":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleScienceContainer>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleScienceContainer>();
                 case "ModuleScienceConverter":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleScienceConverter>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleScienceConverter>();
                 case "ModuleScienceExperiment":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleScienceExperiment>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleScienceExperiment>();
                 case "ModuleScienceLab":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleScienceLab>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleScienceLab>();
                 case "ModuleSeeThroughObject":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSeeThroughObject>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleSeeThroughObject>();
                 case "ModuleStatusLight":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleStatusLight>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleStatusLight>();
                 case "ModuleSurfaceFX":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleSurfaceFX>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleSurfaceFX>();
                 case "ModuleTestSubject":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleTestSubject>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleTestSubject>();
                 case "ModuleToggleCrossfeed":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleToggleCrossfeed>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleToggleCrossfeed>();
                 case "ModuleTripLogger":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleTripLogger>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleTripLogger>();
                 case "ModuleWheelBase":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelBase>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelBase>();
                 case "FXModuleAnimateThrottle":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<FXModuleAnimateThrottle>() != null;
+                    return part.partPrefab.Modules.Contains<FXModuleAnimateThrottle>();
                 case "FXModuleConstrainPosition":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<FXModuleConstrainPosition>() != null;
+                    return part.partPrefab.Modules.Contains<FXModuleConstrainPosition>();
                 case "FXModuleLookAtConstraint":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<FXModuleLookAtConstraint>() != null;
+                    return part.partPrefab.Modules.Contains<FXModuleLookAtConstraint>();
                 case "ModuleWheelBogey":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelBogey>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelBogey>();
                 case "ModuleWheelBrakes":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelBrakes>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelBrakes>();
                 case "ModuleWheelDamage":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelDamage>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelDamage>();
                 case "ModuleWheelDeployment":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelDeployment>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelDeployment>();
                 case "ModuleWheelLock":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelLock>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelLock>();
                 case "ModuleWheelMotor":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelMotor>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelMotor>();
                 case "ModuleWheelMotorSteering":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelMotorSteering>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelMotorSteering>();
                 case "ModuleWheelSteering":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelSteering>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelSteering>();
                 case "ModuleWheelSubmodule":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelSubmodule>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelSubmodule>();
                 case "ModuleWheelSuspension":
-                    return part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleWheelSuspension>() != null;
+                    return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
                 default:
                     return false;
             }
@@ -355,7 +353,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkPropellant(AvailablePart part, string[] value, bool contains = true)
         {
-            foreach (ModuleEngines e in part.partPrefab.GetModules<ModuleEngines>())
+            foreach (ModuleEngines e in part.partPrefab.Modules.GetModules<ModuleEngines>())
             {
                 if (contains && e.propellants.Any(p => value.Contains(p.name)) || (!contains && e.propellants.Any(p => !value.Contains(p.name))))
                     return true;
@@ -598,13 +596,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool isCommand(AvailablePart part)
         {
-            if (isMannedPod(part))
-                return true;
-            if (isDrone(part))
-                return true;
-            if (part.partPrefab.Modules.FirstOfTypeOrDefault<KerbalSeat>() != null)
-                return true;
-            return false;
+            return isMannedPod(part) || isDrone(part) || part.partPrefab.Modules.Contains<KerbalSeat>();
         }
         
         /// <summary>
@@ -612,9 +604,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool isEngine(AvailablePart part)
         {
-            if (part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleEngines>() != null)
-                return true;
-            return false;
+            return part.partPrefab.Modules.Contains<ModuleEngines>();
         }
 
         /// <summary>
@@ -622,9 +612,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool isMannedPod(AvailablePart part)
         {
-            if (part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCommand>() != null && part.partPrefab.CrewCapacity > 0)
-                return true;
-            return false;
+            return part.partPrefab.Modules.Contains<ModuleCommand>() && part.partPrefab.CrewCapacity > 0;
         }
 
         /// <summary>
@@ -632,9 +620,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool isDrone(AvailablePart part)
         {
-            if (part.partPrefab.Modules.FirstOfTypeOrDefault<ModuleCommand>() != null && part.partPrefab.CrewCapacity == 0)
-                return true;
-            return false;
+            return part.partPrefab.Modules.Contains<ModuleCommand>() && part.partPrefab.CrewCapacity == 0;
         }
 
         /// <summary>
@@ -659,51 +645,15 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool isAdapter(AvailablePart part)
         {
-            if (part.partPrefab == null || part.partPrefab.attachNodes == null)
+            if (part.partPrefab == null || part.partPrefab.attachNodes == null || part.partPrefab.attachNodes.Count != 2 || isCommand(part))
                 return false;
-
-            if (isCommand(part))
-                return false;
-            if (part.partPrefab.attachNodes.Count != 2)
-                return false;
-            if (part.partPrefab.attachNodes[0].size != part.partPrefab.attachNodes[1].size)
-                return true;
-            return false;
-        }
-
-        /// <summary>
-        /// get a list of partmodules of type T
-        /// </summary>
-        public static List<T> GetModules<T>(this Part part) where T : PartModule
-        {
-            List<T> moduleList = new List<T>();
-            for (int i = 0; i < part.Modules.Count; i++)
-            {
-                T module = part.Modules[i] as T;
-                if (module != null)
-                    moduleList.Add(module);
-            }
-            return moduleList;
-        }
-        
-        /// <summary>
-        /// get the first module of type T
-        /// </summary>
-        public static T GetModule<T>(this Part part) where T : PartModule
-        {
-            for (int i = 0; i < part.Modules.Count; i++ )
-            {
-                T module = part.Modules[i] as T;
-                if (module != null)
-                    return module;
-            }
-            return null;
+            return part.partPrefab.attachNodes[0].size != part.partPrefab.attachNodes[1].size;
         }
 
         /// <summary>
         /// used for string contains where we don't care about the string case
         /// </summary>
-        class CaseInsensitiveComparer : IEqualityComparer<string>
+        public class CaseInsensitiveComparer : IEqualityComparer<string>
         {
             public bool Equals(string s1, string s2)
             {

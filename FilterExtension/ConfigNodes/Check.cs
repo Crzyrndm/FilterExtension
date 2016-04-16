@@ -7,40 +7,82 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
-    public enum CheckType
-    {
-        moduleTitle,
-        moduleName,
-        partName,
-        partTitle,
-        resource,
-        propellant,
-        tech,
-        manufacturer,
-        folder,
-        path,
-        category,
-        size,
-        crew,
-        custom,
-        mass,
-        cost,
-        crashTolerance,
-        maxTemp,
-        profile,
-        check,
-        subcategory
-    }
-
     public class Check
     {
+        public enum CheckType
+        {
+            moduleTitle,
+            moduleName,
+            partName,
+            partTitle,
+            resource,
+            propellant,
+            tech,
+            manufacturer,
+            folder,
+            path,
+            category,
+            size,
+            crew,
+            custom,
+            mass,
+            cost,
+            crashTolerance,
+            maxTemp,
+            profile,
+            check,
+            subcategory
+        }
+
         public enum Equality
         {
             Equals, // default
             LessThan,
             GreaterThan
         }
-        public CheckType type { get; set; }
+
+        public class CheckParameters
+        {
+            public CheckType typeEnum { get; private set; }
+            public string typeString { get; private set; }
+            public bool usesContains { get; private set; }
+            public bool usesEquality { get; private set; }
+
+            public CheckParameters(CheckType Type, string TypeStr, bool Contains = false, bool Equality = false)
+            {
+                typeEnum = Type;
+                typeString = TypeStr;
+                usesContains = Contains;
+                usesEquality = Equality;
+            }
+        }
+
+        public static readonly Dictionary<string, CheckParameters> checkParams = new Dictionary<string, CheckParameters>(PartType.comparer)
+            {
+                { "name", new CheckParameters(CheckType.partName, "name") },
+                { "title", new CheckParameters(CheckType.partTitle, "title") },
+                { "moduleName", new CheckParameters(CheckType.moduleName, "moduleName", true) },
+                { "moduleTitle", new CheckParameters(CheckType.moduleTitle, "moduleTitle", true) },
+                { "resource", new CheckParameters(CheckType.resource, "resource", true) },
+                { "propellant", new CheckParameters(CheckType.propellant, "propellant", true) },
+                { "tech", new CheckParameters(CheckType.tech, "tech") },
+                { "manufacturer", new CheckParameters(CheckType.manufacturer, "manufacturer") },
+                { "folder", new CheckParameters(CheckType.folder, "folder") },
+                { "path", new CheckParameters(CheckType.path, "path") },
+                { "category", new CheckParameters(CheckType.category, "category") },
+                { "size", new CheckParameters(CheckType.size, "size", true, true) },
+                { "crew", new CheckParameters(CheckType.crew, "crew", false, true) },
+                { "custom", new CheckParameters(CheckType.custom, "custom") },
+                { "mass", new CheckParameters(CheckType.mass, "mass", false, true) },
+                { "cost", new CheckParameters(CheckType.cost, "cost", false, true) },
+                { "crash", new CheckParameters(CheckType.crashTolerance, "crash", false, true) },
+                { "maxTemp", new CheckParameters(CheckType.maxTemp, "maxTemp", false, true) },
+                { "profile", new CheckParameters(CheckType.profile, "profile", true) },
+                { "check", new CheckParameters(CheckType.check, "check") },
+                { "subcategory", new CheckParameters(CheckType.subcategory, "subcategory") }
+            };
+
+        public CheckParameters type { get; set; }
         public string[] value { get; set; }
         public bool invert { get; set; }
         public bool contains { get; set; }
@@ -49,45 +91,43 @@ namespace FilterExtensions.ConfigNodes
 
         public Check(ConfigNode node)
         {
-            string tmpVal = node.GetValue("value");
-            if (!string.IsNullOrEmpty(tmpVal))
+            string tmpStr = string.Empty;
+            bool tmpBool = false;
+            checks = new List<Check>();
+
+            if (node.TryGetValue("value", ref tmpStr) && !string.IsNullOrEmpty(tmpStr))
             {
-                value = tmpVal.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                value = tmpStr.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < value.Length; ++i)
                     value[i] = value[i].Trim();
             }
-            
-            bool tmp;
-            if (node.HasValue("invert") && bool.TryParse(node.GetValue("invert"), out tmp))
-                invert = tmp;
 
-            if (node.HasValue("contains") && !bool.TryParse(node.GetValue("contains"), out tmp))
-                contains = tmp;
+            if (!node.TryGetValue("invert", ref tmpBool))
+                invert = tmpBool;
             else
-                contains = true;
-            
-            checks = new List<Check>();
-            type = getType(node.GetValue("type"));
-            if (type == CheckType.check)
+                invert = false;
+
+            type = getCheckType(node.GetValue("type"));
+            if (type.typeEnum == CheckType.check)
             {
                 foreach (ConfigNode subNode in node.GetNodes("CHECK"))
                     checks.Add(new Check(subNode));
             }
 
-            tmpVal = node.GetValue("equality");
-            if (!string.IsNullOrEmpty(tmpVal))
+            if (type.usesContains && node.TryGetValue("contains", ref tmpBool))
+                contains = tmpBool;
+            else
+                contains = true;
+
+            if (type.usesEquality && node.TryGetValue("equality", ref tmpStr))
             {
-                switch (tmpVal.ToUpperInvariant())
+                try
                 {
-                    case "LESSTHAN":
-                        equality = Equality.LessThan;
-                        break;
-                    case "GREATERTHAN":
-                        equality = Equality.GreaterThan;
-                        break;
-                    default:
-                        equality = Equality.Equals;
-                        break;
+                    equality = (Equality)Enum.Parse(typeof(Equality), tmpStr, true);
+                }
+                catch
+                {
+                    equality = Equality.Equals;
                 }
             }
             else
@@ -108,7 +148,7 @@ namespace FilterExtensions.ConfigNodes
 
         public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)
         {
-            type = getType(Type.ToLowerInvariant());
+            type = getCheckType(Type);
             value = Value.Split(',');
             for (int i = 0; i < value.Length; ++i)
                 value[i] = value[i].Trim();
@@ -122,13 +162,16 @@ namespace FilterExtensions.ConfigNodes
         public ConfigNode toConfigNode()
         {
             ConfigNode node = new ConfigNode("CHECK");
-            node.AddValue("type", getTypeString(type));
+            node.AddValue("type", type.typeString);
 
             if (value != null)
                 node.AddValue("value", string.Join(",", value));
-            node.AddValue("invert", this.invert.ToString());
-            node.AddValue("contains", this.contains.ToString());
-            node.AddValue("equality", this.equality.ToString());
+            node.AddValue("invert", invert.ToString());
+
+            if (type.usesContains)
+                node.AddValue("contains", contains.ToString());
+            if (type.usesEquality)
+                node.AddValue("equality", equality.ToString());
 
             foreach (Check c in this.checks)
                 node.AddNode(c.toConfigNode());
@@ -139,7 +182,7 @@ namespace FilterExtensions.ConfigNodes
         public bool checkPart(AvailablePart part, int depth = 0)
         {
             bool result = true;
-            switch (type)
+            switch (type.typeEnum)
             {
                 case CheckType.moduleTitle: // check by module title
                     result = PartType.checkModuleTitle(part, value, contains);
@@ -225,144 +268,12 @@ namespace FilterExtensions.ConfigNodes
         /// </summary>
         /// <param name="type">type string</param>
         /// <returns>type enum</returns>
-        public static CheckType getType(string type)
+        public static CheckParameters getCheckType(string type)
         {
-            switch(type)
-            {
-                case "name":
-                    return CheckType.partName;
-                case "title":
-                    return CheckType.partTitle;
-                case "modulename":
-                    return CheckType.moduleName;
-                case "moduletitle":
-                    return CheckType.moduleTitle;
-                case "resource":
-                    return CheckType.resource;
-                case "propellant":
-                    return CheckType.propellant;
-                case "tech":
-                    return CheckType.tech;
-                case "manufacturer":
-                    return CheckType.manufacturer;
-                case "folder":
-                    return CheckType.folder;
-                case "path":
-                    return CheckType.path;
-                case "category":
-                    return CheckType.category;
-                case "size":
-                    return CheckType.size;
-                case "crew":
-                    return CheckType.crew;
-                case "custom":
-                    return CheckType.custom;
-                case "mass":
-                    return CheckType.mass;
-                case "cost":
-                    return CheckType.cost;
-                case "crash":
-                    return CheckType.crashTolerance;
-                case "maxtemp":
-                    return CheckType.maxTemp;
-                case "profile":
-                    return CheckType.profile;
-                case "check":
-                    return CheckType.check;
-                case "subcategory":
-                    return CheckType.subcategory;
-                default:
-                    return CheckType.category;
-            }
-        }
-
-        /// <summary>
-        /// set type string from type enum
-        /// NOTE: Needs the string => enum conversion added to function
-        /// </summary>
-        /// <param name="type">type enum</param>
-        /// <returns>type string</returns>
-        public static string getTypeString(CheckType type)
-        {
-            switch (type)
-            {
-                case CheckType.partName:
-                    return "name";
-                case CheckType.partTitle:
-                    return "title";
-                case CheckType.moduleName:
-                    return "modulename";
-                case CheckType.moduleTitle:
-                    return "moduletitle";
-                case CheckType.resource:
-                    return "resource";
-                case CheckType.propellant:
-                    return "propellant";
-                case CheckType.tech:
-                    return "tech";
-                case CheckType.manufacturer:
-                    return "manufacturer";
-                case CheckType.folder:
-                    return "folder";
-                case CheckType.path:
-                    return "path";
-                case CheckType.category:
-                    return "category";
-                case CheckType.size:
-                    return "size";
-                case CheckType.crew:
-                    return "crew";
-                case CheckType.custom:
-                    return "custom";
-                case CheckType.mass:
-                    return "mass";
-                case CheckType.cost:
-                    return "cost";
-                case CheckType.crashTolerance:
-                    return "crash";
-                case CheckType.maxTemp:
-                    return "maxtemp";
-                case CheckType.profile:
-                    return "profile";
-                case CheckType.check:
-                    return "check";
-                case CheckType.subcategory:
-                    return "subcategory";
-                default:
-                    return "category";
-            }
-        }
-
-        public bool checkUsesContains()
-        {
-            switch (type)
-            {
-                case CheckType.moduleTitle:
-                case CheckType.moduleName:
-                case CheckType.resource:
-                case CheckType.propellant:
-                case CheckType.size:
-                case CheckType.profile:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public bool checkUsesEquality()
-        {
-            switch (type)
-            {
-                case CheckType.size:
-                case CheckType.crew:
-                case CheckType.mass:
-                case CheckType.cost:
-                case CheckType.crashTolerance:
-                case CheckType.maxTemp:
-                    return true;
-                default:
-                    return false;
-            }
+            CheckParameters tmpParams;
+            if (!checkParams.TryGetValue(type, out tmpParams))
+                tmpParams = checkParams["category"];
+            return tmpParams;
         }
 
         public bool Equals(Check c2)

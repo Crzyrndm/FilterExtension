@@ -206,7 +206,7 @@ namespace FilterExtensions
                     if (subCategoriesDict.TryGetValue(name, out subcategory))
                     {
                         // if the collision is already looking for the specified resource
-                        if (customSubCategory.checkForCheckMatch(subcategory, CheckType.resource, s))
+                        if (customSubCategory.checkForCheckMatch(subcategory, Check.CheckType.resource, s))
                             continue;
                         name = "res_" + name;
                     }
@@ -257,7 +257,7 @@ namespace FilterExtensions
         /// <param name="p"></param>
         private void processEnginePropellants(AvailablePart p)
         {
-            List<ModuleEngines> engines = p.partPrefab.GetModules<ModuleEngines>();
+            List<ModuleEngines> engines = p.partPrefab.Modules.GetModules<ModuleEngines>();
             for (int i = 0; i < engines.Count; i++)
             {
                 ModuleEngines e = engines[i];

@@ -115,7 +115,7 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="equality"></param>
         /// <param name="invert"></param>
         /// <returns>true if there is a matching check in the category</returns>
-        public static bool checkForCheckMatch(customSubCategory subcategory, CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
+        public static bool checkForCheckMatch(customSubCategory subcategory, Check.CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
         {
             for (int j = 0; j < subcategory.filters.Count; j++)
             {
@@ -123,7 +123,7 @@ namespace FilterExtensions.ConfigNodes
                 for (int k = 0; k < f.checks.Count; k++)
                 {
                     Check c = f.checks[k];
-                    if (c.type == type && c.value.Contains(value) && c.value.Length == 1 && c.invert == invert && c.contains == contains && c.equality == equality)
+                    if (c.type.typeEnum == type && c.value.Contains(value) && c.value.Length == 1 && c.invert == invert && c.contains == contains && c.equality == equality)
                         return true;
                 }
             }
