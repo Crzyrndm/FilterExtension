@@ -31,7 +31,8 @@ namespace FilterExtensions.ConfigNodes
             maxTemp,
             profile,
             check,
-            subcategory
+            subcategory,
+            tag
         }
 
         public enum Equality
@@ -57,7 +58,7 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        public static readonly Dictionary<string, CheckParameters> checkParams = new Dictionary<string, CheckParameters>(PartType.comparer)
+        public static readonly Dictionary<string, CheckParameters> checkParams = new Dictionary<string, CheckParameters>(StringComparer.OrdinalIgnoreCase)
             {
                 { "name",           new CheckParameters(CheckType.partName, "name") },
                 { "title",          new CheckParameters(CheckType.partTitle, "title") },
@@ -79,11 +80,12 @@ namespace FilterExtensions.ConfigNodes
                 { "maxTemp",        new CheckParameters(CheckType.maxTemp, "maxTemp", false, true) },
                 { "profile",        new CheckParameters(CheckType.profile, "profile", true) },
                 { "check",          new CheckParameters(CheckType.check, "check") },
-                { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") }
+                { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") },
+                { "tag",            new CheckParameters(CheckType.tag, "tag", true) }
             };
 
         public CheckParameters type { get; set; }
-        public string[] value { get; set; }
+        public string[] values { get; set; }
         public bool invert { get; set; }
         public bool contains { get; set; }
         public Equality equality { get; set; }
@@ -97,9 +99,9 @@ namespace FilterExtensions.ConfigNodes
 
             if (node.TryGetValue("value", ref tmpStr) && !string.IsNullOrEmpty(tmpStr))
             {
-                value = tmpStr.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < value.Length; ++i)
-                    value[i] = value[i].Trim();
+                values = tmpStr.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < values.Length; ++i)
+                    values[i] = values[i].Trim();
             }
 
             if (node.TryGetValue("invert", ref tmpBool))
@@ -137,7 +139,7 @@ namespace FilterExtensions.ConfigNodes
         public Check(Check c)
         {
             type = c.type;
-            value = (string[])c.value.Clone();
+            values = (string[])c.values.Clone();
             invert = c.invert;
             contains = c.contains;
 
@@ -149,9 +151,9 @@ namespace FilterExtensions.ConfigNodes
         public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)
         {
             type = getCheckType(Type);
-            value = Value.Split(',');
-            for (int i = 0; i < value.Length; ++i)
-                value[i] = value[i].Trim();
+            values = Value.Split(',');
+            for (int i = 0; i < values.Length; ++i)
+                values[i] = values[i].Trim();
 
             invert = Invert;
             contains = Contains;
@@ -164,8 +166,8 @@ namespace FilterExtensions.ConfigNodes
             ConfigNode node = new ConfigNode("CHECK");
             node.AddValue("type", type.typeString);
 
-            if (value != null)
-                node.AddValue("value", string.Join(",", value));
+            if (values != null)
+                node.AddValue("value", string.Join(",", values));
             node.AddValue("invert", invert.ToString());
 
             if (type.usesContains)
@@ -185,61 +187,61 @@ namespace FilterExtensions.ConfigNodes
             switch (type.typeEnum)
             {
                 case CheckType.moduleTitle: // check by module title
-                    result = PartType.checkModuleTitle(part, value, contains);
+                    result = PartType.checkModuleTitle(part, values, contains);
                     break;
                 case CheckType.moduleName:
-                    result = PartType.checkModuleName(part, value, contains);
+                    result = PartType.checkModuleName(part, values, contains);
                     break;
                 case CheckType.partName: // check by part name (cfg name)
-                    result = PartType.checkName(part, value);
+                    result = PartType.checkName(part, values);
                     break;
                 case CheckType.partTitle: // check by part title (in game name)
-                    result = PartType.checkTitle(part, value);
+                    result = PartType.checkTitle(part, values);
                     break;
                 case CheckType.resource: // check for a resource
-                    result = PartType.checkResource(part, value, contains);
+                    result = PartType.checkResource(part, values, contains);
                     break;
                 case CheckType.propellant: // check for engine propellant
-                    result = PartType.checkPropellant(part, value, contains);
+                    result = PartType.checkPropellant(part, values, contains);
                     break;
                 case CheckType.tech: // check by tech
-                    result = PartType.checkTech(part, value);
+                    result = PartType.checkTech(part, values);
                     break;
                 case CheckType.manufacturer: // check by manufacturer
-                    result = PartType.checkManufacturer(part, value);
+                    result = PartType.checkManufacturer(part, values);
                     break;
                 case CheckType.folder: // check by mod root folder
-                    result = PartType.checkFolder(part, value);
+                    result = PartType.checkFolder(part, values);
                     break;
                 case CheckType.path: // check by part folder location
-                    result = PartType.checkPath(part, value);
+                    result = PartType.checkPath(part, values);
                     break;
                 case CheckType.category:
-                    result = PartType.checkCategory(part, value);
+                    result = PartType.checkCategory(part, values);
                     break;
                 case CheckType.size: // check by largest stack node size
-                    result = PartType.checkPartSize(part, value, contains, equality);
+                    result = PartType.checkPartSize(part, values, contains, equality);
                     break;
                 case CheckType.crew:
-                    result = PartType.checkCrewCapacity(part, value, equality);
+                    result = PartType.checkCrewCapacity(part, values, equality);
                     break;
                 case CheckType.custom: // for when things get tricky
-                    result = PartType.checkCustom(part, value);
+                    result = PartType.checkCustom(part, values);
                     break;
                 case CheckType.mass:
-                    result = PartType.checkMass(part, value, equality);
+                    result = PartType.checkMass(part, values, equality);
                     break;
                 case CheckType.cost:
-                    result = PartType.checkCost(part, value, equality);
+                    result = PartType.checkCost(part, values, equality);
                     break;
                 case CheckType.crashTolerance:
-                    result = PartType.checkCrashTolerance(part, value, equality);
+                    result = PartType.checkCrashTolerance(part, values, equality);
                     break;
                 case CheckType.maxTemp:
-                    result = PartType.checkTemperature(part, value, equality);
+                    result = PartType.checkTemperature(part, values, equality);
                     break;
                 case CheckType.profile:
-                    result = PartType.checkBulkHeadProfiles(part, value, contains);
+                    result = PartType.checkBulkHeadProfiles(part, values, contains);
                     break;
                 case CheckType.check:
                     for (int i = 0; i < checks.Count; i++ )
@@ -252,7 +254,10 @@ namespace FilterExtensions.ConfigNodes
                     }
                     break;
                 case CheckType.subcategory:
-                    result = PartType.checkSubcategory(part, value, depth);
+                    result = PartType.checkSubcategory(part, values, depth);
+                    break;
+                case CheckType.tag:
+                    result = PartType.checkTags(part, values, contains);
                     break;
                 default:
                     Core.Log("invalid Check type specified");
@@ -279,11 +284,16 @@ namespace FilterExtensions.ConfigNodes
             return tmpParams;
         }
 
+        public bool isEmpty()
+        {
+            return !checks.Any() || values == null || values.Length > 0;
+        }
+
         public bool Equals(Check c2)
         {
             if (c2 == null)
                 return false;
-            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks && this.equality == c2.equality)
+            if (this.type == c2.type && this.values == c2.values && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks && this.equality == c2.equality)
                 return true;
             else
                 return false;
@@ -292,7 +302,7 @@ namespace FilterExtensions.ConfigNodes
         public override int GetHashCode()
         {
             int checks = this.checks.Any() ? this.checks.GetHashCode() : 1;
-            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * this.equality.GetHashCode() * checks;
+            return this.type.GetHashCode() * this.values.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * this.equality.GetHashCode() * checks;
         }
     }
 }

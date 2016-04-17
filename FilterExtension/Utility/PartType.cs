@@ -9,7 +9,6 @@ namespace FilterExtensions.Utility
     
     public static class PartType
     {
-        public static CaseInsensitiveComparer comparer = new CaseInsensitiveComparer();
         /// <summary>
         /// check the part against another subcategory. Hard limited to a depth of 10
         /// </summary>
@@ -60,45 +59,45 @@ namespace FilterExtensions.Utility
             switch (part.category)
             {
                 case PartCategories.Pods:
-                    if (value.Contains("Pods", comparer))
+                    if (value.Contains("Pods", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.Propulsion:
-                    if (value.Contains("Engines", comparer) && isEngine(part))
+                    if (value.Contains("Engines", StringComparer.OrdinalIgnoreCase) && isEngine(part))
                         return true;
-                    if (value.Contains("Fuel Tanks", comparer) && !isEngine(part))
+                    if (value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase) && !isEngine(part))
                         return true;
                     break;
                 case PartCategories.Engine:
-                    if (value.Contains("Engines", comparer))
+                    if (value.Contains("Engines", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.FuelTank:
-                    if (value.Contains("Fuel Tanks", comparer))
+                    if (value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.Control:
-                    if (value.Contains("Control", comparer))
+                    if (value.Contains("Control", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.Structural:
-                    if (value.Contains("Structural", comparer))
+                    if (value.Contains("Structural", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.Aero:
-                    if (value.Contains("Aerodynamics", comparer))
+                    if (value.Contains("Aerodynamics", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.Utility:
-                    if (value.Contains("Utility", comparer))
+                    if (value.Contains("Utility", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.Science:
-                    if (value.Contains("Science", comparer))
+                    if (value.Contains("Science", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
                 case PartCategories.none:
-                    if (value.Contains("None", comparer))
+                    if (value.Contains("None", StringComparer.OrdinalIgnoreCase))
                         return true;
                     break;
             }
@@ -114,10 +113,11 @@ namespace FilterExtensions.Utility
         {
             if (part.moduleInfos == null)
                 return false;
+            
             if (contains)
-                return part.moduleInfos.Any(m => values.Contains(m.moduleName, comparer));
+                return part.moduleInfos.Any(m => values.Contains(m.moduleName, StringComparer.OrdinalIgnoreCase));
             else
-                return part.moduleInfos.Any(m => !values.Contains(m.moduleName, comparer));
+                return part.moduleInfos.Any(m => !values.Contains(m.moduleName, StringComparer.OrdinalIgnoreCase));
         }
         
         /// <summary>
@@ -322,7 +322,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkName(AvailablePart part, string[] value)
         {
-            return value.Contains(part.name.Replace('.', '_'), comparer);
+            return value.Contains(part.name.Replace('.', '_'), StringComparer.OrdinalIgnoreCase);
         }
         
         /// <summary>
@@ -414,12 +414,12 @@ namespace FilterExtensions.Utility
                 {
                     if (contains)
                     {
-                        if (value.Contains(node.size.ToString(), comparer))
+                        if (value.Contains(node.size.ToString(), StringComparer.OrdinalIgnoreCase))
                             return true;
                     }
                     else
                     {
-                        if (!value.Contains(node.size.ToString(), comparer))
+                        if (!value.Contains(node.size.ToString(), StringComparer.OrdinalIgnoreCase))
                             return true;
                     }
                 }
@@ -456,7 +456,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                return value.Contains(part.partPrefab.CrewCapacity.ToString(), comparer);
+                return value.Contains(part.partPrefab.CrewCapacity.ToString(), StringComparer.OrdinalIgnoreCase);
             else // only compare against the first value here
             {
                 if (value.Length > 1)
@@ -489,7 +489,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                return value.Contains(part.partPrefab.mass.ToString(), comparer);
+                return value.Contains(part.partPrefab.mass.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
                 double d;
@@ -510,7 +510,7 @@ namespace FilterExtensions.Utility
         public static bool checkCost(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
         {
             if (equality == ConfigNodes.Check.Equality.Equals)
-                return value.Contains(part.cost.ToString(), comparer);
+                return value.Contains(part.cost.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
                 double d;
@@ -558,7 +558,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                return value.Contains(part.partPrefab.maxTemp.ToString(), comparer);
+                return value.Contains(part.partPrefab.maxTemp.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
                 double d;
@@ -582,6 +582,21 @@ namespace FilterExtensions.Utility
                 return value.Contains("srf");
 
             foreach (string s in part.bulkheadProfiles.Split(','))
+            {
+                if (contains && value.Contains(s.Trim()))
+                    return true;
+                if (!contains && !value.Contains(s.Trim()))
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool checkTags(AvailablePart part, string[] value, bool contains)
+        {
+            if (string.IsNullOrEmpty(part.tags))
+                return false;
+
+            foreach (string s in part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => s!= string.Empty).ToArray())
             {
                 if (contains && value.Contains(s.Trim()))
                     return true;
@@ -648,22 +663,6 @@ namespace FilterExtensions.Utility
             if (part.partPrefab == null || part.partPrefab.attachNodes == null || part.partPrefab.attachNodes.Count != 2 || isCommand(part))
                 return false;
             return part.partPrefab.attachNodes[0].size != part.partPrefab.attachNodes[1].size;
-        }
-
-        /// <summary>
-        /// used for string contains where we don't care about the string case
-        /// </summary>
-        public class CaseInsensitiveComparer : IEqualityComparer<string>
-        {
-            public bool Equals(string s1, string s2)
-            {
-                return string.Equals(s1, s2, StringComparison.OrdinalIgnoreCase);
-            }
-
-            public int GetHashCode(string s)
-            {
-                return StringComparer.OrdinalIgnoreCase.GetHashCode(s);
-            }
         }
     }
 }
