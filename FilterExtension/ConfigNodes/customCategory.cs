@@ -132,26 +132,29 @@ namespace FilterExtensions.ConfigNodes
                 subCategoryItem subcategoryItem = subCategories[i];
                 if (subcategoryItem == null)
                     continue;
-
-                customSubCategory subcategory = null;
-                if (string.IsNullOrEmpty(subcategoryItem.subcategoryName) || !Core.Instance.subCategoriesDict.TryGetValue(subcategoryItem.subcategoryName, out subcategory))
+                
+                if (string.IsNullOrEmpty(subcategoryItem.subcategoryName))
                     continue;
+                customSubCategory subcategory = null;
+                if (!Core.Instance.subCategoriesDict.TryGetValue(subcategoryItem.subcategoryName, out subcategory))
+                {
+                    Core.Log("subcategory {0} not found in subcategories Dictionary", subcategoryItem.subcategoryName);
+                    continue;
+                }
 
                 List<string> conflictsList;
-                if (Core.Instance.conflictsDict.TryGetValue(subcategoryItem.subcategoryName, out conflictsList))
-                {
-                    // all of the possible conflicts that are also subcategories of this category
-                    List<string> conflicts = conflictsList.Intersect(subcategoryNames).ToList();
-                    // if there are any conflicts that show up in the subcategories list before this one
-                    if (conflicts.Any(c => subcategoryNames.IndexOf(c) < i))
-                    {
-                        string conflictList = "";
-                        foreach (string s in conflicts)
-                            conflictList += "\r\n" + s;
-                        Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories" + conflictList);
-                        continue;
-                    }
-                }
+                #warning subcategory conflicts are broken and doing stupid things
+                //if (Core.Instance.conflictsDict.TryGetValue(subcategoryItem.subcategoryName, out conflictsList))
+                //{
+                //    // all of the possible conflicts that are also subcategories of this category
+                //    List<string> conflicts = conflictsList.Intersect(subcategoryNames).ToList();
+                //    // if there are any conflicts that show up in the subcategories list before this one
+                //    if (conflicts.Any(c => subcategoryNames.IndexOf(c) < i))
+                //    {
+                //        Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories:\r\n" + string.Join("\r\n", conflicts.ToArray()));
+                //        continue;
+                //    }
+                //}
 
                 customSubCategory sC = new customSubCategory(subcategory.toConfigNode());
                 if (subcategoryItem.applyTemplate)

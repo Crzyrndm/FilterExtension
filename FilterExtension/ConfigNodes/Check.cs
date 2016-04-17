@@ -59,27 +59,27 @@ namespace FilterExtensions.ConfigNodes
 
         public static readonly Dictionary<string, CheckParameters> checkParams = new Dictionary<string, CheckParameters>(PartType.comparer)
             {
-                { "name", new CheckParameters(CheckType.partName, "name") },
-                { "title", new CheckParameters(CheckType.partTitle, "title") },
-                { "moduleName", new CheckParameters(CheckType.moduleName, "moduleName", true) },
-                { "moduleTitle", new CheckParameters(CheckType.moduleTitle, "moduleTitle", true) },
-                { "resource", new CheckParameters(CheckType.resource, "resource", true) },
-                { "propellant", new CheckParameters(CheckType.propellant, "propellant", true) },
-                { "tech", new CheckParameters(CheckType.tech, "tech") },
-                { "manufacturer", new CheckParameters(CheckType.manufacturer, "manufacturer") },
-                { "folder", new CheckParameters(CheckType.folder, "folder") },
-                { "path", new CheckParameters(CheckType.path, "path") },
-                { "category", new CheckParameters(CheckType.category, "category") },
-                { "size", new CheckParameters(CheckType.size, "size", true, true) },
-                { "crew", new CheckParameters(CheckType.crew, "crew", false, true) },
-                { "custom", new CheckParameters(CheckType.custom, "custom") },
-                { "mass", new CheckParameters(CheckType.mass, "mass", false, true) },
-                { "cost", new CheckParameters(CheckType.cost, "cost", false, true) },
-                { "crash", new CheckParameters(CheckType.crashTolerance, "crash", false, true) },
-                { "maxTemp", new CheckParameters(CheckType.maxTemp, "maxTemp", false, true) },
-                { "profile", new CheckParameters(CheckType.profile, "profile", true) },
-                { "check", new CheckParameters(CheckType.check, "check") },
-                { "subcategory", new CheckParameters(CheckType.subcategory, "subcategory") }
+                { "name",           new CheckParameters(CheckType.partName, "name") },
+                { "title",          new CheckParameters(CheckType.partTitle, "title") },
+                { "moduleName",     new CheckParameters(CheckType.moduleName, "moduleName", true) },
+                { "moduleTitle",    new CheckParameters(CheckType.moduleTitle, "moduleTitle", true) },
+                { "resource",       new CheckParameters(CheckType.resource, "resource", true) },
+                { "propellant",     new CheckParameters(CheckType.propellant, "propellant", true) },
+                { "tech",           new CheckParameters(CheckType.tech, "tech") },
+                { "manufacturer",   new CheckParameters(CheckType.manufacturer, "manufacturer") },
+                { "folder",         new CheckParameters(CheckType.folder, "folder") },
+                { "path",           new CheckParameters(CheckType.path, "path") },
+                { "category",       new CheckParameters(CheckType.category, "category") },
+                { "size",           new CheckParameters(CheckType.size, "size", true, true) },
+                { "crew",           new CheckParameters(CheckType.crew, "crew", false, true) },
+                { "custom",         new CheckParameters(CheckType.custom, "custom") },
+                { "mass",           new CheckParameters(CheckType.mass, "mass", false, true) },
+                { "cost",           new CheckParameters(CheckType.cost, "cost", false, true) },
+                { "crash",          new CheckParameters(CheckType.crashTolerance, "crash", false, true) },
+                { "maxTemp",        new CheckParameters(CheckType.maxTemp, "maxTemp", false, true) },
+                { "profile",        new CheckParameters(CheckType.profile, "profile", true) },
+                { "check",          new CheckParameters(CheckType.check, "check") },
+                { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") }
             };
 
         public CheckParameters type { get; set; }
@@ -102,7 +102,7 @@ namespace FilterExtensions.ConfigNodes
                     value[i] = value[i].Trim();
             }
 
-            if (!node.TryGetValue("invert", ref tmpBool))
+            if (node.TryGetValue("invert", ref tmpBool))
                 invert = tmpBool;
             else
                 invert = false;
@@ -245,7 +245,10 @@ namespace FilterExtensions.ConfigNodes
                     for (int i = 0; i < checks.Count; i++ )
                     {
                         if (!checks[i].checkPart(part))
+                        {
                             result = false;
+                            break;
+                        }
                     }
                     break;
                 case CheckType.subcategory:
