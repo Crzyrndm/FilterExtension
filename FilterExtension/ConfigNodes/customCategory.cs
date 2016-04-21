@@ -142,7 +142,7 @@ namespace FilterExtensions.ConfigNodes
                     continue;
                 }
 
-                List<string> conflictsList;
+                //List<string> conflictsList;
                 #warning subcategory conflicts are broken and doing stupid things
                 //if (Core.Instance.conflictsDict.TryGetValue(subcategoryItem.subcategoryName, out conflictsList))
                 //{
@@ -156,7 +156,7 @@ namespace FilterExtensions.ConfigNodes
                 //    }
                 //}
 
-                customSubCategory sC = new customSubCategory(subcategory.toConfigNode());
+                customSubCategory sC = new customSubCategory(subcategory);
                 if (subcategoryItem.applyTemplate)
                     sC.template = templates;
 

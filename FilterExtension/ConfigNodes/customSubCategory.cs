@@ -6,7 +6,7 @@ using UnityEngine;
 namespace FilterExtensions.ConfigNodes
 {
     using KSP.UI.Screens;
-    public class customSubCategory
+    public class customSubCategory : ICloneable
     {
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
@@ -37,6 +37,19 @@ namespace FilterExtensions.ConfigNodes
                 filters.Add(new Filter(subNode));
             }
             template = new List<Filter>();
+        }
+
+        public customSubCategory(customSubCategory subCat)
+        {
+            subCategoryTitle = subCat.subCategoryTitle;
+            iconName = subCat.iconName;
+            filters = new List<Filter>(subCat.filters.Count);
+            subCat.filters.ForEach(f => filters.Add(new Filter(f)));
+
+            template = new List<Filter>(subCat.template.Count);
+            subCat.template.ForEach(f => template.Add(new Filter(f)));
+
+            unPurchasedOverride = subCat.unPurchasedOverride;
         }
 
         public customSubCategory(string name, string icon)
@@ -75,6 +88,11 @@ namespace FilterExtensions.ConfigNodes
                 node.AddNode(f.toConfigNode());
 
             return node;
+        }
+
+        public object Clone()
+        {
+            return new customSubCategory(this);
         }
 
         /// <summary>

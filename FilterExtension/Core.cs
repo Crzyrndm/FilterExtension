@@ -300,8 +300,6 @@ namespace FilterExtensions
                     f.checks = checks;
                     sC.filters.Add(f);
                     subCategoriesDict.Add(name, sC);
-
-                    Log(sC.toConfigNode());
                 }
             }
         }
@@ -371,42 +369,6 @@ namespace FilterExtensions
                     return true;
             }
             return false;
-        }
-
-        /// <summary>
-        /// refresh the visible subcategories to ensure all changes are visible
-        /// </summary>
-        public static void setSelectedCategory()
-        {
-            try
-            {
-                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
-                if (Filter != null)
-                    Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.False, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
-
-                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
-                if (Filter != null)
-                    Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
-                else
-                {
-                    Filter = PartCategorizer.Instance.filters[0];
-                    if (Filter != null)
-                    {
-                        Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
-                    }
-                }
-
-                // set the subcategory button
-                //Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
-                //if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
-                //    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-            }
-            catch (Exception e)
-            {
-                Log("Category refresh failed");
-                Log(e.InnerException);
-                Log(e.StackTrace);
-            }
         }
 
         /// <summary>

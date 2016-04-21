@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
-    public class Filter
+    public class Filter : ICloneable
     {
         public List<Check> checks { get; set; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
         public bool invert { get; set; }
@@ -52,14 +52,14 @@ namespace FilterExtensions.ConfigNodes
             return node;
         }
 
+        public object Clone()
+        {
+            return new Filter(this);
+        }
+
         internal bool checkFilter(AvailablePart part, int depth = 0)
         {
-            for (int i = 0; i < checks.Count; i++)
-            {
-                if (!checks[i].checkPart(part, depth))
-                    return invert ? true : false;
-            }
-            return invert ? false : true;
+            return invert ? !checks.All(c => c.checkPart(part, depth)) : checks.All(c => c.checkPart(part, depth));
         }
 
         /// <summary>

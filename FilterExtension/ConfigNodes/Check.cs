@@ -7,7 +7,7 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
-    public class Check
+    public class Check : ICloneable
     {
         public enum CheckType
         {
@@ -139,13 +139,17 @@ namespace FilterExtensions.ConfigNodes
         public Check(Check c)
         {
             type = c.type;
-            values = (string[])c.values.Clone();
+            if (c.values != null)
+                values = (string[])c.values.Clone();
             invert = c.invert;
             contains = c.contains;
 
-            checks = new List<Check>();
-            for (int i = 0; i < c.checks.Count; i++)
-                checks.Add(new Check(c.checks[i]));
+            if (c.checks != null)
+            {
+                checks = new List<Check>(c.checks.Count);
+                for (int i = 0; i < c.checks.Count; ++i)
+                    checks.Add(new Check(c.checks[i]));
+            }
         }
 
         public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)
@@ -159,26 +163,6 @@ namespace FilterExtensions.ConfigNodes
             contains = Contains;
             equality = Compare;
             checks = new List<Check>();
-        }
-
-        public ConfigNode toConfigNode()
-        {
-            ConfigNode node = new ConfigNode("CHECK");
-            node.AddValue("type", type.typeString);
-
-            if (values != null)
-                node.AddValue("value", string.Join(",", values));
-            node.AddValue("invert", invert.ToString());
-
-            if (type.usesContains)
-                node.AddValue("contains", contains.ToString());
-            if (type.usesEquality)
-                node.AddValue("equality", equality.ToString());
-
-            foreach (Check c in this.checks)
-                node.AddNode(c.toConfigNode());
-
-            return node;
         }
 
         public bool checkPart(AvailablePart part, int depth = 0)
@@ -286,7 +270,32 @@ namespace FilterExtensions.ConfigNodes
 
         public bool isEmpty()
         {
-            return !checks.Any() || values == null || values.Length > 0;
+            return !checks.Any() && (values == null || values.Length == 0);
+        }
+
+        public ConfigNode toConfigNode()
+        {
+            ConfigNode node = new ConfigNode("CHECK");
+            node.AddValue("type", type.typeString);
+
+            if (values != null)
+                node.AddValue("value", string.Join(",", values));
+            node.AddValue("invert", invert.ToString());
+
+            if (type.usesContains)
+                node.AddValue("contains", contains.ToString());
+            if (type.usesEquality)
+                node.AddValue("equality", equality.ToString());
+
+            foreach (Check c in this.checks)
+                node.AddNode(c.toConfigNode());
+
+            return node;
+        }
+
+        public object Clone()
+        {
+            return new Check(this);
         }
 
         public bool Equals(Check c2)

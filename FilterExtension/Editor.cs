@@ -110,9 +110,45 @@ namespace FilterExtensions
                 yield return null;
             if (Settings.debug)
                 Core.Log("Refreshing parts list");
-            Core.setSelectedCategory();
+            setSelectedCategory();
 
             ready = true;
+        }
+
+        /// <summary>
+        /// refresh the visible subcategories to ensure all changes are visible
+        /// </summary>
+        public static void setSelectedCategory()
+        {
+            //try
+            //{
+            //    PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
+            //    if (Filter != null)
+            //        Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.False, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
+
+            //    Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
+            //    if (Filter != null)
+            //        Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
+            //    else
+            //    {
+            //        Filter = PartCategorizer.Instance.filters[0];
+            //        if (Filter != null)
+            //        {
+            //            Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
+            //        }
+            //    }
+
+            //    // set the subcategory button
+            //    //Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
+            //    //if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
+            //    //    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
+            //}
+            //catch (Exception e)
+            //{
+            //    Core.Log("Category refresh failed");
+            //    Core.Log(e.InnerException);
+            //    Core.Log(e.StackTrace);
+            //}
         }
 
         /// <summary>

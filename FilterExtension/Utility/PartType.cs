@@ -460,7 +460,7 @@ namespace FilterExtensions.Utility
             else // only compare against the first value here
             {
                 if (value.Length > 1)
-                    Core.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                    Core.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
 
                 int i;
                 if (int.TryParse(value[0], out i))
