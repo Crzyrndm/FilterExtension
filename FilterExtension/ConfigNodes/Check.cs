@@ -150,6 +150,7 @@ namespace FilterExtensions.ConfigNodes
                 for (int i = 0; i < c.checks.Count; ++i)
                     checks.Add(new Check(c.checks[i]));
             }
+            equality = c.equality;
         }
 
         public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)

@@ -462,19 +462,13 @@ namespace FilterExtensions.Utility
                 if (value.Length > 1)
                     Core.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
 
-                int i;
-                if (int.TryParse(value[0], out i))
+                double d;
+                if (double.TryParse(value[0], out d))
                 {
-                    if (equality == ConfigNodes.Check.Equality.GreaterThan)
-                    {
-                        if (part.partPrefab.CrewCapacity > i)
-                            return true;
-                    }
-                    else if (equality == ConfigNodes.Check.Equality.LessThan)
-                    {
-                        if (part.partPrefab.CrewCapacity < i)
-                            return true;
-                    }
+                    if (equality == ConfigNodes.Check.Equality.GreaterThan && part.partPrefab.CrewCapacity > d)
+                        return true;
+                    else if (equality == ConfigNodes.Check.Equality.LessThan && part.partPrefab.CrewCapacity < d)
+                        return true;
                 }
             }
             return false;
@@ -492,6 +486,9 @@ namespace FilterExtensions.Utility
                 return value.Contains(part.partPrefab.mass.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
+                if (value.Length > 1)
+                    Core.Log("Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+
                 double d;
                 if (double.TryParse(value[0], out d))
                 {
@@ -513,6 +510,9 @@ namespace FilterExtensions.Utility
                 return value.Contains(part.cost.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
+                if (value.Length > 1)
+                    Core.Log("Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+
                 double d;
                 if (double.TryParse(value[0], out d))
                 {
@@ -537,6 +537,9 @@ namespace FilterExtensions.Utility
                 return value.Contains(part.partPrefab.crashTolerance.ToString());
             else
             {
+                if (value.Length > 1)
+                    Core.Log("Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+
                 float f;
                 if (float.TryParse(value[0], out f))
                 {
@@ -561,6 +564,8 @@ namespace FilterExtensions.Utility
                 return value.Contains(part.partPrefab.maxTemp.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
+                if (value.Length > 1)
+                    Core.Log("Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
                 double d;
                 if (double.TryParse(value[0], out d))
                 {
