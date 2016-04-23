@@ -131,6 +131,9 @@ namespace FilterExtensions.ConfigNodes
         /// <returns>true if the subcategory contains any parts</returns>
         public bool checkSubCategoryHasParts(string category)
         {
+            //if (Editor.subcategoriesChecked)
+            //    return true;
+
             PartModuleFilter pmf;
             AvailablePart p;
             for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
@@ -148,6 +151,7 @@ namespace FilterExtensions.ConfigNodes
                     return true;
             }
 
+#warning this is not working. Empty categories will show up if the one pass checking is enabled
             // only need to do this the first time we hit the editor
             customCategory C = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == category);
             if (C != null)

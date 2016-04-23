@@ -215,7 +215,7 @@ namespace FilterExtensions.ConfigNodes
 
             try
             {
-                if (Editor.subcategoriesChecked || sC.checkSubCategoryHasParts(categoryName))
+                if (sC.checkSubCategoryHasParts(categoryName))
                     sC.initialise(category);
             }
             catch (Exception ex)
