@@ -113,11 +113,13 @@ namespace FilterExtensions.Utility
         {
             if (part.moduleInfos == null)
                 return false;
-            
-            if (contains)
-                return part.moduleInfos.Any(m => values.Contains(m.moduleName, StringComparer.OrdinalIgnoreCase));
-            else
-                return part.moduleInfos.Any(m => !values.Contains(m.moduleName, StringComparer.OrdinalIgnoreCase));
+
+            foreach (AvailablePart.ModuleInfo mi in part.moduleInfos)
+            {
+                if (contains == values.Contains(mi.moduleName, StringComparer.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
         
         /// <summary>
@@ -127,6 +129,7 @@ namespace FilterExtensions.Utility
         {
             if (part.partPrefab == null || part.partPrefab.Modules == null)
                 return false;
+
             if (contains)
                 return value.Any(s => checkModuleNameType(part, s) || part.partPrefab.Modules.Contains(s));
             else
@@ -342,10 +345,12 @@ namespace FilterExtensions.Utility
             if (part.partPrefab == null || part.partPrefab.Resources == null)
                 return false;
 
-            if (contains)
-                return value.Any(s => part.partPrefab.Resources.Contains(s) && part.partPrefab.Resources[s].maxAmount > 0);
-            else
-                return value.Any(s => !part.partPrefab.Resources.Contains(s) || part.partPrefab.Resources[s].maxAmount <= 0);
+            foreach (PartResource r in part.partPrefab.Resources)
+            {
+                if (r.maxAmount > 0 && contains == value.Contains(r.resourceName))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -355,8 +360,11 @@ namespace FilterExtensions.Utility
         {
             foreach (ModuleEngines e in part.partPrefab.Modules.GetModules<ModuleEngines>())
             {
-                if (contains && e.propellants.Any(p => value.Contains(p.name)) || (!contains && e.propellants.Any(p => !value.Contains(p.name))))
-                    return true;
+                foreach (Propellant p in e.propellants)
+                {
+                    if (contains == value.Contains(p.name))
+                        return true;
+                }
             }
             return false;
         }
@@ -588,9 +596,7 @@ namespace FilterExtensions.Utility
 
             foreach (string s in part.bulkheadProfiles.Split(','))
             {
-                if (contains && value.Contains(s.Trim()))
-                    return true;
-                if (!contains && !value.Contains(s.Trim()))
+                if (contains == value.Contains(s.Trim()))
                     return true;
             }
             return false;
@@ -601,11 +607,9 @@ namespace FilterExtensions.Utility
             if (string.IsNullOrEmpty(part.tags))
                 return false;
 
-            foreach (string s in part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => s!= string.Empty).ToArray())
+            foreach (string s in part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray())
             {
-                if (contains && value.Contains(s.Trim()))
-                    return true;
-                if (!contains && !value.Contains(s.Trim()))
+                if (contains == value.Contains(s))
                     return true;
             }
             return false;
