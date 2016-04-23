@@ -8,39 +8,44 @@ namespace FilterExtensions.ConfigNodes
     using Utility;
     using KSP.UI.Screens;
 
-    public enum categoryTypeAndBehaviour
+    public class customCategory : IEquatable<customCategory>, ICloneable
     {
-        None,
-        Engines,
-        StockAdd,
-        StockReplace,
-        ModAdd,
-        ModReplace
-    }
+        public enum categoryType
+        {
+            New = 1, // new category
+            Stock = 2, // modification to stock category
+            Mod = 4, // modification to a mod cateogry
+        }
 
-    public class customCategory : IEquatable<customCategory>
-    {
+        public enum categoryBehaviour
+        {
+            Add = 1, // only add to existing categories
+            Replace = 2, // wipe existing categories
+            Engines = 4 // generate unique engine types
+        }
+
         public string categoryName { get; set; }
         public string iconName { get; set; }
         public Color colour { get; set; }
-        public categoryTypeAndBehaviour behaviour { get; set; }
+        public categoryType type { get; set; }
+        public categoryBehaviour behaviour { get; set; }
         public bool all { get; set; } // has an all parts subCategory
         public List<subCategoryItem> subCategories { get; set; } // array of subcategories
         public List<Filter> templates { get; set; } // Checks to add to every Filter in a category with the template tag
 
-        private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
-
         public customCategory(ConfigNode node)
         {
-            bool tmp;
+            bool tmpBool;
+            string tmpStr = string.Empty;
+
             categoryName = node.GetValue("name");
             iconName = node.GetValue("icon");
             colour = convertToColor(node.GetValue("colour"));
 
             makeTemplate(node);
 
-            bool.TryParse(node.GetValue("all"), out tmp);
-            this.all = tmp;
+            bool.TryParse(node.GetValue("all"), out tmpBool);
+            this.all = tmpBool;
             
             ConfigNode[] subcategoryList = node.GetNodes("SUBCATEGORIES");
             subCategories = new List<subCategoryItem>();
@@ -84,7 +89,62 @@ namespace FilterExtensions.ConfigNodes
                 subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
                 subCategories.RemoveAll(s => s == null);
             }
-            typeSwitch(node.GetValue("type"), node.GetValue("value"));
+
+            if (node.TryGetValue("type", ref tmpStr))
+                tmpStr = tmpStr.ToLower();
+            switch (tmpStr)
+            {
+                case "stock":
+                    type = categoryType.Stock;
+                    break;
+                case "mod":
+                    type = categoryType.Mod;
+                    break;
+                case "new":
+                default:
+                    type = categoryType.New;
+                    break;
+            }
+            if (node.TryGetValue("value", ref tmpStr))
+            {
+                if (string.Equals(tmpStr, "replace", StringComparison.OrdinalIgnoreCase))
+                    behaviour = categoryBehaviour.Replace;
+                else if (string.Equals(tmpStr, "engine", StringComparison.OrdinalIgnoreCase))
+                {
+                    behaviour = categoryBehaviour.Engines;
+                    foreach (List<string> combo in Core.Instance.propellantCombos)
+                    {
+                        string dummy = string.Empty, subcatName = string.Join(",", combo.ToArray());
+                        Core.Instance.SetNameAndIcon(ref subcatName, ref dummy);
+                        subCategories.AddUnique(new subCategoryItem(subcatName));
+                    }
+                }
+                else
+                    behaviour = categoryBehaviour.Add;
+            }
+        }
+
+        public customCategory(customCategory c)
+        {
+            categoryName = c.categoryName;
+            iconName = c.iconName;
+            colour = c.colour;
+            type = c.type;
+            behaviour = c.behaviour;
+            all = c.all;
+
+            subCategories = new List<subCategoryItem>();
+            for (int i = 0; i < c.subCategories.Count; ++i)
+                subCategories.Add(new subCategoryItem(c.subCategories[i].subcategoryName, c.subCategories[i].applyTemplate));
+
+            templates = new List<Filter>();
+            for (int i = 0; i < c.templates.Count; ++i)
+                templates.Add(new Filter(c.templates[i]));
+        }
+
+        public object Clone()
+        {
+            return new customCategory(this);
         }
 
         public void initialise()
@@ -100,7 +160,7 @@ namespace FilterExtensions.ConfigNodes
                 return;
             }
             PartCategorizer.Category category;
-            if (behaviour == categoryTypeAndBehaviour.None || behaviour == categoryTypeAndBehaviour.Engines)
+            if (type == categoryType.New)
             {
                 RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
                 PartCategorizer.AddCustomFilter(categoryName, icon, colour);
@@ -116,11 +176,8 @@ namespace FilterExtensions.ConfigNodes
                     Core.Log("No category of this name was found to manipulate: " + categoryName);
                     return;
                 }
-                else
-                {
-                    if (behaviour == categoryTypeAndBehaviour.StockReplace || behaviour == categoryTypeAndBehaviour.ModReplace)
-                        category.subcategories.Clear();
-                }
+                else if (behaviour == categoryBehaviour.Replace)
+                    category.subcategories.Clear();
             }
 
             List<string> subcategoryNames = new List<string>();
@@ -162,7 +219,7 @@ namespace FilterExtensions.ConfigNodes
 
                 try
                 {
-                    if (Core.checkSubCategoryHasParts(sC, categoryName))
+                    if (Editor.subcategoriesChecked || sC.checkSubCategoryHasParts(categoryName))
                         sC.initialise(category);
                 }
                 catch (Exception ex)
@@ -175,35 +232,9 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        private void typeSwitch(string type, string value)
+        private void typeSwitch(string Type, string Replace)
         {
-            switch (type)
-            {
-                case "engine":
-                    behaviour = categoryTypeAndBehaviour.Engines;
-                    foreach (List<string> combo in Core.Instance.propellantCombos)
-                    {
-                        string dummy = string.Empty, subcatName = string.Join(",", combo.ToArray());
-                        Core.Instance.SetNameAndIcon(ref subcatName, ref dummy);
-                        subCategories.AddUnique(new subCategoryItem(subcatName));
-                    }
-                    break;
-                case "stock":
-                    if (value == "replace")
-                        behaviour = categoryTypeAndBehaviour.StockReplace;
-                    else
-                        behaviour = categoryTypeAndBehaviour.StockAdd;
-                    break;
-                case "mod":
-                    if (value == "replace")
-                        behaviour = categoryTypeAndBehaviour.ModReplace;
-                    else
-                        behaviour = categoryTypeAndBehaviour.ModAdd;
-                    break;
-                default:
-                    behaviour = categoryTypeAndBehaviour.None;
-                    break;
-            }
+
         }
 
         private void makeTemplate(ConfigNode node)

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace FilterExtensions.ConfigNodes
 {
     using KSP.UI.Screens;
-    public class customSubCategory : ICloneable
+    public class customSubCategory : IEquatable<customSubCategory>, ICloneable
     {
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
@@ -121,6 +121,46 @@ namespace FilterExtensions.ConfigNodes
             }
 
             return ((!template.Any() || template.Any(t => t.checkFilter(part, depth))) && filters.Any(f => f.checkFilter(part, depth))); // part passed a template if present, and a subcategory filter
+        }
+
+        /// <summary>
+        /// if a subcategory doesn't have any parts, it shouldn't be used. Doesn't account for the blackListed parts the first time the editor is entered
+        /// </summary>
+        /// <param name="sC">the subcat to check</param>
+        /// <param name="category">the category for logging purposes</param>
+        /// <returns>true if the subcategory contains any parts</returns>
+        public bool checkSubCategoryHasParts(string category)
+        {
+            PartModuleFilter pmf;
+            AvailablePart p;
+            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
+            {
+                pmf = null;
+                p = PartLoader.Instance.parts[i];
+                if (Core.Instance.filterModules.TryGetValue(p.name, out pmf))
+                {
+                    if (pmf.CheckForForceAdd(subCategoryTitle))
+                        return true;
+                    if (pmf.CheckForForceBlock(subCategoryTitle))
+                        return false;
+                }
+                if (checkFilters(PartLoader.Instance.parts[i]))
+                    return true;
+            }
+
+            // only need to do this the first time we hit the editor
+            customCategory C = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == category);
+            if (C != null)
+                C.subCategories.RemoveAll(s => s.subcategoryName == subCategoryTitle);
+
+            if (Settings.debug)
+            {
+                if (!string.IsNullOrEmpty(category))
+                    Core.Log(subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
+                else
+                    Core.Log(subCategoryTitle + " has no valid parts and was not initialised");
+            }
+            return false;
         }
 
         /// <summary>

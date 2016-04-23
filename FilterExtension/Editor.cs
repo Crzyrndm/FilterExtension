@@ -14,6 +14,7 @@ namespace FilterExtensions
     class Editor : MonoBehaviour
     {
         public static Editor instance;
+        public static bool subcategoriesChecked;
         public bool ready = false;
         void Start()
         {
@@ -41,11 +42,8 @@ namespace FilterExtensions
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat;
-                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat))
-                {
-                    if (cat.hasSubCategories() && (cat.behaviour == categoryTypeAndBehaviour.StockReplace || cat.behaviour == categoryTypeAndBehaviour.StockAdd))
-                        cat.initialise();
-                }
+                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat) && cat.type == customCategory.categoryType.Stock)
+                    cat.initialise();
             }
 
             // custom categories
@@ -62,7 +60,7 @@ namespace FilterExtensions
             // all FE categories
             foreach (customCategory c in Core.Instance.Categories)
             {
-                if (c.behaviour == categoryTypeAndBehaviour.None || c.behaviour == categoryTypeAndBehaviour.Engines)
+                if (c.type == customCategory.categoryType.New)
                     c.initialise();
             }
 
@@ -82,13 +80,13 @@ namespace FilterExtensions
             // this is to be used for altering subcategories in a category added by another mod
             foreach (customCategory c in Core.Instance.Categories)
             {
-                if (c.behaviour == categoryTypeAndBehaviour.ModAdd || c.behaviour == categoryTypeAndBehaviour.ModReplace)
+                if (c.type == customCategory.categoryType.Mod)
                     c.initialise();
             }
 
             // 
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
-                Core.Instance.namesAndIcons(c);
+                namesAndIcons(c);
 
             // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = 0; i < 4; i++)
@@ -112,7 +110,31 @@ namespace FilterExtensions
                 Core.Log("Refreshing parts list");
             setSelectedCategory();
 
-            ready = true;
+            subcategoriesChecked = ready = true;
+        }
+
+        /// <summary>
+        /// In the editor, checks all subcategories of a category and edits their names/icons if required
+        /// </summary>
+        public void namesAndIcons(PartCategorizer.Category category)
+        {
+            HashSet<string> toRemove = new HashSet<string>();
+            foreach (PartCategorizer.Category c in category.subcategories)
+            {
+                if (Core.Instance.removeSubCategory.Contains(c.button.categoryName))
+                    toRemove.Add(c.button.categoryName);
+                else
+                {
+                    string tmp;
+                    if (Core.Instance.Rename.TryGetValue(c.button.categoryName, out tmp)) // update the name first
+                        c.button.categoryName = tmp;
+
+                    RUI.Icons.Selectable.Icon icon;
+                    if (Core.tryGetIcon(tmp, out icon) || Core.tryGetIcon(c.button.categoryName, out icon)) // if there is an explicit setIcon for the subcategory or if the name matches an icon
+                        c.button.SetIcon(icon); // change the icon
+                }
+            }
+            category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
         }
 
         /// <summary>

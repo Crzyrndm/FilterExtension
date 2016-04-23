@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
-    public class Filter : ICloneable
+    public class Filter : IEquatable<Filter>, ICloneable
     {
         public List<Check> checks { get; set; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
         public bool invert { get; set; }

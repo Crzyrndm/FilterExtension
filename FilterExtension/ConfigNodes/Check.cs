@@ -7,7 +7,7 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
-    public class Check : ICloneable
+    public class Check : IEquatable<Check>, ICloneable
     {
         public enum CheckType
         {
@@ -139,18 +139,18 @@ namespace FilterExtensions.ConfigNodes
         public Check(Check c)
         {
             type = c.type;
-            if (c.values != null)
-                values = (string[])c.values.Clone();
             invert = c.invert;
             contains = c.contains;
+            equality = c.equality;
 
+            if (c.values != null)
+                values = (string[])c.values.Clone();
             if (c.checks != null)
             {
                 checks = new List<Check>(c.checks.Count);
                 for (int i = 0; i < c.checks.Count; ++i)
                     checks.Add(new Check(c.checks[i]));
             }
-            equality = c.equality;
         }
 
         public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)

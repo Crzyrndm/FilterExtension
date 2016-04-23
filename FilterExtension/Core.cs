@@ -290,7 +290,6 @@ namespace FilterExtensions
                 string name = propList; // rename function needs to be parsed from
                 string icon = propList;
                 SetNameAndIcon(ref name, ref icon);
-                Core.Log(name);
 
                 if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
                 {
@@ -407,57 +406,15 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// checks all subcategories and edits their names/icons if required
-        /// </summary>
-        public void namesAndIcons(PartCategorizer.Category category)
-        {
-            HashSet<string> toRemove = new HashSet<string>();
-            foreach (PartCategorizer.Category c in category.subcategories)
-            {
-                if (removeSubCategory.Contains(c.button.categoryName))
-                    toRemove.Add(c.button.categoryName);
-                else
-                {
-                    string tmp;
-                    if (Rename.TryGetValue(c.button.categoryName, out tmp)) // update the name first
-                        c.button.categoryName = tmp;
-
-                    RUI.Icons.Selectable.Icon icon;
-                    if (tryGetIcon(tmp, out icon) || tryGetIcon(c.button.categoryName, out icon)) // if there is an explicit setIcon for the subcategory or if the name matches an icon
-                        c.button.SetIcon(icon); // change the icon
-                }
-            }
-            category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
-        }
-
-        /// <summary>
         /// loads all textures between 25 and 40 px in dimensions into a dictionary using the filename as a key
         /// </summary>
         private static void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null && t.texture.height <= 40 && t.texture.width <= 40 && t.texture.width >= 25 && t.texture.height >= 25).ToList();
-
-            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
-            // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
-            foreach(GameDatabase.TextureInfo t in texList)
-            {
-                if (!texDict.ContainsKey(t.name))
-                    texDict.Add(t.name, t);
-                else
-                {
-                    int i = 1;
-                    while (texDict.ContainsKey(t.name + i.ToString()) && i < 1000)
-                        i++;
-                    if (i < 1000)
-                    {
-                        texDict.Add(t.name + i.ToString(), t);
-                        Log(t.name + i.ToString());
-                    }
-                }
-            }
+            GameDatabase.TextureInfo[] texArray = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null && t.texture.height == 32 && t.texture.width == 32).ToArray();
+            Dictionary<string, GameDatabase.TextureInfo> texDict = texArray.ToDictionary(k => k.name);
 
             Texture2D selectedTex = null;
-            foreach (GameDatabase.TextureInfo t in texList)
+            foreach (GameDatabase.TextureInfo t in texArray)
             {
                 GameDatabase.TextureInfo texInfo;
                 if (texDict.TryGetValue(t.name + "_selected", out texInfo))
@@ -466,17 +423,6 @@ namespace FilterExtensions
                     selectedTex = t.texture;
 
                 string name = t.name.Split(new char[] { '/', '\\' }).Last();
-                if (Instance.iconDict.ContainsKey(name))
-                {
-                    int i = 1;
-                    while (Instance.iconDict.ContainsKey(name + i.ToString()) && i < 1000)
-                        i++;
-                    if (i != 1000)
-                        name = name + i.ToString();
-                    if (Settings.debug)
-                        Log(string.Format("Duplicated texture name \"{0}\" at:\r\n{1}\r\n New reference is: {2}", t.name.Split(new char[] { '/', '\\' }).Last(), t.name, name));
-                }
-
                 RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
                 Instance.iconDict.TryAdd(icon.name, icon);
             }
@@ -529,30 +475,6 @@ namespace FilterExtensions
             UrlDir.UrlConfig url = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(u => u.name.Replace('_', '.') == ap.name);
             if (url != null)
                 ap.partUrl = url.url;
-        }
-
-        /// <summary>
-        /// if a subcategory doesn't have any parts, it shouldn't be used. Doesn't account for the blackListed parts the first time the editor is entered
-        /// </summary>
-        /// <param name="sC">the subcat to check</param>
-        /// <param name="category">the category for logging purposes</param>
-        /// <returns>true if the subcategory contains any parts</returns>
-        public static bool checkSubCategoryHasParts(customSubCategory sC, string category)
-        {
-            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
-            {
-                if (sC.checkFilters(PartLoader.Instance.parts[i]))
-                    return true;
-            }
-
-            if (Settings.debug)
-            {
-                if (!string.IsNullOrEmpty(category))
-                    Log(sC.subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
-                else
-                    Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
-            }
-            return false;
         }
 
         /// <summary>
