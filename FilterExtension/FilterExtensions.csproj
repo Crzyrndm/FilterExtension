@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\Desktop\Kerbal Space Program Dev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
@@ -74,6 +77,10 @@
   <PropertyGroup>
     <PostBuildEvent>set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\GameData"
 set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData"
+xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y
+
+set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\Testing"
+set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData\000_FilterExtensions Configs\Testing"
 xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
