@@ -142,35 +142,34 @@ namespace FilterExtensions
         /// </summary>
         public static void setSelectedCategory()
         {
-            //try
-            //{
-            //    PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
-            //    if (Filter != null)
-            //        Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.False, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
+            try
+            {
+                PartCategorizer.Category cat;
+                if (Settings.categoryDefault != string.Empty)
+                {
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
+                    if (cat != null)
+                        cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
+                }
 
-            //    Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
-            //    if (Filter != null)
-            //        Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
-            //    else
-            //    {
-            //        Filter = PartCategorizer.Instance.filters[0];
-            //        if (Filter != null)
-            //        {
-            //            Filter.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATIONSILENT, null);
-            //        }
-            //    }
-
-            //    // set the subcategory button
-            //    //Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
-            //    //if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
-            //    //    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-            //}
-            //catch (Exception e)
-            //{
-            //    Core.Log("Category refresh failed");
-            //    Core.Log(e.InnerException);
-            //    Core.Log(e.StackTrace);
-            //}
+                if (Settings.subCategoryDefault != string.Empty)
+                {
+                    // set the subcategory button
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.Value);
+                    if (cat != null)
+                    {
+                        cat = cat.subcategories.FirstOrDefault(sC => sC.button.categoryName == Settings.subCategoryDefault);
+                        if (cat != null)
+                            cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Core.Log("Category refresh failed");
+                Core.Log(e.InnerException);
+                Core.Log(e.StackTrace);
+            }
         }
 
         /// <summary>

@@ -193,7 +193,7 @@ namespace FilterExtensions.ConfigNodes
             if (sC2 == null)
                 return false;
 
-            if (this.subCategoryTitle == sC2.subCategoryTitle)
+            if (subCategoryTitle == sC2.subCategoryTitle)
                 return true;
 
             return false;
@@ -201,7 +201,7 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            return this.subCategoryTitle.GetHashCode();
+            return subCategoryTitle.GetHashCode();
         }
     }
 }

@@ -378,27 +378,26 @@ namespace FilterExtensions
             // Can't guarantee iteration order of dict will be the same each time so need a set of elements that have been processed
             // to ensure conflicts are only checked against elements that are already checked
             // by only checking against processed elements we know we're only adding checking for collisions between each pair once
-            HashSet<string> processedElements = new HashSet<string>();
+            List<string> processedElements = new List<string>();
             foreach (KeyValuePair<string, customSubCategory> kvpOuter in subCategoriesDict)
             {
-                foreach (KeyValuePair<string, customSubCategory> kvp in subCategoriesDict) // iterate through the already added sC's
+                foreach (string subcatName in processedElements)
                 {
-                    if (kvp.Key == kvpOuter.Key || !processedElements.Contains(kvp.Key))
-                        continue;
-                    if (Filter.compareFilterLists(kvp.Value.filters, kvpOuter.Value.filters)) // check for duplicated filters
+                    customSubCategory processedSubcat = subCategoriesDict[subcatName];
+                    if (Filter.compareFilterLists(processedSubcat.filters, kvpOuter.Value.filters))
                     {
                         // add conflict entry for the already entered subCategory
                         List<string> conflicts;
-                        if (conflictsDict.TryGetValue(kvp.Key, out conflicts))
+                        if (conflictsDict.TryGetValue(subcatName, out conflicts))
                             conflicts.Add(kvpOuter.Key);
                         else
-                            conflictsDict.Add(kvp.Key, new List<string>() { kvpOuter.Key});
+                            conflictsDict.Add(subcatName, new List<string>() { kvpOuter.Key });
 
                         // add a conflict entry for the new subcategory
                         if (conflictsDict.TryGetValue(kvpOuter.Key, out conflicts))
-                            conflicts.Add(kvp.Key);
+                            conflicts.Add(subcatName);
                         else
-                            conflictsDict.Add(kvpOuter.Key, new List<string>() { kvp.Key });
+                            conflictsDict.Add(kvpOuter.Key, new List<string>() { subcatName });
                     }
                 }
                 processedElements.Add(kvpOuter.Key);
@@ -406,7 +405,7 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// loads all textures between 25 and 40 px in dimensions into a dictionary using the filename as a key
+        /// loads all textures that are 32x32px into a dictionary using the filename as a key
         /// </summary>
         private static void loadIcons()
         {

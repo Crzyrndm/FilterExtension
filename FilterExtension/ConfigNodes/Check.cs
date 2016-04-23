@@ -145,9 +145,10 @@ namespace FilterExtensions.ConfigNodes
 
             if (c.values != null)
                 values = (string[])c.values.Clone();
+            checks = new List<Check>();
             if (c.checks != null)
             {
-                checks = new List<Check>(c.checks.Count);
+                checks = new List<Check>();
                 for (int i = 0; i < c.checks.Count; ++i)
                     checks.Add(new Check(c.checks[i]));
             }
@@ -303,7 +304,7 @@ namespace FilterExtensions.ConfigNodes
         {
             if (c2 == null)
                 return false;
-            if (this.type == c2.type && this.values == c2.values && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks && this.equality == c2.equality)
+            if (type == c2.type && values == c2.values && invert == c2.invert && contains == c2.contains && checks == c2.checks && equality == c2.equality)
                 return true;
             else
                 return false;
@@ -311,8 +312,7 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            int checks = this.checks.Any() ? this.checks.GetHashCode() : 1;
-            return this.type.GetHashCode() * this.values.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * this.equality.GetHashCode() * checks;
+            return type.GetHashCode() ^ values.GetHashCode() ^ invert.GetHashCode() ^ contains.GetHashCode() ^ equality.GetHashCode() ^ (int)checks.Average(c => c.GetHashCode());
         }
     }
 }

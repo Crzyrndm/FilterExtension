@@ -40,7 +40,7 @@ namespace FilterExtensions.ConfigNodes
 
             categoryName = node.GetValue("name");
             iconName = node.GetValue("icon");
-            colour = convertToColor(node.GetValue("colour"));
+            colour = GUIUtils.convertToColor(node.GetValue("colour"));
 
             makeTemplate(node);
 
@@ -180,61 +180,51 @@ namespace FilterExtensions.ConfigNodes
                     category.subcategories.Clear();
             }
 
-            List<string> subcategoryNames = new List<string>();
-            for (int i = 0; i < subCategories.Count; i++ )
-                subcategoryNames.Add(subCategories[i].subcategoryName);
-            
             for (int i = 0; i < subCategories.Count; i++)
-            {
-                subCategoryItem subcategoryItem = subCategories[i];
-                if (subcategoryItem == null)
-                    continue;
-                
-                if (string.IsNullOrEmpty(subcategoryItem.subcategoryName))
-                    continue;
-                customSubCategory subcategory = null;
-                if (!Core.Instance.subCategoriesDict.TryGetValue(subcategoryItem.subcategoryName, out subcategory))
-                {
-                    Core.Log("subcategory {0} not found in subcategories Dictionary", subcategoryItem.subcategoryName);
-                    continue;
-                }
-
-                //List<string> conflictsList;
-                #warning subcategory conflicts are broken and doing stupid things
-                //if (Core.Instance.conflictsDict.TryGetValue(subcategoryItem.subcategoryName, out conflictsList))
-                //{
-                //    // all of the possible conflicts that are also subcategories of this category
-                //    List<string> conflicts = conflictsList.Intersect(subcategoryNames).ToList();
-                //    // if there are any conflicts that show up in the subcategories list before this one
-                //    if (conflicts.Any(c => subcategoryNames.IndexOf(c) < i))
-                //    {
-                //        Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories:\r\n" + string.Join("\r\n", conflicts.ToArray()));
-                //        continue;
-                //    }
-                //}
-
-                customSubCategory sC = new customSubCategory(subcategory);
-                if (subcategoryItem.applyTemplate)
-                    sC.template = templates;
-
-                try
-                {
-                    if (Editor.subcategoriesChecked || sC.checkSubCategoryHasParts(categoryName))
-                        sC.initialise(category);
-                }
-                catch (Exception ex)
-                {
-                    // extended logging for errors
-                    Core.Log(subCategories[i] + " failed to initialise");
-                    Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
-                    Core.Log(ex.StackTrace);
-                }
-            }
+                initSubcategory(i, subCategories[i], category);
         }
 
-        private void typeSwitch(string Type, string Replace)
+        public void initSubcategory(int index, subCategoryItem toInit, PartCategorizer.Category category)
         {
+            if (toInit == null || string.IsNullOrEmpty(toInit.ToString()))
+                return;
 
+            List<string> conflictsList;
+            if (Core.Instance.conflictsDict.TryGetValue(toInit.ToString(), out conflictsList)) // if we have a conflict with some other subcategory
+            {
+                for (int j = 0; j < index; ++j) // iterate over the subcategories we've already added to see if it's one of them
+                {
+                    if (conflictsList.Contains(subCategories[j].subcategoryName))
+                    {
+                        // if so, we skip this subcategory
+                        Core.Log("Filters duplicated in category {0} between subCategories:\r\n{1} and {2}", categoryName, toInit.ToString(), subCategories[j].subcategoryName);
+                        return;
+                    }
+                }
+            }
+            customSubCategory subcategory = null;
+            if (!Core.Instance.subCategoriesDict.TryGetValue(toInit.ToString(), out subcategory))
+            {
+                Core.Log("subcategory {0} not found in subcategories Dictionary", toInit.ToString());
+                return;
+            }
+
+            customSubCategory sC = new customSubCategory(subcategory);
+            if (toInit.applyTemplate)
+                sC.template = templates;
+
+            try
+            {
+                if (Editor.subcategoriesChecked || sC.checkSubCategoryHasParts(categoryName))
+                    sC.initialise(category);
+            }
+            catch (Exception ex)
+            {
+                // extended logging for errors
+                Core.Log(subCategories[index] + " failed to initialise");
+                Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
+                Core.Log(ex.StackTrace);
+            }
         }
 
         private void makeTemplate(ConfigNode node)
@@ -245,36 +235,6 @@ namespace FilterExtensions.ConfigNodes
             templates = new List<Filter>();
             foreach (ConfigNode n in filtNodes)
                 templates.Add(new Filter(n));
-        }
-
-        public static Color convertToColor(string hex_ARGB)
-        {
-            if (string.IsNullOrEmpty(hex_ARGB))
-                return Color.clear;
-
-            hex_ARGB = hex_ARGB.Replace("#", "").Replace("0x", ""); // remove any hexadecimal identifiers
-            if (System.Text.RegularExpressions.Regex.IsMatch(hex_ARGB, "[0-9a-fA-F]{6,8}")) // check it is valid hex
-            {
-                if (hex_ARGB.Length == 8)
-                {
-                    Color c = new Color();
-                    c.a = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.r = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.g = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.b = (float)byte.Parse(hex_ARGB.Substring(6, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    return c;
-                }
-                else // if (hex_ARGB.Length == 6)
-                {
-                    Color c = new Color();
-                    c.a = 1;
-                    c.r = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.g = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.b = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    return c;
-                }
-            }
-            return Color.clear;
         }
 
         public bool hasSubCategories()
