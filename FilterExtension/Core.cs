@@ -1,19 +1,29 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
+using System.Linq;
 
 
 namespace FilterExtensions
 {
+    using ConfigNodes;
     using UnityEngine;
     using Utility;
-    using ConfigNodes;
+
+    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
+        public static readonly Version version = new Version(2, 5, 0, 0);
+        
         private static Core instance;
+        public static Core Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
         public List<customCategory> Categories = new List<customCategory>();
@@ -44,19 +54,11 @@ namespace FilterExtensions
 
         const string fallbackIcon = "stockIcon_fallback";
 
-        public static Core Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
-
         void Awake()
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log("Version 2.5.0");
+            Log(string.Empty);
 
             getConfigs();
             getPartData();
@@ -79,14 +81,9 @@ namespace FilterExtensions
                 string[] names = node.GetValues("name");
                 for (int j = 0; j < names.Length; j++)
                 {
-                    string s = names[j];
-                    if (s.Split().Length >= 2)
-                    {
-                        string nameToReplace = s.Split(',')[0].Trim();
-                        string newName = s.Split(',')[1].Trim();
-                        if (!Rename.ContainsKey(nameToReplace))
-                            Rename.Add(nameToReplace, newName);
-                    }
+                    string[] s = names[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
+                    if (s.Length >= 2 && !Rename.ContainsKey(s[0]))
+                            Rename.Add(s[0], s[1]);
                 }
             }
 
@@ -97,14 +94,9 @@ namespace FilterExtensions
                 string[] icons = node.GetValues("icon");
                 for (int j = 0; j < icons.Length; j++)
                 {
-                    string s = icons[j];
-                    if (s.Split().Length >= 2)
-                    {
-                        string categoryName = s.Split(',')[0].Trim();
-                        string icon = s.Split(',')[1].Trim();
-                        if (!setIcon.ContainsKey(categoryName))
-                            setIcon.Add(categoryName, icon);
-                    }
+                    string[] s = icons[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
+                    if (s.Length >= 2 && !setIcon.ContainsKey(s[0]))
+                        setIcon.Add(s[0], s[1]);
                 }
             }
 
@@ -163,6 +155,7 @@ namespace FilterExtensions
                 if (p.partPrefab.Modules.Contains("PartModuleFilter"))
                     filterModules.Add(p.name, (PartModuleFilter)p.partPrefab.Modules["PartModuleFilter"]);
             }
+            generateEngineTypes();
 
             if (Settings.replaceFbM)
                 processFilterByManufacturer(modNames);
@@ -213,7 +206,7 @@ namespace FilterExtensions
                     if (subCategoriesDict.TryGetValue(name, out subcategory))
                     {
                         // if the collision is already looking for the specified resource
-                        if (customSubCategory.checkForCheckMatch(subcategory, CheckType.resource, s))
+                        if (customSubCategory.checkForCheckMatch(subcategory, Check.CheckType.resource, s))
                             continue;
                         name = "res_" + name;
                     }
@@ -264,7 +257,7 @@ namespace FilterExtensions
         /// <param name="p"></param>
         private void processEnginePropellants(AvailablePart p)
         {
-            List<ModuleEngines> engines = p.partPrefab.GetModules<ModuleEngines>();
+            List<ModuleEngines> engines = p.partPrefab.Modules.GetModules<ModuleEngines>();
             for (int i = 0; i < engines.Count; i++)
             {
                 ModuleEngines e = engines[i];
@@ -275,6 +268,38 @@ namespace FilterExtensions
 
                 if (!stringListComparer(propellants))
                     propellantCombos.Add(propellants);
+            }
+        }
+
+        /// <summary>
+        /// create the subcategories for each unique propellant combination found
+        /// </summary>
+        private void generateEngineTypes()
+        {
+            List<subCategoryItem> engines = new List<subCategoryItem>();
+            for (int i = 0; i < propellantCombos.Count; i++)
+            {
+                string[] ls = propellantCombos[i].ToArray();
+                string propList = string.Join(",", ls);
+
+                List<Check> checks = new List<Check>();
+                Array.ForEach(ls, s => checks.Add(new Check("propellant", s)));
+
+                checks.Add(new Check("propellant", propList, true, false)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
+
+                string name = propList; // rename function needs to be parsed from
+                string icon = propList;
+                SetNameAndIcon(ref name, ref icon);
+
+                if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
+                {
+                    customSubCategory sC = new customSubCategory(name, icon);
+
+                    Filter f = new Filter(false);
+                    f.checks = checks;
+                    sC.filters.Add(f);
+                    subCategoriesDict.Add(name, sC);
+                }
             }
         }
 
@@ -346,42 +371,6 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// refresh the visible subcategories to ensure all changes are visible
-        /// </summary>
-        public static void setSelectedCategory()
-        {
-            try
-            {
-                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.State == RUIToggleButtonTyped.ButtonState.TRUE);
-                if (Filter != null)
-                    Filter.button.activeButton.SetFalse(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-
-                Filter = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
-                if (Filter != null)
-                    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-                else
-                {
-                    Filter = PartCategorizer.Instance.filters[0];
-                    if (Filter != null)
-                    {
-                        Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-                    }
-                }
-
-                // set the subcategory button
-                //Filter = Filter.subcategories.FirstOrDefault(sC => sC.button.categoryName == instance.subCategoryDefault);
-                //if (Filter != null && Filter.button.activeButton.State != RUIToggleButtonTyped.ButtonState.TRUE)
-                //    Filter.button.activeButton.SetTrue(Filter.button.activeButton, RUIToggleButtonTyped.ClickType.FORCED);
-            }
-            catch (Exception e)
-            {
-                Log("Category refresh failed");
-                Log(e.InnerException);
-                Log(e.StackTrace);
-            }
-        }
-
-        /// <summary>
         /// mark all subcategories that have identical filtering
         /// </summary>
         private void checkAndMarkConflicts()
@@ -389,27 +378,26 @@ namespace FilterExtensions
             // Can't guarantee iteration order of dict will be the same each time so need a set of elements that have been processed
             // to ensure conflicts are only checked against elements that are already checked
             // by only checking against processed elements we know we're only adding checking for collisions between each pair once
-            HashSet<string> processedElements = new HashSet<string>();
+            List<string> processedElements = new List<string>();
             foreach (KeyValuePair<string, customSubCategory> kvpOuter in subCategoriesDict)
             {
-                foreach (KeyValuePair<string, customSubCategory> kvp in subCategoriesDict) // iterate through the already added sC's
+                foreach (string subcatName in processedElements)
                 {
-                    if (kvp.Key == kvpOuter.Key || !processedElements.Contains(kvp.Key))
-                        continue;
-                    if (Filter.compareFilterLists(kvp.Value.filters, kvpOuter.Value.filters)) // check for duplicated filters
+                    customSubCategory processedSubcat = subCategoriesDict[subcatName];
+                    if (Filter.compareFilterLists(processedSubcat.filters, kvpOuter.Value.filters))
                     {
                         // add conflict entry for the already entered subCategory
                         List<string> conflicts;
-                        if (conflictsDict.TryGetValue(kvp.Key, out conflicts))
+                        if (conflictsDict.TryGetValue(subcatName, out conflicts))
                             conflicts.Add(kvpOuter.Key);
                         else
-                            conflictsDict.Add(kvp.Key, new List<string>() { kvpOuter.Key});
+                            conflictsDict.Add(subcatName, new List<string>() { kvpOuter.Key });
 
                         // add a conflict entry for the new subcategory
                         if (conflictsDict.TryGetValue(kvpOuter.Key, out conflicts))
-                            conflicts.Add(kvp.Key);
+                            conflicts.Add(subcatName);
                         else
-                            conflictsDict.Add(kvpOuter.Key, new List<string>() { kvp.Key });
+                            conflictsDict.Add(kvpOuter.Key, new List<string>() { subcatName });
                     }
                 }
                 processedElements.Add(kvpOuter.Key);
@@ -417,57 +405,15 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// checks all subcategories and edits their names/icons if required
-        /// </summary>
-        public void namesAndIcons(PartCategorizer.Category category)
-        {
-            HashSet<string> toRemove = new HashSet<string>();
-            foreach (PartCategorizer.Category c in category.subcategories)
-            {
-                if (removeSubCategory.Contains(c.button.categoryName))
-                    toRemove.Add(c.button.categoryName);
-                else
-                {
-                    string tmp;
-                    if (Rename.TryGetValue(c.button.categoryName, out tmp)) // update the name first
-                        c.button.categoryName = tmp;
-
-                    RUI.Icons.Selectable.Icon icon;
-                    if (tryGetIcon(tmp, out icon) || tryGetIcon(c.button.categoryName, out icon)) // if there is an explicit setIcon for the subcategory or if the name matches an icon
-                        c.button.SetIcon(icon); // change the icon
-                }
-            }
-            category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
-        }
-
-        /// <summary>
-        /// loads all textures between 25 and 40 px in dimensions into a dictionary using the filename as a key
+        /// loads all textures that are 32x32px into a dictionary using the filename as a key
         /// </summary>
         private static void loadIcons()
         {
-            List<GameDatabase.TextureInfo> texList = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null && t.texture.height <= 40 && t.texture.width <= 40 && t.texture.width >= 25 && t.texture.height >= 25).ToList();
-
-            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
-            // using a dictionary for looking up _selected textures. Else the list has to be iterated over for every texture
-            foreach(GameDatabase.TextureInfo t in texList)
-            {
-                if (!texDict.ContainsKey(t.name))
-                    texDict.Add(t.name, t);
-                else
-                {
-                    int i = 1;
-                    while (texDict.ContainsKey(t.name + i.ToString()) && i < 1000)
-                        i++;
-                    if (i < 1000)
-                    {
-                        texDict.Add(t.name + i.ToString(), t);
-                        Log(t.name + i.ToString());
-                    }
-                }
-            }
+            GameDatabase.TextureInfo[] texArray = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null && t.texture.height == 32 && t.texture.width == 32).ToArray();
+            Dictionary<string, GameDatabase.TextureInfo> texDict = texArray.ToDictionary(k => k.name);
 
             Texture2D selectedTex = null;
-            foreach (GameDatabase.TextureInfo t in texList)
+            foreach (GameDatabase.TextureInfo t in texArray)
             {
                 GameDatabase.TextureInfo texInfo;
                 if (texDict.TryGetValue(t.name + "_selected", out texInfo))
@@ -476,17 +422,6 @@ namespace FilterExtensions
                     selectedTex = t.texture;
 
                 string name = t.name.Split(new char[] { '/', '\\' }).Last();
-                if (Instance.iconDict.ContainsKey(name))
-                {
-                    int i = 1;
-                    while (Instance.iconDict.ContainsKey(name + i.ToString()) && i < 1000)
-                        i++;
-                    if (i != 1000)
-                        name = name + i.ToString();
-                    if (Settings.debug)
-                        Log("Duplicated texture name \"" + t.name.Split(new char[] { '/', '\\' }).Last() + "\" at:\r\n" + t.name + "\r\n New reference is: " + name);
-                }
-
                 RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
                 Instance.iconDict.TryAdd(icon.name, icon);
             }
@@ -542,30 +477,6 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// if a subcategory doesn't have any parts, it shouldn't be used. Doesn't account for the blackListed parts the first time the editor is entered
-        /// </summary>
-        /// <param name="sC">the subcat to check</param>
-        /// <param name="category">the category for logging purposes</param>
-        /// <returns>true if the subcategory contains any parts</returns>
-        public static bool checkSubCategoryHasParts(customSubCategory sC, string category)
-        {
-            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
-            {
-                if (sC.checkFilters(PartLoader.Instance.parts[i]))
-                    return true;
-            }
-
-            if (Settings.debug)
-            {
-                if (!string.IsNullOrEmpty(category))
-                    Log(sC.subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
-                else
-                    Log(sC.subCategoryTitle + " has no valid parts and was not initialised");
-            }
-            return false;
-        }
-
-        /// <summary>
         /// check the name and icon against the sets for renaming and setting a different icon
         /// </summary>
         /// <param name="name"></param>
@@ -580,12 +491,17 @@ namespace FilterExtensions
         }
 
         /// <summary>
-        /// Debug.Log with FE id inserted
+        /// Debug.Log with FE id/version inserted
         /// </summary>
         /// <param name="o"></param>
         internal static void Log(object o)
         {
-            Debug.Log("[Filter Extensions] " + o);
+            Debug.Log(string.Format("[Filter Extensions {0}]: {1}", version, o));
+        }
+
+        internal static void Log(string format, params object[] o)
+        {
+            Debug.Log(string.Format("[Filter Extensions {0}]: ", version) + string.Format(format, o));
         }
     }
 }

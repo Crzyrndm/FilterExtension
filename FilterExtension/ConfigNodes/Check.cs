@@ -7,41 +7,85 @@ namespace FilterExtensions.ConfigNodes
 {
     using Utility;
 
-    public enum CheckType
+    public class Check : IEquatable<Check>, ICloneable
     {
-        moduleTitle,
-        moduleName,
-        partName,
-        partTitle,
-        resource,
-        propellant,
-        tech,
-        manufacturer,
-        folder,
-        path,
-        category,
-        size,
-        crew,
-        custom,
-        mass,
-        cost,
-        crashTolerance,
-        maxTemp,
-        profile,
-        check,
-        subcategory
-    }
+        public enum CheckType
+        {
+            moduleTitle,
+            moduleName,
+            partName,
+            partTitle,
+            resource,
+            propellant,
+            tech,
+            manufacturer,
+            folder,
+            path,
+            category,
+            size,
+            crew,
+            custom,
+            mass,
+            cost,
+            crashTolerance,
+            maxTemp,
+            profile,
+            check,
+            subcategory,
+            tag
+        }
 
-    public class Check
-    {
         public enum Equality
         {
             Equals, // default
             LessThan,
             GreaterThan
         }
-        public CheckType type { get; set; }
-        public string[] value { get; set; }
+
+        public class CheckParameters
+        {
+            public CheckType typeEnum { get; private set; }
+            public string typeString { get; private set; }
+            public bool usesContains { get; private set; }
+            public bool usesEquality { get; private set; }
+
+            public CheckParameters(CheckType Type, string TypeStr, bool Contains = false, bool Equality = false)
+            {
+                typeEnum = Type;
+                typeString = TypeStr;
+                usesContains = Contains;
+                usesEquality = Equality;
+            }
+        }
+
+        public static readonly Dictionary<string, CheckParameters> checkParams = new Dictionary<string, CheckParameters>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "name",           new CheckParameters(CheckType.partName, "name") },
+                { "title",          new CheckParameters(CheckType.partTitle, "title") },
+                { "moduleName",     new CheckParameters(CheckType.moduleName, "moduleName", true) },
+                { "moduleTitle",    new CheckParameters(CheckType.moduleTitle, "moduleTitle", true) },
+                { "resource",       new CheckParameters(CheckType.resource, "resource", true) },
+                { "propellant",     new CheckParameters(CheckType.propellant, "propellant", true) },
+                { "tech",           new CheckParameters(CheckType.tech, "tech") },
+                { "manufacturer",   new CheckParameters(CheckType.manufacturer, "manufacturer") },
+                { "folder",         new CheckParameters(CheckType.folder, "folder") },
+                { "path",           new CheckParameters(CheckType.path, "path") },
+                { "category",       new CheckParameters(CheckType.category, "category") },
+                { "size",           new CheckParameters(CheckType.size, "size", true, true) },
+                { "crew",           new CheckParameters(CheckType.crew, "crew", false, true) },
+                { "custom",         new CheckParameters(CheckType.custom, "custom") },
+                { "mass",           new CheckParameters(CheckType.mass, "mass", false, true) },
+                { "cost",           new CheckParameters(CheckType.cost, "cost", false, true) },
+                { "crash",          new CheckParameters(CheckType.crashTolerance, "crash", false, true) },
+                { "maxTemp",        new CheckParameters(CheckType.maxTemp, "maxTemp", false, true) },
+                { "profile",        new CheckParameters(CheckType.profile, "profile", true) },
+                { "check",          new CheckParameters(CheckType.check, "check") },
+                { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") },
+                { "tag",            new CheckParameters(CheckType.tag, "tag", true) }
+            };
+
+        public CheckParameters type { get; set; }
+        public string[] values { get; set; }
         public bool invert { get; set; }
         public bool contains { get; set; }
         public Equality equality { get; set; }
@@ -49,164 +93,157 @@ namespace FilterExtensions.ConfigNodes
 
         public Check(ConfigNode node)
         {
-            type = getType(node.GetValue("type"));
+            string tmpStr = string.Empty;
+            bool tmpBool = false;
+            checks = new List<Check>();
 
-            string tmpVal = node.GetValue("value");
-            if (tmpVal != null)
+            if (node.TryGetValue("value", ref tmpStr) && !string.IsNullOrEmpty(tmpStr))
             {
-                value = tmpVal.Split(',');
-                for (int i = 0; i < this.value.Length; ++i)
-                    value[i] = value[i].Trim();
+                values = tmpStr.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < values.Length; ++i)
+                    values[i] = values[i].Trim();
             }
 
-            bool tmp;
-            bool.TryParse(node.GetValue("invert"), out tmp);
-            invert = tmp;
+            if (node.TryGetValue("invert", ref tmpBool))
+                invert = tmpBool;
+            else
+                invert = false;
 
-            if (bool.TryParse(node.GetValue("contains"), out tmp))
-                contains = tmp;
+            type = getCheckType(node.GetValue("type"));
+            if (type.typeEnum == CheckType.check)
+            {
+                foreach (ConfigNode subNode in node.GetNodes("CHECK"))
+                    checks.Add(new Check(subNode));
+            }
+
+            if (type.usesContains && node.TryGetValue("contains", ref tmpBool))
+                contains = tmpBool;
             else
                 contains = true;
 
-            checks = new List<Check>();
-            if (type == CheckType.check)
+            if (type.usesEquality && node.TryGetValue("equality", ref tmpStr))
             {
-                foreach (ConfigNode subNode in node.GetNodes("CHECK"))
+                try
                 {
-                    checks.Add(new Check(subNode));
+                    equality = (Equality)Enum.Parse(typeof(Equality), tmpStr, true);
+                }
+                catch
+                {
+                    equality = Equality.Equals;
                 }
             }
-
-            switch (node.GetValue("equality").ToLower())
-            {
-                case "lessthan":
-                    equality = Equality.LessThan;
-                    break;
-                case "greaterthan":
-                    equality = Equality.GreaterThan;
-                    break;
-                default:
-                    equality = Equality.Equals;
-                    break;
-            }
+            else
+                equality = Equality.Equals;
         }
 
         public Check(Check c)
         {
             type = c.type;
-            value = (string[])c.value.Clone();
             invert = c.invert;
             contains = c.contains;
+            equality = c.equality;
 
+            if (c.values != null)
+                values = (string[])c.values.Clone();
             checks = new List<Check>();
-            for (int i = 0; i < c.checks.Count; i++)
-                checks.Add(new Check(c.checks[i]));
+            if (c.checks != null)
+            {
+                checks = new List<Check>();
+                for (int i = 0; i < c.checks.Count; ++i)
+                    checks.Add(new Check(c.checks[i]));
+            }
         }
 
-        public Check(string type, string value, bool invert = false, bool contains = true, Equality compare = Equality.Equals)
+        public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)
         {
-            this.type = getType(type.ToLowerInvariant());
-            this.value = value.Split(',');
-            for (int i = 0; i < this.value.Length; ++i)
-                this.value[i] = this.value[i].Trim();
+            type = getCheckType(Type);
+            values = Value.Split(',');
+            for (int i = 0; i < values.Length; ++i)
+                values[i] = values[i].Trim();
 
-            this.invert = invert;
-            this.contains = contains;
-            equality = compare;
-            this.checks = new List<Check>();
-        }
-
-        public ConfigNode toConfigNode()
-        {
-            ConfigNode node = new ConfigNode("CHECK");
-            node.AddValue("type", getTypeString(type));
-
-            if (value != null)
-                node.AddValue("value", string.Join(",", value));
-            if (invert)
-                node.AddValue("invert", this.invert.ToString());
-            if (!contains && checkUsesContains())
-                node.AddValue("contains", this.contains.ToString());
-            if (equality != Equality.Equals && checkUsesEquality())
-                node.AddValue("equality", this.equality.ToString());
-
-            foreach (Check c in this.checks)
-                node.AddNode(c.toConfigNode());
-
-            return node;
+            invert = Invert;
+            contains = Contains;
+            equality = Compare;
+            checks = new List<Check>();
         }
 
         public bool checkPart(AvailablePart part, int depth = 0)
         {
             bool result = true;
-            switch (type)
+            switch (type.typeEnum)
             {
                 case CheckType.moduleTitle: // check by module title
-                    result = PartType.checkModuleTitle(part, value, contains);
+                    result = PartType.checkModuleTitle(part, values, contains);
                     break;
                 case CheckType.moduleName:
-                    result = PartType.checkModuleName(part, value, contains);
+                    result = PartType.checkModuleName(part, values, contains);
                     break;
                 case CheckType.partName: // check by part name (cfg name)
-                    result = PartType.checkName(part, value);
+                    result = PartType.checkName(part, values);
                     break;
                 case CheckType.partTitle: // check by part title (in game name)
-                    result = PartType.checkTitle(part, value);
+                    result = PartType.checkTitle(part, values);
                     break;
                 case CheckType.resource: // check for a resource
-                    result = PartType.checkResource(part, value, contains);
+                    result = PartType.checkResource(part, values, contains);
                     break;
                 case CheckType.propellant: // check for engine propellant
-                    result = PartType.checkPropellant(part, value, contains);
+                    result = PartType.checkPropellant(part, values, contains);
                     break;
                 case CheckType.tech: // check by tech
-                    result = PartType.checkTech(part, value);
+                    result = PartType.checkTech(part, values);
                     break;
                 case CheckType.manufacturer: // check by manufacturer
-                    result = PartType.checkManufacturer(part, value);
+                    result = PartType.checkManufacturer(part, values);
                     break;
                 case CheckType.folder: // check by mod root folder
-                    result = PartType.checkFolder(part, value);
+                    result = PartType.checkFolder(part, values);
                     break;
                 case CheckType.path: // check by part folder location
-                    result = PartType.checkPath(part, value);
+                    result = PartType.checkPath(part, values);
                     break;
                 case CheckType.category:
-                    result = PartType.checkCategory(part, value);
+                    result = PartType.checkCategory(part, values);
                     break;
                 case CheckType.size: // check by largest stack node size
-                    result = PartType.checkPartSize(part, value, contains, equality);
+                    result = PartType.checkPartSize(part, values, contains, equality);
                     break;
                 case CheckType.crew:
-                    result = PartType.checkCrewCapacity(part, value, equality);
+                    result = PartType.checkCrewCapacity(part, values, equality);
                     break;
                 case CheckType.custom: // for when things get tricky
-                    result = PartType.checkCustom(part, value);
+                    result = PartType.checkCustom(part, values);
                     break;
                 case CheckType.mass:
-                    result = PartType.checkMass(part, value, equality);
+                    result = PartType.checkMass(part, values, equality);
                     break;
                 case CheckType.cost:
-                    result = PartType.checkCost(part, value, equality);
+                    result = PartType.checkCost(part, values, equality);
                     break;
                 case CheckType.crashTolerance:
-                    result = PartType.checkCrashTolerance(part, value, equality);
+                    result = PartType.checkCrashTolerance(part, values, equality);
                     break;
                 case CheckType.maxTemp:
-                    result = PartType.checkTemperature(part, value, equality);
+                    result = PartType.checkTemperature(part, values, equality);
                     break;
                 case CheckType.profile:
-                    result = PartType.checkBulkHeadProfiles(part, value, contains);
+                    result = PartType.checkBulkHeadProfiles(part, values, contains);
                     break;
                 case CheckType.check:
                     for (int i = 0; i < checks.Count; i++ )
                     {
                         if (!checks[i].checkPart(part))
+                        {
                             result = false;
+                            break;
+                        }
                     }
                     break;
                 case CheckType.subcategory:
-                    result = PartType.checkSubcategory(part, value, depth);
+                    result = PartType.checkSubcategory(part, values, depth);
+                    break;
+                case CheckType.tag:
+                    result = PartType.checkTags(part, values, contains);
                     break;
                 default:
                     Core.Log("invalid Check type specified");
@@ -225,151 +262,49 @@ namespace FilterExtensions.ConfigNodes
         /// </summary>
         /// <param name="type">type string</param>
         /// <returns>type enum</returns>
-        public static CheckType getType(string type)
+        public static CheckParameters getCheckType(string type)
         {
-            switch(type)
-            {
-                case "name":
-                    return CheckType.partName;
-                case "title":
-                    return CheckType.partTitle;
-                case "modulename":
-                    return CheckType.moduleName;
-                case "moduletitle":
-                    return CheckType.moduleTitle;
-                case "resource":
-                    return CheckType.resource;
-                case "propellant":
-                    return CheckType.propellant;
-                case "tech":
-                    return CheckType.tech;
-                case "manufacturer":
-                    return CheckType.manufacturer;
-                case "folder":
-                    return CheckType.folder;
-                case "path":
-                    return CheckType.path;
-                case "category":
-                    return CheckType.category;
-                case "size":
-                    return CheckType.size;
-                case "crew":
-                    return CheckType.crew;
-                case "custom":
-                    return CheckType.custom;
-                case "mass":
-                    return CheckType.mass;
-                case "cost":
-                    return CheckType.cost;
-                case "crash":
-                    return CheckType.crashTolerance;
-                case "maxtemp":
-                    return CheckType.maxTemp;
-                case "profile":
-                    return CheckType.profile;
-                case "check":
-                    return CheckType.check;
-                case "subcategory":
-                    return CheckType.subcategory;
-                default:
-                    return CheckType.category;
-            }
+            CheckParameters tmpParams;
+            if (!checkParams.TryGetValue(type, out tmpParams))
+                tmpParams = checkParams["category"];
+            return tmpParams;
         }
 
-        /// <summary>
-        /// set type string from type enum
-        /// NOTE: Needs the string => enum conversion added to function
-        /// </summary>
-        /// <param name="type">type enum</param>
-        /// <returns>type string</returns>
-        public static string getTypeString(CheckType type)
+        public bool isEmpty()
         {
-            switch (type)
-            {
-                case CheckType.partName:
-                    return "name";
-                case CheckType.partTitle:
-                    return "title";
-                case CheckType.moduleName:
-                    return "modulename";
-                case CheckType.moduleTitle:
-                    return "moduletitle";
-                case CheckType.resource:
-                    return "resource";
-                case CheckType.propellant:
-                    return "propellant";
-                case CheckType.tech:
-                    return "tech";
-                case CheckType.manufacturer:
-                    return "manufacturer";
-                case CheckType.folder:
-                    return "folder";
-                case CheckType.path:
-                    return "path";
-                case CheckType.category:
-                    return "category";
-                case CheckType.size:
-                    return "size";
-                case CheckType.crew:
-                    return "crew";
-                case CheckType.custom:
-                    return "custom";
-                case CheckType.mass:
-                    return "mass";
-                case CheckType.cost:
-                    return "cost";
-                case CheckType.crashTolerance:
-                    return "crash";
-                case CheckType.maxTemp:
-                    return "maxtemp";
-                case CheckType.profile:
-                    return "profile";
-                case CheckType.check:
-                    return "check";
-                case CheckType.subcategory:
-                    return "subcategory";
-                default:
-                    return "category";
-            }
+            return !checks.Any() && (values == null || values.Length == 0);
         }
 
-        public bool checkUsesContains()
+        public ConfigNode toConfigNode()
         {
-            switch (type)
-            {
-                case CheckType.moduleTitle:
-                case CheckType.moduleName:
-                case CheckType.resource:
-                case CheckType.propellant:
-                case CheckType.size:
-                case CheckType.profile:
-                    return true;
-                default:
-                    return false;
-            }
+            ConfigNode node = new ConfigNode("CHECK");
+            node.AddValue("type", type.typeString);
+
+            if (values != null)
+                node.AddValue("value", string.Join(",", values));
+            node.AddValue("invert", invert.ToString());
+
+            if (type.usesContains)
+                node.AddValue("contains", contains.ToString());
+            if (type.usesEquality)
+                node.AddValue("equality", equality.ToString());
+
+            foreach (Check c in this.checks)
+                node.AddNode(c.toConfigNode());
+
+            return node;
         }
 
-        public bool checkUsesEquality()
+        public object Clone()
         {
-            switch (type)
-            {
-                case CheckType.size:
-                case CheckType.crew:
-                case CheckType.mass:
-                case CheckType.cost:
-                case CheckType.crashTolerance:
-                case CheckType.maxTemp:
-                    return true;
-                default:
-                    return false;
-            }
+            return new Check(this);
         }
 
         public bool Equals(Check c2)
         {
             if (c2 == null)
                 return false;
-            if (this.type == c2.type && this.value == c2.value && this.invert == c2.invert && this.contains == c2.contains && this.checks == c2.checks && this.equality == c2.equality)
+            if (type == c2.type && values == c2.values && invert == c2.invert && contains == c2.contains && checks == c2.checks && equality == c2.equality)
                 return true;
             else
                 return false;
@@ -377,8 +312,7 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            int checks = this.checks.Any() ? this.checks.GetHashCode() : 1;
-            return this.type.GetHashCode() * this.value.GetHashCode() * this.invert.GetHashCode() * this.contains.GetHashCode() * this.equality.GetHashCode() * checks;
+            return type.GetHashCode() ^ values.GetHashCode() ^ invert.GetHashCode() ^ contains.GetHashCode() ^ equality.GetHashCode() ^ (int)checks.Average(c => c.GetHashCode());
         }
     }
 }

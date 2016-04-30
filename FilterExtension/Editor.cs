@@ -8,11 +8,13 @@ namespace FilterExtensions
 {
     using ConfigNodes;
     using Utility;
+    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     class Editor : MonoBehaviour
     {
         public static Editor instance;
+        public static bool subcategoriesChecked;
         public bool ready = false;
         void Start()
         {
@@ -40,11 +42,8 @@ namespace FilterExtensions
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat;
-                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat))
-                {
-                    if (cat.hasSubCategories() && (cat.behaviour == categoryTypeAndBehaviour.StockReplace || cat.behaviour == categoryTypeAndBehaviour.StockAdd))
-                        cat.initialise();
-                }
+                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat) && cat.type == customCategory.categoryType.Stock)
+                    cat.initialise();
             }
 
             // custom categories
@@ -61,7 +60,7 @@ namespace FilterExtensions
             // all FE categories
             foreach (customCategory c in Core.Instance.Categories)
             {
-                if (c.behaviour == categoryTypeAndBehaviour.None || c.behaviour == categoryTypeAndBehaviour.Engines)
+                if (c.type == customCategory.categoryType.New)
                     c.initialise();
             }
 
@@ -81,13 +80,13 @@ namespace FilterExtensions
             // this is to be used for altering subcategories in a category added by another mod
             foreach (customCategory c in Core.Instance.Categories)
             {
-                if (c.behaviour == categoryTypeAndBehaviour.ModAdd || c.behaviour == categoryTypeAndBehaviour.ModReplace)
+                if (c.type == customCategory.categoryType.Mod)
                     c.initialise();
             }
 
             // 
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
-                Core.Instance.namesAndIcons(c);
+                namesAndIcons(c);
 
             // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = 0; i < 4; i++)
@@ -97,7 +96,7 @@ namespace FilterExtensions
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
-                PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
+                PartCategorizer.Instance.scrollListMain.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
 
@@ -109,9 +108,68 @@ namespace FilterExtensions
                 yield return null;
             if (Settings.debug)
                 Core.Log("Refreshing parts list");
-            Core.setSelectedCategory();
+            setSelectedCategory();
 
-            ready = true;
+            subcategoriesChecked = ready = true;
+        }
+
+        /// <summary>
+        /// In the editor, checks all subcategories of a category and edits their names/icons if required
+        /// </summary>
+        public void namesAndIcons(PartCategorizer.Category category)
+        {
+            HashSet<string> toRemove = new HashSet<string>();
+            foreach (PartCategorizer.Category c in category.subcategories)
+            {
+                if (Core.Instance.removeSubCategory.Contains(c.button.categoryName))
+                    toRemove.Add(c.button.categoryName);
+                else
+                {
+                    string tmp;
+                    if (Core.Instance.Rename.TryGetValue(c.button.categoryName, out tmp)) // update the name first
+                        c.button.categoryName = tmp;
+
+                    RUI.Icons.Selectable.Icon icon;
+                    if (Core.tryGetIcon(tmp, out icon) || Core.tryGetIcon(c.button.categoryName, out icon)) // if there is an explicit setIcon for the subcategory or if the name matches an icon
+                        c.button.SetIcon(icon); // change the icon
+                }
+            }
+            category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
+        }
+
+        /// <summary>
+        /// refresh the visible subcategories to ensure all changes are visible
+        /// </summary>
+        public static void setSelectedCategory()
+        {
+            try
+            {
+                PartCategorizer.Category cat;
+                if (Settings.categoryDefault != string.Empty)
+                {
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
+                    if (cat != null)
+                        cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
+                }
+
+                if (Settings.subCategoryDefault != string.Empty)
+                {
+                    // set the subcategory button
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.Value);
+                    if (cat != null)
+                    {
+                        cat = cat.subcategories.FirstOrDefault(sC => sC.button.categoryName == Settings.subCategoryDefault);
+                        if (cat != null)
+                            cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Core.Log("Category refresh failed");
+                Core.Log(e.InnerException);
+                Core.Log(e.StackTrace);
+            }
         }
 
         /// <summary>

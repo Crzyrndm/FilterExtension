@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
-    public class Filter
+    public class Filter : IEquatable<Filter>, ICloneable
     {
         public List<Check> checks { get; set; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
         public bool invert { get; set; }
@@ -17,7 +17,7 @@ namespace FilterExtensions.ConfigNodes
             {
                 checks.Add(new Check(subNode));
             }
-            checks.RemoveAll(c => c.value == null);
+            checks.RemoveAll(c => c.isEmpty());
 
             bool tmp;
             bool.TryParse(node.GetValue("invert"), out tmp);
@@ -29,7 +29,7 @@ namespace FilterExtensions.ConfigNodes
             checks = new List<Check>();
             for (int i = 0; i < f.checks.Count; i++)
             {
-                if (f.checks[i].value != null)
+                if (!f.checks[i].isEmpty())
                     checks.Add(new Check(f.checks[i]));
             }
 
@@ -45,22 +45,21 @@ namespace FilterExtensions.ConfigNodes
         public ConfigNode toConfigNode()
         {
             ConfigNode node = new ConfigNode("FILTER");
-            if (invert)
-                node.AddValue("invert", this.invert.ToString());
+            node.AddValue("invert", this.invert.ToString());
             foreach (Check c in checks)
                 node.AddNode(c.toConfigNode());
 
             return node;
         }
 
+        public object Clone()
+        {
+            return new Filter(this);
+        }
+
         internal bool checkFilter(AvailablePart part, int depth = 0)
         {
-            for (int i = 0; i < checks.Count; i++)
-            {
-                if (!checks[i].checkPart(part, depth))
-                    return invert ? true : false;
-            }
-            return invert ? false : true;
+            return invert ? !checks.All(c => c.checkPart(part, depth)) : checks.All(c => c.checkPart(part, depth));
         }
 
         /// <summary>
@@ -74,12 +73,7 @@ namespace FilterExtensions.ConfigNodes
             if (fLA.Count != fLB.Count && fLA.Count != 0)
                 return false;
 
-            foreach (Filter fA in fLA)
-            {
-                if (!fLB.Any(fB => fB.Equals(fA)))
-                    return false;
-            }
-            return true;
+            return fLA.All(f => fLB.Contains(f));
         }
 
         public bool Equals(Filter f2)
@@ -87,28 +81,20 @@ namespace FilterExtensions.ConfigNodes
             if (f2 == null)
                 return false;
 
-            if (this.invert != f2.invert)
+            if (invert != f2.invert)
                 return false;
-            else
-            {
-                foreach (Check c1 in this.checks)
-                {
-                    if (!f2.checks.Any(c2 => c1.Equals(c2)))
-                        return false;
-                }
-                return true;
-            }
+            return checks.All(c => f2.checks.Contains(c));
         }
 
         public override int GetHashCode()
         {
             int hash = 0;
-            foreach (Check c in this.checks)
+            foreach (Check c in checks)
             {
                 hash *= c.GetHashCode();
             }
 
-            return hash * this.invert.GetHashCode();
+            return hash ^ invert.GetHashCode();
         }
     }
 }
