@@ -6,65 +6,145 @@ using UnityEngine;
 namespace FilterExtensions.ConfigNodes
 {
     using Utility;
+    using KSP.UI.Screens;
 
-    public enum categoryTypeAndBehaviour
+    public class customCategory : IEquatable<customCategory>, ICloneable
     {
-        None,
-        Engines,
-        StockAdd,
-        StockReplace
-    }
+        public enum categoryType
+        {
+            New = 1, // new category
+            Stock = 2, // modification to stock category
+            Mod = 4, // modification to a mod cateogry
+        }
 
-    public class customCategory : IEquatable<customCategory>
-    {
+        public enum categoryBehaviour
+        {
+            Add = 1, // only add to existing categories
+            Replace = 2, // wipe existing categories
+            Engines = 4 // generate unique engine types
+        }
+
         public string categoryName { get; set; }
         public string iconName { get; set; }
         public Color colour { get; set; }
-        public categoryTypeAndBehaviour behaviour { get; set; }
+        public categoryType type { get; set; }
+        public categoryBehaviour behaviour { get; set; }
         public bool all { get; set; } // has an all parts subCategory
-        public List<string> subCategories { get; set; } // array of subcategories
+        public List<subCategoryItem> subCategories { get; set; } // array of subcategories
         public List<Filter> templates { get; set; } // Checks to add to every Filter in a category with the template tag
-
-        private static readonly List<string> categoryNames = new List<string> { "Pods", "Engines", "Fuel Tanks", "Command and Control", "Structural", "Aerodynamics", "Utility", "Science" };
 
         public customCategory(ConfigNode node)
         {
-            bool tmp;
+            bool tmpBool;
+            string tmpStr = string.Empty;
+
             categoryName = node.GetValue("name");
             iconName = node.GetValue("icon");
-            colour = convertToColor(node.GetValue("colour"));
+            colour = GUIUtils.convertToColor(node.GetValue("colour"));
 
             makeTemplate(node);
 
-            bool.TryParse(node.GetValue("all"), out tmp);
-            this.all = tmp;
+            bool.TryParse(node.GetValue("all"), out tmpBool);
+            this.all = tmpBool;
             
-            ConfigNode subcategoryList = node.GetNode("SUBCATEGORIES", 0);
+            ConfigNode[] subcategoryList = node.GetNodes("SUBCATEGORIES");
+            subCategories = new List<subCategoryItem>();
             if (subcategoryList != null)
             {
-                List<string> unorderedSubCats = new List<string>();
-                string[] stringList = subcategoryList.GetValues();
-                string[] subs = new string[1000];
-                for (int i = 0; i < stringList.Length; i++)
+                List<subCategoryItem> unorderedSubCats = new List<subCategoryItem>();
+                List<string> stringList = new List<string>();
+                for (int i = 0; i < subcategoryList.Length; i++)
+                    stringList.AddRange(subcategoryList[i].GetValues());
+                
+                subCategoryItem[] subs = new subCategoryItem[1000];
+                for (int i = 0; i < stringList.Count; i++)
                 {
-                    string[] indexAndValue = stringList[i].Split(',');
-                    if (indexAndValue.Length >= 2) // location and ID
+                    string[] indexAndValue = stringList[i].Split(',').Select(s => s.Trim()).ToArray();
+
+                    subCategoryItem newSubItem = new subCategoryItem();
+                    int index;
+                    if (int.TryParse(indexAndValue[0], out index)) // has position index
                     {
-                        int index;
-                        if (int.TryParse(indexAndValue[0], out index))
-                            subs[index] = indexAndValue[1].Trim();
+                        if (indexAndValue.Length >= 2)
+                            newSubItem.subcategoryName = indexAndValue[1];
+                        if (string.IsNullOrEmpty(newSubItem.subcategoryName))
+                            continue;
+
+                        if (indexAndValue.Length >= 3 && string.Equals(indexAndValue[2], "dont template", StringComparison.CurrentCultureIgnoreCase))
+                            newSubItem.applyTemplate = false;
+                        subs[index] = newSubItem;
                     }
-                    else if (indexAndValue.Length == 1) // just an ID
+                    else // no valid position index
                     {
-                        int index;
-                        if (!int.TryParse(indexAndValue[0], out index))
-                            unorderedSubCats.Add(indexAndValue[0]);
+                        newSubItem.subcategoryName = indexAndValue[0];
+                        if (string.IsNullOrEmpty(newSubItem.subcategoryName))
+                            continue;
+
+                        if (indexAndValue.Length >= 2 && string.Equals(indexAndValue[1], "dont template", StringComparison.CurrentCultureIgnoreCase))
+                            newSubItem.applyTemplate = false;
+                        unorderedSubCats.Add(newSubItem);
                     }
                 }
                 subCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
                 subCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
+                subCategories.RemoveAll(s => s == null);
             }
-            typeSwitch(node.GetValue("type"), node.GetValue("value"));
+
+            if (node.TryGetValue("type", ref tmpStr))
+                tmpStr = tmpStr.ToLower();
+            switch (tmpStr)
+            {
+                case "stock":
+                    type = categoryType.Stock;
+                    break;
+                case "mod":
+                    type = categoryType.Mod;
+                    break;
+                case "new":
+                default:
+                    type = categoryType.New;
+                    break;
+            }
+            if (node.TryGetValue("value", ref tmpStr))
+            {
+                if (string.Equals(tmpStr, "replace", StringComparison.OrdinalIgnoreCase))
+                    behaviour = categoryBehaviour.Replace;
+                else if (string.Equals(tmpStr, "engine", StringComparison.OrdinalIgnoreCase))
+                {
+                    behaviour = categoryBehaviour.Engines;
+                    foreach (List<string> combo in Core.Instance.propellantCombos)
+                    {
+                        string dummy = string.Empty, subcatName = string.Join(",", combo.ToArray());
+                        Core.Instance.SetNameAndIcon(ref subcatName, ref dummy);
+                        subCategories.AddUnique(new subCategoryItem(subcatName));
+                    }
+                }
+                else
+                    behaviour = categoryBehaviour.Add;
+            }
+        }
+
+        public customCategory(customCategory c)
+        {
+            categoryName = c.categoryName;
+            iconName = c.iconName;
+            colour = c.colour;
+            type = c.type;
+            behaviour = c.behaviour;
+            all = c.all;
+
+            subCategories = new List<subCategoryItem>();
+            for (int i = 0; i < c.subCategories.Count; ++i)
+                subCategories.Add(new subCategoryItem(c.subCategories[i].subcategoryName, c.subCategories[i].applyTemplate));
+
+            templates = new List<Filter>();
+            for (int i = 0; i < c.templates.Count; ++i)
+                templates.Add(new Filter(c.templates[i]));
+        }
+
+        public object Clone()
+        {
+            return new customCategory(this);
         }
 
         public void initialise()
@@ -80,7 +160,7 @@ namespace FilterExtensions.ConfigNodes
                 return;
             }
             PartCategorizer.Category category;
-            if (!stockCategory)
+            if (type == categoryType.New)
             {
                 RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
                 PartCategorizer.AddCustomFilter(categoryName, icon, colour);
@@ -89,122 +169,62 @@ namespace FilterExtensions.ConfigNodes
                 category.displayType = EditorPartList.State.PartsList;
                 category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
             }
-            else
+            else 
             {
-                category = PartCategorizer.Instance.filters.Find(c => c.button.categoryName == categoryName);
-                if (category == null)
+                if (!PartCategorizer.Instance.filters.TryGetValue(c => c.button.categoryName == categoryName, out category))
                 {
-                    Core.Log("No Stock category of this name was found: " + categoryName);
+                    Core.Log("No category of this name was found to manipulate: " + categoryName);
                     return;
                 }
+                else if (behaviour == categoryBehaviour.Replace)
+                    category.subcategories.Clear();
             }
-            
+
             for (int i = 0; i < subCategories.Count; i++)
-            {
-                if (!string.IsNullOrEmpty(subCategories[i]) && Core.Instance.subCategoriesDict.ContainsKey(subCategories[i]))
-                {
-                    if (Core.Instance.conflictsDict.ContainsKey(subCategories[i]))
-                    {
-                        List<string> conflicts = Core.Instance.conflictsDict[subCategories[i]].Intersect(subCategories).ToList();
-                        
-                        if (conflicts.Any(c => subCategories.IndexOf(c) < i))
-                        {
-                            string conflictList = "";
-                            foreach (string s in conflicts)
-                                conflictList += "\r\n" + s;
-                            Core.Log("Filters duplicated in category " + this.categoryName + " between subCategories" + conflictList);
-                            continue;
-                        }
-                    }
-                    customSubCategory sC = new customSubCategory(Core.Instance.subCategoriesDict[subCategories[i]].toConfigNode());
-                    
-                    if (templates != null && templates.Any())
-                    {
-                        List<Filter> baseSubCatFilters = new List<Filter>();
-                        foreach (Filter f in sC.filters)
-                            baseSubCatFilters.Add(new Filter(f.toConfigNode())); // create independent copies
-                        sC.filters.Clear(); // create them from scratch
-                        foreach (Filter templateFilter in templates)
-                        {
-                            foreach (Filter f in baseSubCatFilters)
-                            {
-                                sC.filters.Add(new Filter(f.toConfigNode()));
-                                sC.filters.Last().checks.AddRange(templateFilter.checks);
-                            }
-                        }
-                    }
-                    try
-                    {
-                        if (Core.checkSubCategoryHasParts(sC, categoryName))
-                            sC.initialise(category);
-                    }
-                    catch (Exception ex)
-                    {
-                        // extended logging for errors
-                        Core.Log(subCategories[i] + " failed to initialise");
-                        Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
-                        Core.Log(ex.StackTrace);
-                    }
-                }
-            }
+                initSubcategory(i, subCategories[i], category);
         }
 
-        private void typeSwitch(string type, string value)
+        public void initSubcategory(int index, subCategoryItem toInit, PartCategorizer.Category category)
         {
-            switch (type)
+            if (toInit == null || string.IsNullOrEmpty(toInit.ToString()))
+                return;
+
+            List<string> conflictsList;
+            if (Core.Instance.conflictsDict.TryGetValue(toInit.ToString(), out conflictsList)) // if we have a conflict with some other subcategory
             {
-                case "engine":
-                    generateEngineTypes();
-                    behaviour = categoryTypeAndBehaviour.Engines;
-                    break;
-                case "stock":
-                    if (value == "replace")
-                        behaviour = categoryTypeAndBehaviour.StockReplace;
-                    else
-                        behaviour = categoryTypeAndBehaviour.StockAdd;
-                    break;
-                default:
-                    behaviour = categoryTypeAndBehaviour.None;
-                    break;
+                for (int j = 0; j < index; ++j) // iterate over the subcategories we've already added to see if it's one of them
+                {
+                    if (conflictsList.Contains(subCategories[j].subcategoryName))
+                    {
+                        // if so, we skip this subcategory
+                        Core.Log("Filters duplicated in category {0} between subCategories:\r\n{1} and {2}", categoryName, toInit.ToString(), subCategories[j].subcategoryName);
+                        return;
+                    }
+                }
             }
-        }
-
-        private void generateEngineTypes()
-        {
-            List<string> engines = new List<string>();
-            foreach (List<string> ls in Core.Instance.propellantCombos)
+            customSubCategory subcategory = null;
+            if (!Core.Instance.subCategoriesDict.TryGetValue(toInit.ToString(), out subcategory))
             {
-                List<Check> checks = new List<Check>();
-                string props = "";
-                foreach (string s in ls)
-                {
-                    if (props != "")
-                        props += ",";
-                    props += s;
-                }
-                foreach (string s in props.Split(','))
-                    checks.Add(new Check("propellant", s.Trim()));
-                checks.Add(new Check("propellant", props, true, false)); // exact match to propellant list. Nothing extra, nothing less
-
-                string name = props.Replace(',', '/'); // can't use ',' as a delimiter in the procedural name/icon switch function
-                string icon = name;
-                Core.Instance.proceduralNameandIcon(ref name, ref icon);
-
-                if (!Core.Instance.subCategoriesDict.ContainsKey(name))
-                {
-                    customSubCategory sC = new customSubCategory(name, icon);
-
-                    Filter f = new Filter(false);
-                    f.checks = checks;
-                    sC.filters.Add(f);
-                    Core.Instance.subCategoriesDict.Add(name, sC);
-                }
-                engines.Add(name);
+                Core.Log("subcategory {0} not found in subcategories Dictionary", toInit.ToString());
+                return;
             }
-            if (subCategories != null)
-                subCategories.AddUniqueRange(engines);
-            else
-                subCategories = engines;
+
+            customSubCategory sC = new customSubCategory(subcategory);
+            if (toInit.applyTemplate)
+                sC.template = templates;
+
+            try
+            {
+                if (sC.checkSubCategoryHasParts(categoryName))
+                    sC.initialise(category);
+            }
+            catch (Exception ex)
+            {
+                // extended logging for errors
+                Core.Log(subCategories[index] + " failed to initialise");
+                Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
+                Core.Log(ex.StackTrace);
+            }
         }
 
         private void makeTemplate(ConfigNode node)
@@ -212,44 +232,14 @@ namespace FilterExtensions.ConfigNodes
             ConfigNode[] filtNodes = node.GetNodes("FILTER");
             if (filtNodes == null)
                 return;
-            this.templates = new List<Filter>();
+            templates = new List<Filter>();
             foreach (ConfigNode n in filtNodes)
-                this.templates.Add(new Filter(n));
-        }
-
-        public static Color convertToColor(string hex_ARGB)
-        {
-            if (string.IsNullOrEmpty(hex_ARGB))
-                return Color.clear;
-
-            hex_ARGB = hex_ARGB.Replace("#", "").Replace("0x", ""); // remove any hexadecimal identifiers
-            if (System.Text.RegularExpressions.Regex.IsMatch(hex_ARGB, "[0-9a-fA-F]{6,8}")) // check it is valid hex
-            {
-                if (hex_ARGB.Length == 8)
-                {
-                    Color c = new Color();
-                    c.a = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.r = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.g = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.b = (float)byte.Parse(hex_ARGB.Substring(6, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    return c;
-                }
-                else if (hex_ARGB.Length == 6)
-                {
-                    Color c = new Color();
-                    c.a = 1;
-                    c.r = (float)byte.Parse(hex_ARGB.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.g = (float)byte.Parse(hex_ARGB.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    c.b = (float)byte.Parse(hex_ARGB.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-                    return c;
-                }
-            }
-            return Color.clear;
+                templates.Add(new Filter(n));
         }
 
         public bool hasSubCategories()
         {
-            return (this.subCategories != null && this.subCategories.Any());
+            return (subCategories != null && subCategories.Any());
         }
 
         public override bool Equals(object obj)
@@ -277,13 +267,41 @@ namespace FilterExtensions.ConfigNodes
         {
             return categoryName.GetHashCode();
         }
+    }
 
-        public bool stockCategory
+    public class subCategoryItem : IEquatable<subCategoryItem>
+    {
+        public string subcategoryName { get; set; }
+        public bool applyTemplate { get; set; }
+
+        public subCategoryItem()
         {
-            get
-            {
-                return this.behaviour == categoryTypeAndBehaviour.StockAdd || this.behaviour == categoryTypeAndBehaviour.StockReplace;
-            }
+            applyTemplate = true;
+        }
+        public subCategoryItem(string name, bool useTemplate = true)
+        {
+            subcategoryName = name;
+            applyTemplate = useTemplate;
+        }
+
+        public bool Equals(subCategoryItem sub)
+        {
+            if (ReferenceEquals(null, sub))
+                return false;
+            if (ReferenceEquals(this, sub))
+                return true;
+
+            return subcategoryName.Equals(sub.subcategoryName);
+        }
+
+        public override int GetHashCode()
+        {
+            return subcategoryName.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return subcategoryName;
         }
     }
 }

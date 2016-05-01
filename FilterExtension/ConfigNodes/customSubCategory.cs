@@ -5,48 +5,84 @@ using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
-    public class customSubCategory
+    using KSP.UI.Screens;
+    public class customSubCategory : IEquatable<customSubCategory>, ICloneable
     {
         public string subCategoryTitle { get; set; } // title of this subcategory
         public string iconName { get; set; } // default icon to use
         public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        public List<Filter> template { get; set; } // from the category, checked seperately
+        public bool unPurchasedOverride { get; set; } // allow unpurchased parts to be visible even if the global setting hides them
 
         public bool hasFilters
         {
             get
             {
-                return filters.Count > 0;
+                return filters.Any() || template.Any();
             }
         }
 
         public customSubCategory(ConfigNode node)
         {
             subCategoryTitle = node.GetValue("name");
-            if (string.IsNullOrEmpty(subCategoryTitle))
-                subCategoryTitle = node.GetValue("title");
-
             iconName = node.GetValue("icon");
+
+            bool tmp;
+            bool.TryParse(node.GetValue("showUnpurchased"), out tmp);
+            unPurchasedOverride = tmp;
 
             filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
             }
+            template = new List<Filter>();
+        }
+
+        public customSubCategory(customSubCategory subCat)
+        {
+            subCategoryTitle = subCat.subCategoryTitle;
+            iconName = subCat.iconName;
+            filters = new List<Filter>(subCat.filters.Count);
+            subCat.filters.ForEach(f => filters.Add(new Filter(f)));
+
+            template = new List<Filter>(subCat.template.Count);
+            subCat.template.ForEach(f => template.Add(new Filter(f)));
+
+            unPurchasedOverride = subCat.unPurchasedOverride;
         }
 
         public customSubCategory(string name, string icon)
         {
             filters = new List<Filter>();
+            template = new List<Filter>();
             this.subCategoryTitle = name;
             this.iconName = icon;
         }
 
+        /// <summary>
+        /// called in the editor when creating the subcategory
+        /// </summary>
+        /// <param name="cat">The category to add this subcategory to</param>
+        public void initialise(PartCategorizer.Category cat)
+        {
+            if (cat == null)
+                return;
+            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
+            PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
+        }
+
+        /// <summary>
+        /// used mostly for purpose of creating a deep copy
+        /// </summary>
+        /// <returns></returns>
         public ConfigNode toConfigNode()
         {
             ConfigNode node = new ConfigNode("SUBCATEGORY");
 
-            node.AddValue("name", this.subCategoryTitle);
-            node.AddValue("icon", this.iconName);
+            node.AddValue("name", subCategoryTitle);
+            node.AddValue("icon", iconName);
+            node.AddValue("showUnpurchased", unPurchasedOverride);
 
             foreach (Filter f in this.filters)
                 node.AddNode(f.toConfigNode());
@@ -54,27 +90,97 @@ namespace FilterExtensions.ConfigNodes
             return node;
         }
 
-        public bool checkFilters(AvailablePart part)
+        public object Clone()
         {
-            foreach (Filter f in filters)
-            {
-                if (f.checkFilter(part))
-                    return true;
-            }
-            return false; // part passed no filter(s), not compatible with this subcategory
+            return new customSubCategory(this);
         }
 
-        public void initialise(PartCategorizer.Category cat)
+        /// <summary>
+        /// called by subcategory check type, has depth limit protection
+        /// </summary>
+        /// <param name="part"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        public bool checkFilters(AvailablePart part, int depth = 0)
         {
-            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            if (hasFilters)
+            if (Editor.blackListedParts != null)
             {
-                if (cat == null)
-                    return;
-                PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
+                if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                    return false;
             }
-            else
-                Core.Log("Invalid subCategory definition");
+            if (!unPurchasedOverride && Settings.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+                return false;
+
+            PartModuleFilter pmf;
+            if (Core.Instance.filterModules.TryGetValue(part.name, out pmf))
+            {
+                if (pmf.CheckForForceAdd(subCategoryTitle))
+                    return true;
+                if (pmf.CheckForForceBlock(subCategoryTitle))
+                    return false;
+            }
+
+            return ((!template.Any() || template.Any(t => t.checkFilter(part, depth))) && filters.Any(f => f.checkFilter(part, depth))); // part passed a template if present, and a subcategory filter
+        }
+
+        /// <summary>
+        /// if a subcategory doesn't have any parts, it shouldn't be used. Doesn't account for the blackListed parts the first time the editor is entered
+        /// </summary>
+        /// <param name="sC">the subcat to check</param>
+        /// <param name="category">the category for logging purposes</param>
+        /// <returns>true if the subcategory contains any parts</returns>
+        public bool checkSubCategoryHasParts(string category)
+        {
+            PartModuleFilter pmf;
+            AvailablePart p;
+            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
+            {
+                pmf = null;
+                p = PartLoader.Instance.parts[i];
+                if (Core.Instance.filterModules.TryGetValue(p.name, out pmf))
+                {
+                    if (pmf.CheckForForceAdd(subCategoryTitle))
+                        return true;
+                    if (pmf.CheckForForceBlock(subCategoryTitle))
+                        return false;
+                }
+                if (checkFilters(PartLoader.Instance.parts[i]))
+                    return true;
+            }
+
+            if (Settings.debug)
+            {
+                if (!string.IsNullOrEmpty(category))
+                    Core.Log(subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
+                else
+                    Core.Log(subCategoryTitle + " has no valid parts and was not initialised");
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// check to see if any checks in a subcategory match a given check
+        /// </summary>
+        /// <param name="subcategory"></param>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
+        /// <param name="contains"></param>
+        /// <param name="equality"></param>
+        /// <param name="invert"></param>
+        /// <returns>true if there is a matching check in the category</returns>
+        public static bool checkForCheckMatch(customSubCategory subcategory, Check.CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
+        {
+            for (int j = 0; j < subcategory.filters.Count; j++)
+            {
+                Filter f = subcategory.filters[j];
+                for (int k = 0; k < f.checks.Count; k++)
+                {
+                    Check c = f.checks[k];
+                    if (c.type.typeEnum == type && c.values.Contains(value) && c.values.Length == 1 && c.invert == invert && c.contains == contains && c.equality == equality)
+                        return true;
+                }
+            }
+            return false;
         }
 
         public bool Equals(customSubCategory sC2)
@@ -82,7 +188,7 @@ namespace FilterExtensions.ConfigNodes
             if (sC2 == null)
                 return false;
 
-            if (this.subCategoryTitle == sC2.subCategoryTitle)
+            if (subCategoryTitle == sC2.subCategoryTitle)
                 return true;
 
             return false;
@@ -90,7 +196,7 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            return this.subCategoryTitle.GetHashCode();
+            return subCategoryTitle.GetHashCode();
         }
     }
 }

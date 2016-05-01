@@ -7,39 +7,45 @@ using UnityEngine;
 namespace FilterExtensions
 {
     using ConfigNodes;
+    using Utility;
+    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     class Editor : MonoBehaviour
     {
         public static Editor instance;
+        public static bool subcategoriesChecked;
+        public bool ready = false;
         void Start()
         {
             instance = this;
             StartCoroutine(editorInit());
         }
 
+        /// <summary>
+        /// names of all parts that shouldn't be visible to the player
+        /// </summary>
         public static HashSet<string> blackListedParts;
 
         IEnumerator editorInit()
         {
+            ready = false;
+
             while (PartCategorizer.Instance == null)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Starting on Stock Filters");
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
-            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I clear the category
+            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I may clear the category
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
-                customCategory cat = Core.Instance.Categories.FirstOrDefault(c => c.categoryName == C.button.categoryName);
-                if (cat != null && cat.hasSubCategories() && cat.stockCategory)
-                {
-                    if (cat.behaviour == categoryTypeAndBehaviour.StockReplace)
-                        C.subcategories.Clear();
+                customCategory cat;
+                if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat) && cat.type == customCategory.categoryType.Stock)
                     cat.initialise();
-                }
             }
+
             // custom categories
             // wait until the part menu is initialised
             while (!PartCategorizer.Ready)
@@ -48,47 +54,122 @@ namespace FilterExtensions
             // frames after the flag is set to wait before initialising. Minimum of two for things to work consistently
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
-                Core.Log("Starting on other filters");
-            // run everything
+            if (Settings.debug)
+                Core.Log("Starting on general categories");
+            
+            // all FE categories
             foreach (customCategory c in Core.Instance.Categories)
-                if (!c.stockCategory)
+            {
+                if (c.type == customCategory.categoryType.New)
                     c.initialise();
+            }
 
             // wait again so icon edits don't occur immediately and cause breakages
             for (int i = 0; i < 4; i++)
                 yield return null;
-            // edit names and icons of all subcategories
-            if (Core.Instance.debug)
-                Core.Log("Starting on setting names and icons");
+            if (Settings.debug)
+                Core.Log("Starting on late categories");
+
+            // generate the set of parts to block
             if (blackListedParts == null)
+            {
+                #warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
                 findPartsToBlock();
+            }
+
+            // this is to be used for altering subcategories in a category added by another mod
+            foreach (customCategory c in Core.Instance.Categories)
+            {
+                if (c.type == customCategory.categoryType.Mod)
+                    c.initialise();
+            }
+
+            // 
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
-                Core.Instance.namesAndIcons(c);
+                namesAndIcons(c);
 
             // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Starting on removing categories");
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
-                PartCategorizer.Instance.scrollListMain.scrollList.RemoveItem(cat.button.container, true);
+                PartCategorizer.Instance.scrollListMain.RemoveItem(cat.button.container, true);
                 PartCategorizer.Instance.filters.Remove(cat);
             }
 
-            if (Core.Instance.setAdvanced)
+            // make the categories visible
+            if (Settings.setAdvanced)
                 PartCategorizer.Instance.SetAdvancedMode();
 
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Core.Instance.debug)
+            if (Settings.debug)
                 Core.Log("Refreshing parts list");
-            Core.setSelectedCategory();
+            setSelectedCategory();
 
-            //while (true)
-            //    yield return null;
+            subcategoriesChecked = ready = true;
+        }
+
+        /// <summary>
+        /// In the editor, checks all subcategories of a category and edits their names/icons if required
+        /// </summary>
+        public void namesAndIcons(PartCategorizer.Category category)
+        {
+            HashSet<string> toRemove = new HashSet<string>();
+            foreach (PartCategorizer.Category c in category.subcategories)
+            {
+                if (Core.Instance.removeSubCategory.Contains(c.button.categoryName))
+                    toRemove.Add(c.button.categoryName);
+                else
+                {
+                    string tmp;
+                    if (Core.Instance.Rename.TryGetValue(c.button.categoryName, out tmp)) // update the name first
+                        c.button.categoryName = tmp;
+
+                    RUI.Icons.Selectable.Icon icon;
+                    if (Core.tryGetIcon(tmp, out icon) || Core.tryGetIcon(c.button.categoryName, out icon)) // if there is an explicit setIcon for the subcategory or if the name matches an icon
+                        c.button.SetIcon(icon); // change the icon
+                }
+            }
+            category.subcategories.RemoveAll(c => toRemove.Contains(c.button.categoryName));
+        }
+
+        /// <summary>
+        /// refresh the visible subcategories to ensure all changes are visible
+        /// </summary>
+        public static void setSelectedCategory()
+        {
+            try
+            {
+                PartCategorizer.Category cat;
+                if (Settings.categoryDefault != string.Empty)
+                {
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
+                    if (cat != null)
+                        cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
+                }
+
+                if (Settings.subCategoryDefault != string.Empty)
+                {
+                    // set the subcategory button
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.Value);
+                    if (cat != null)
+                    {
+                        cat = cat.subcategories.FirstOrDefault(sC => sC.button.categoryName == Settings.subCategoryDefault);
+                        if (cat != null)
+                            cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Core.Log("Category refresh failed");
+                Core.Log(e.InnerException);
+                Core.Log(e.StackTrace);
+            }
         }
 
         /// <summary>
@@ -96,8 +177,10 @@ namespace FilterExtensions
         /// </summary>
         void findPartsToBlock()
         {
+            PartModuleFilter pmf;
             // all parts that may not be visible
-            List<AvailablePart> partsToCheck = PartLoader.Instance.parts.FindAll(ap => ap.category == PartCategories.none);
+            List<AvailablePart> partsToCheck = PartLoader.Instance.parts.FindAll(ap => ap.category == PartCategories.none
+                                                                                    && !(Core.Instance.filterModules.TryGetValue(ap.name, out pmf) && pmf.hasForceAdd()));
             // Only checking the category which should be Filter by Function (should I find FbF explcitly?)
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
             // has a reference to all the subcats that FE added to the category
@@ -108,21 +191,18 @@ namespace FilterExtensions
             {
                 PartCategorizer.Category subCat = mainCat.subcategories[i];
                 // if the name is an FE subcat and the category should have that FE subcat and it's not the duplicate of one already seen created by another mod, mark it seen and move on
-                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Contains(subCat.button.categoryName) && !subCatsSeen.Contains(subCat.button.categoryName))
+                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Any(subItem => string.Equals(subItem.subcategoryName, subCat.button.categoryName, StringComparison.CurrentCulture)))
                     subCatsSeen.Add(subCat.button.categoryName);
                 else // subcat created by another mod
                 {
-                    // can't remove parts from a collection being looped over, need to remember the visible parts
-                    List<AvailablePart> visibleParts = new List<AvailablePart>();
-                    for (int j = 0; j < partsToCheck.Count; j++)
+                    int j = 0;
+                    while (j < partsToCheck.Count)
                     {
-                        AvailablePart AP = partsToCheck[j];
-                        if (subCat.exclusionFilter.FilterCriteria.Invoke(AP)) // if visible
-                            visibleParts.Add(AP);
+                        if (subCat.exclusionFilter.FilterCriteria.Invoke(partsToCheck[j])) // if visible
+                            partsToCheck.RemoveAt(j);
+                        else
+                            j++;
                     }
-                    // remove all visible parts from the list to block
-                    foreach (AvailablePart ap in visibleParts)
-                        partsToCheck.Remove(ap);
                 }
             }
             // add the blocked parts to a hashset for later lookup
