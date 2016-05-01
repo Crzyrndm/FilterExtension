@@ -152,8 +152,8 @@ namespace FilterExtensions
                             resources.AddUnique(r.resourceName);
                     }
                 }
-                if (p.partPrefab.Modules.Contains("PartModuleFilter"))
-                    filterModules.Add(p.name, (PartModuleFilter)p.partPrefab.Modules["PartModuleFilter"]);
+                if (p.partPrefab.Modules.Contains<PartModuleFilter>())
+                    filterModules.Add(p.name, p.partPrefab.Modules.GetModule<PartModuleFilter>());
             }
             generateEngineTypes();
 
