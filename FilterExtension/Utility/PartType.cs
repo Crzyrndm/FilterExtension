@@ -593,10 +593,10 @@ namespace FilterExtensions.Utility
         {
             if (part.bulkheadProfiles == null)
                 return value.Contains("srf");
-
-            foreach (string s in part.bulkheadProfiles.Split(','))
+            
+            foreach (string s in part.bulkheadProfiles.Split(',').Select(s => s.Trim()))
             {
-                if (contains == value.Contains(s.Trim()))
+                if (contains == value.Contains(s, StringComparer.OrdinalIgnoreCase))
                     return true;
             }
             return false;
