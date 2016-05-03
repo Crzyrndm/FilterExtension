@@ -131,9 +131,9 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (contains)
-                return value.Any(s => checkModuleNameType(part, s) || part.partPrefab.Modules.Contains(s));
+                return value.Any(s => checkModuleNameType(part, s) || part.partPrefab.Modules.PMListContains(s));
             else
-                return value.Any(s => !checkModuleNameType(part, s) && !part.partPrefab.Modules.Contains(s));
+                return value.Any(s => !checkModuleNameType(part, s) && !part.partPrefab.Modules.PMListContains(s));
         }
         
         /// <summary>
