@@ -51,7 +51,7 @@ namespace FilterExtensions.Utility
         {
             for (int i = 0; i < list.Count; ++i)
             {
-                if (list[i].GetType().Name == moduleName)
+                if (list[i] != null && list[i].GetType().Name == moduleName)
                     return true;
             }
             return false;
