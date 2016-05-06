@@ -490,18 +490,35 @@ namespace FilterExtensions
                 icon = tmp;
         }
 
+        public enum LogLevel
+        {
+            Log,
+            Warn,
+            Error
+        }
+
         /// <summary>
         /// Debug.Log with FE id/version inserted
         /// </summary>
         /// <param name="o"></param>
-        internal static void Log(object o)
+        internal static void Log(object o, LogLevel level = LogLevel.Log)
         {
-            Debug.Log(string.Format("[Filter Extensions {0}]: {1}", version, o));
+            if (level == LogLevel.Log)
+                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, o);
+            else if (level == LogLevel.Warn)
+                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, o);
+            else
+                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, o);
         }
 
-        internal static void Log(string format, params object[] o)
+        internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
         {
-            Debug.Log(string.Format("[Filter Extensions {0}]: ", version) + string.Format(format, o));
+            if (level == LogLevel.Log)
+                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+            else if (level == LogLevel.Warn)
+                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+            else
+                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
         }
     }
 }

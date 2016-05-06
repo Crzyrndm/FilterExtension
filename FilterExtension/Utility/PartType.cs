@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -15,11 +16,15 @@ namespace FilterExtensions.Utility
         public static bool checkSubcategory(AvailablePart part, string[] value, int depth)
         {
             if (depth > 10)
+            {
+                Core.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                        , Core.LogLevel.Error);
                 return false;
+            }
             foreach (string s in value)
             {
                 FilterExtensions.ConfigNodes.customSubCategory subcategory;
-                if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkFilters(part, depth + 1))
+                if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkFilters(part, ++depth))
                     return true;
             }
             return false;
@@ -59,47 +64,28 @@ namespace FilterExtensions.Utility
             switch (part.category)
             {
                 case PartCategories.Pods:
-                    if (value.Contains("Pods", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Pods", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Propulsion:
-                    if (value.Contains("Engines", StringComparer.OrdinalIgnoreCase) && isEngine(part))
-                        return true;
-                    if (value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase) && !isEngine(part))
-                        return true;
-                    break;
+                    if (isEngine(part))
+                        return value.Contains("Engines", StringComparer.OrdinalIgnoreCase);
+                    else
+                        return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Engine:
-                    if (value.Contains("Engines", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Engines", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.FuelTank:
-                    if (value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Control:
-                    if (value.Contains("Control", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Control", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Structural:
-                    if (value.Contains("Structural", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Structural", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Aero:
-                    if (value.Contains("Aerodynamics", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Aerodynamics", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Utility:
-                    if (value.Contains("Utility", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Utility", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Science:
-                    if (value.Contains("Science", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("Science", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.none:
-                    if (value.Contains("None", StringComparer.OrdinalIgnoreCase))
-                        return true;
-                    break;
+                    return value.Contains("None", StringComparer.OrdinalIgnoreCase);
             }
             return false;
         }
@@ -127,13 +113,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkModuleName(AvailablePart part, string[] value, bool contains = true)
         {
-            if (part.partPrefab == null || part.partPrefab.Modules == null)
-                return false;
-
-            if (contains)
-                return value.Any(s => checkModuleNameType(part, s) || part.partPrefab.Modules.PMListContains(s));
-            else
-                return value.Any(s => !checkModuleNameType(part, s) && !part.partPrefab.Modules.PMListContains(s));
+            return contains == value.Any(s => checkModuleNameType(part, s));
         }
         
         /// <summary>
@@ -316,7 +296,7 @@ namespace FilterExtensions.Utility
                 case "ModuleWheelSuspension":
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
                 default:
-                    return false;
+                    return part.partPrefab.Modules.PMListContains(value);
             }
         }
 
@@ -340,31 +320,24 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the resources the part holds
         /// </summary>
-        public static bool checkResource(AvailablePart part, string[] value, bool contains = true)
+        public static bool checkResource(AvailablePart part, string[] values, bool contains = true)
         {
-            if (part.partPrefab == null || part.partPrefab.Resources == null)
+            if (part.partPrefab.Resources == null)
                 return false;
-
-            foreach (PartResource r in part.partPrefab.Resources)
-            {
-                if (r.maxAmount > 0 && contains == value.Contains(r.resourceName))
-                    return true;
-            }
-            return false;
+            return contains == Contains(values, part.partPrefab.Resources.list, r => r.resourceName);
         }
 
         /// <summary>
         /// check the propellants this engine uses
         /// </summary>
-        public static bool checkPropellant(AvailablePart part, string[] value, bool contains = true)
+        public static bool checkPropellant(AvailablePart part, string[] values, bool contains = true)
         {
-            foreach (ModuleEngines e in part.partPrefab.Modules.GetModules<ModuleEngines>())
+            ModuleEngines e;
+            for (int i = 0; i < part.partPrefab.Modules.Count; ++i )
             {
-                foreach (Propellant p in e.propellants)
-                {
-                    if (contains == value.Contains(p.name))
-                        return true;
-                }
+                e = part.partPrefab.Modules[i] as ModuleEngines;
+                if (e != null && contains == Contains(values, e.propellants, p => p.name))
+                    return true;
             }
             return false;
         }
@@ -411,34 +384,20 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// checks against the attach node sizes on the part
         /// </summary>
-        public static bool checkPartSize(AvailablePart part, string[] value, bool contains, ConfigNodes.Check.Equality equality)
+        public static bool checkPartSize(AvailablePart part, string[] values, bool contains, ConfigNodes.Check.Equality equality)
         {
-            if (part.partPrefab == null || part.partPrefab.attachNodes == null)
+            if (part.partPrefab.attachNodes == null)
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-            {
-                foreach (AttachNode node in part.partPrefab.attachNodes)
-                {
-                    if (contains)
-                    {
-                        if (value.Contains(node.size.ToString(), StringComparer.OrdinalIgnoreCase))
-                            return true;
-                    }
-                    else
-                    {
-                        if (!value.Contains(node.size.ToString(), StringComparer.OrdinalIgnoreCase))
-                            return true;
-                    }
-                }
-            }
+                return contains == Contains(values, part.partPrefab.attachNodes, n => n.size.ToString());
             else // only compare against the first value here
             {
-                if (value.Length > 1)
-                    Core.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                if (values.Length > 1)
+                    Core.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", values));
 
                 int i;
-                if (int.TryParse(value[0], out i))
+                if (int.TryParse(values[0], out i))
                 {
                     if (equality == ConfigNodes.Check.Equality.GreaterThan)
                     {
@@ -468,7 +427,7 @@ namespace FilterExtensions.Utility
             else // only compare against the first value here
             {
                 if (value.Length > 1)
-                    Core.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                    Core.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
 
                 double d;
                 if (double.TryParse(value[0], out d))
@@ -495,7 +454,7 @@ namespace FilterExtensions.Utility
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                    Core.Log("Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
 
                 double d;
                 if (double.TryParse(value[0], out d))
@@ -519,7 +478,7 @@ namespace FilterExtensions.Utility
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                    Core.Log("Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
 
                 double d;
                 if (double.TryParse(value[0], out d))
@@ -546,7 +505,7 @@ namespace FilterExtensions.Utility
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                    Core.Log("Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
 
                 float f;
                 if (float.TryParse(value[0], out f))
@@ -573,7 +532,7 @@ namespace FilterExtensions.Utility
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", string.Join(", ", value));
+                    Core.Log("Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
                 double d;
                 if (double.TryParse(value[0], out d))
                 {
@@ -589,30 +548,20 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// bulkhead profiles used to id part shapes for stock editor. parts with no profiles get dumped in srf
         /// </summary>
-        public static bool checkBulkHeadProfiles(AvailablePart part, string[] value, bool contains)
+        public static bool checkBulkHeadProfiles(AvailablePart part, string[] values, bool contains)
         {
             if (part.bulkheadProfiles == null)
-                return value.Contains("srf");
-            
-            foreach (string s in part.bulkheadProfiles.Split(',').Select(s => s.Trim()))
-            {
-                if (contains == value.Contains(s, StringComparer.OrdinalIgnoreCase))
-                    return true;
-            }
-            return false;
+                return values.Contains("srf");
+
+            return contains == Contains(values, part.bulkheadProfiles.Split(','));
         }
 
-        public static bool checkTags(AvailablePart part, string[] value, bool contains)
+        public static bool checkTags(AvailablePart part, string[] values, bool contains)
         {
             if (string.IsNullOrEmpty(part.tags))
                 return false;
 
-            foreach (string s in part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray())
-            {
-                if (contains == value.Contains(s))
-                    return true;
-            }
-            return false;
+            return contains == Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries));
         }
 
         /// <summary>
@@ -672,6 +621,36 @@ namespace FilterExtensions.Utility
             if (part.partPrefab == null || part.partPrefab.attachNodes == null || part.partPrefab.attachNodes.Count != 2 || isCommand(part))
                 return false;
             return part.partPrefab.attachNodes[0].size != part.partPrefab.attachNodes[1].size;
+        }
+
+        public static bool Contains(string[] CheckParams, IEnumerable<string> partParams)
+        {
+            foreach(string s in partParams)
+            {
+                if (CheckParams.Contains(s.Trim(), StringComparer.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool Contains<T>(string[] CheckParams, IEnumerable<T> partParams, Func<T, string> ToStringFunc)
+        {
+            foreach (T t in partParams)
+            {
+                if (CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool Contains<T>(string[] CheckParams, IEnumerable<T> partParams, Func<T, string> ToStringFunc, Func<T, bool> selectorFunc)
+        {
+            foreach (T t in partParams)
+            {
+                if (selectorFunc(t) && CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
     }
 }

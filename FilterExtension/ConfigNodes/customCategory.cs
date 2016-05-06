@@ -197,7 +197,7 @@ namespace FilterExtensions.ConfigNodes
                     if (conflictsList.Contains(subCategories[j].subcategoryName))
                     {
                         // if so, we skip this subcategory
-                        Core.Log("Filters duplicated in category {0} between subCategories:\r\n{1} and {2}", categoryName, toInit.ToString(), subCategories[j].subcategoryName);
+                        Core.Log("Filters duplicated in category {0} between subCategories:\r\n{1} and {2}", Core.LogLevel.Log, categoryName, toInit.ToString(), subCategories[j].subcategoryName);
                         return;
                     }
                 }
@@ -205,7 +205,7 @@ namespace FilterExtensions.ConfigNodes
             customSubCategory subcategory = null;
             if (!Core.Instance.subCategoriesDict.TryGetValue(toInit.ToString(), out subcategory))
             {
-                Core.Log("subcategory {0} not found in subcategories Dictionary", toInit.ToString());
+                Core.Log("subcategory {0} not found in subcategories Dictionary", Core.LogLevel.Log, toInit.ToString());
                 return;
             }
 
@@ -221,9 +221,9 @@ namespace FilterExtensions.ConfigNodes
             catch (Exception ex)
             {
                 // extended logging for errors
-                Core.Log(subCategories[index] + " failed to initialise");
-                Core.Log("Category:" + categoryName + ", filter:" + sC.hasFilters + ", Count:" + sC.filters.Count + ", Icon:" + Core.getIcon(sC.iconName));
-                Core.Log(ex.StackTrace);
+                Core.Log("{0} failed to initialise\r\nCategory: {1}, Subcategory: {2}, filter?: {3}, filter count: {4}, Icon: {5}\r\n{6}\r\n{7}",
+                            Core.LogLevel.Error,
+                            subCategories[index], categoryName, sC.hasFilters, sC.filters.Count, Core.getIcon(sC.iconName), ex.Message, ex.StackTrace);
             }
         }
 
