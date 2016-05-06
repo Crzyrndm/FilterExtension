@@ -379,7 +379,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// checks against the attach node sizes on the part
         /// </summary>
-        public static bool checkPartSize(AvailablePart part, string[] values, bool contains, ConfigNodes.Check.Equality equality)
+        public static bool checkPartSize(AvailablePart part, string[] values, bool contains = true, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             if (part.partPrefab.attachNodes == null)
                 return false;
@@ -412,7 +412,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check against the number of crew this part can hold
         /// </summary>
-        public static bool checkCrewCapacity(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
+        public static bool checkCrewCapacity(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             if (part.partPrefab == null)
                 return false;
@@ -439,7 +439,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part mass against a list of values
         /// </summary>
-        public static bool checkMass(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
+        public static bool checkMass(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             if (part.partPrefab == null)
                 return false;
@@ -466,7 +466,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part cost against a string list
         /// </summary>
-        public static bool checkCost(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
+        public static bool checkCost(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             if (equality == ConfigNodes.Check.Equality.Equals)
                 return value.Contains(part.cost.ToString(), StringComparer.OrdinalIgnoreCase);
@@ -490,7 +490,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the impact speed at which the part will explode
         /// </summary>
-        public static bool checkCrashTolerance(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
+        public static bool checkCrashTolerance(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             if (part.partPrefab == null)
                 return false;
@@ -517,7 +517,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// compares against the part max temp
         /// </summary>
-        public static bool checkTemperature(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality)
+        public static bool checkTemperature(AvailablePart part, string[] value, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             if (part.partPrefab == null)
                 return false;
@@ -543,7 +543,7 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// bulkhead profiles used to id part shapes for stock editor. parts with no profiles get dumped in srf
         /// </summary>
-        public static bool checkBulkHeadProfiles(AvailablePart part, string[] values, bool contains)
+        public static bool checkBulkHeadProfiles(AvailablePart part, string[] values, bool contains = true)
         {
             if (part.bulkheadProfiles == null)
                 return values.Contains("srf");
@@ -551,7 +551,7 @@ namespace FilterExtensions.Utility
             return contains == Contains(values, part.bulkheadProfiles.Split(','));
         }
 
-        public static bool checkTags(AvailablePart part, string[] values, bool contains)
+        public static bool checkTags(AvailablePart part, string[] values, bool contains = true)
         {
             if (string.IsNullOrEmpty(part.tags))
                 return false;
