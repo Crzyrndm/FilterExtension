@@ -100,12 +100,7 @@ namespace FilterExtensions.Utility
             if (part.moduleInfos == null)
                 return false;
 
-            foreach (AvailablePart.ModuleInfo mi in part.moduleInfos)
-            {
-                if (contains == values.Contains(mi.moduleName, StringComparer.OrdinalIgnoreCase))
-                    return true;
-            }
-            return false;
+            return contains == Contains(values, part.moduleInfos, m => m.moduleName);
         }
         
         /// <summary>
