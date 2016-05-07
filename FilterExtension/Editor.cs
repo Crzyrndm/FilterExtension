@@ -179,8 +179,6 @@ namespace FilterExtensions
         {
             blackListedParts = new HashSet<string>();
 
-            List<PartCategorizer.Category> subcategoriesToCheck = new List<PartCategorizer.Category>();
-
             // Only checking the category which should be Filter by Function (should I find FbF explcitly?)
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
 
