@@ -58,7 +58,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log(string.Empty);
+            Log(string.Empty, LogLevel.Warn);
 
             getConfigs();
             getPartData();
@@ -141,7 +141,7 @@ namespace FilterExtensions
                     if (!partPathDict.ContainsKey(p.name))
                         partPathDict.Add(p.name, p.partUrl);
                     else
-                        Log(p.name + " duplicated part key in part path dictionary");
+                        Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
 
                     if (PartType.isEngine(p))
                         processEnginePropellants(p);

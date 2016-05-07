@@ -151,12 +151,12 @@ namespace FilterExtensions.ConfigNodes
         {
             if (string.IsNullOrEmpty(categoryName))
             {
-                Core.Log("Category name is null or empty");
+                Core.Log("Category name is null or empty", Core.LogLevel.Warn);
                 return;
             }
             if (!hasSubCategories())
             {
-                Core.Log(categoryName + " has no subcategories");
+                Core.Log(categoryName + " has no subcategories", Core.LogLevel.Warn);
                 return;
             }
             PartCategorizer.Category category;
@@ -173,7 +173,7 @@ namespace FilterExtensions.ConfigNodes
             {
                 if (!PartCategorizer.Instance.filters.TryGetValue(c => c.button.categoryName == categoryName, out category))
                 {
-                    Core.Log("No category of this name was found to manipulate: " + categoryName);
+                    Core.Log("No category of this name was found to manipulate: " + categoryName, Core.LogLevel.Warn);
                     return;
                 }
                 else if (behaviour == categoryBehaviour.Replace)
@@ -197,7 +197,7 @@ namespace FilterExtensions.ConfigNodes
                     if (conflictsList.Contains(subCategories[j].subcategoryName))
                     {
                         // if so, we skip this subcategory
-                        Core.Log("Filters duplicated in category {0} between subCategories:\r\n{1} and {2}", Core.LogLevel.Log, categoryName, toInit.ToString(), subCategories[j].subcategoryName);
+                        Core.Log("Filters duplicated in category {0} between subCategories:\r\n{1} and {2}", Core.LogLevel.Warn, categoryName, toInit.ToString(), subCategories[j].subcategoryName);
                         return;
                     }
                 }
@@ -205,7 +205,7 @@ namespace FilterExtensions.ConfigNodes
             customSubCategory subcategory = null;
             if (!Core.Instance.subCategoriesDict.TryGetValue(toInit.ToString(), out subcategory))
             {
-                Core.Log("subcategory {0} not found in subcategories Dictionary", Core.LogLevel.Log, toInit.ToString());
+                Core.Log("subcategory {0} not found in subcategories Dictionary", Core.LogLevel.Warn, toInit.ToString());
                 return;
             }
 

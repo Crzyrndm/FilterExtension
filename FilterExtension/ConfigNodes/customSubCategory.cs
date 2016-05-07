@@ -201,9 +201,9 @@ namespace FilterExtensions.ConfigNodes
             if (Settings.debug)
             {
                 if (!string.IsNullOrEmpty(category))
-                    Core.Log(subCategoryTitle + " in category " + category + " has no valid parts and was not initialised");
+                    Core.Log(subCategoryTitle + " in category " + category + " has no valid parts and was not initialised", Core.LogLevel.Warn);
                 else
-                    Core.Log(subCategoryTitle + " has no valid parts and was not initialised");
+                    Core.Log(subCategoryTitle + " has no valid parts and was not initialised", Core.LogLevel.Warn);
             }
             return false;
         }

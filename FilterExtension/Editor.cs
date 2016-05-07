@@ -36,7 +36,7 @@ namespace FilterExtensions
                 yield return null;
 
             if (Settings.debug)
-                Core.Log("Starting on Stock Filters");
+                Core.Log("Starting on Stock Filters", Core.LogLevel.Log);
 
             // stock filters
             // If I edit them later everything breaks
@@ -58,7 +58,7 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Starting on general categories");
+                Core.Log("Starting on general categories", Core.LogLevel.Log);
 
             // all FE categories
             foreach (customCategory c in Core.Instance.Categories)
@@ -71,7 +71,7 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Starting on late categories");
+                Core.Log("Starting on late categories", Core.LogLevel.Log);
 
             // generate the set of parts to block
             if (blackListedParts == null)
@@ -95,7 +95,7 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Starting on removing categories");
+                Core.Log("Starting on removing categories", Core.LogLevel.Log);
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
@@ -110,7 +110,7 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Refreshing parts list");
+                Core.Log("Refreshing parts list", Core.LogLevel.Log);
             setSelectedCategory();
 
             subcategoriesChecked = ready = true;
@@ -169,9 +169,7 @@ namespace FilterExtensions
             }
             catch (Exception e)
             {
-                Core.Log("Category refresh failed");
-                Core.Log(e.InnerException);
-                Core.Log(e.StackTrace);
+                Core.Log("Category refresh failed\r\n{0}\r\n{1}", Core.LogLevel.Error, e.InnerException, e.StackTrace);
             }
         }
 
