@@ -24,7 +24,7 @@ namespace FilterExtensions.Utility
             foreach (string s in value)
             {
                 FilterExtensions.ConfigNodes.customSubCategory subcategory;
-                if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkFilters(part, ++depth))
+                if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkPartFilters(part, ++depth))
                     return true;
             }
             return false;
@@ -100,7 +100,7 @@ namespace FilterExtensions.Utility
             if (part.moduleInfos == null)
                 return false;
 
-            return contains == Contains(values, part.moduleInfos, m => m.moduleName);
+            return Contains(values, contains, part.moduleInfos, m => m.moduleName);
         }
         
         /// <summary>
@@ -308,7 +308,6 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool checkTitle(AvailablePart part, string[] value)
         {
-            
             return value.Any(s => part.title.IndexOf(s, StringComparison.OrdinalIgnoreCase) != -1);
         }
 
@@ -319,7 +318,7 @@ namespace FilterExtensions.Utility
         {
             if (part.partPrefab.Resources == null)
                 return false;
-            return contains == Contains(values, part.partPrefab.Resources.list, r => r.resourceName);
+            return Contains(values, contains, part.partPrefab.Resources.list, r => r.resourceName, r => r.amount > 0);
         }
 
         /// <summary>
@@ -331,7 +330,7 @@ namespace FilterExtensions.Utility
             for (int i = 0; i < part.partPrefab.Modules.Count; ++i )
             {
                 e = part.partPrefab.Modules[i] as ModuleEngines;
-                if (e != null && contains == Contains(values, e.propellants, p => p.name))
+                if (e != null && Contains(values, contains, e.propellants, p => p.name))
                     return true;
             }
             return false;
@@ -385,7 +384,7 @@ namespace FilterExtensions.Utility
                 return false;
 
             if (equality == ConfigNodes.Check.Equality.Equals)
-                return contains == Contains(values, part.partPrefab.attachNodes, n => n.size.ToString());
+                return Contains(values, contains, part.partPrefab.attachNodes, n => n.size.ToString());
             else // only compare against the first value here
             {
                 if (values.Length > 1)
@@ -548,7 +547,7 @@ namespace FilterExtensions.Utility
             if (part.bulkheadProfiles == null)
                 return values.Contains("srf");
 
-            return contains == Contains(values, part.bulkheadProfiles.Split(','));
+            return Contains(values, contains, part.bulkheadProfiles.Split(','));
         }
 
         public static bool checkTags(AvailablePart part, string[] values, bool contains = true)
@@ -556,7 +555,7 @@ namespace FilterExtensions.Utility
             if (string.IsNullOrEmpty(part.tags))
                 return false;
 
-            return contains == Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries));
+            return Contains(values, contains, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries));
         }
 
         /// <summary>
@@ -618,31 +617,31 @@ namespace FilterExtensions.Utility
             return part.partPrefab.attachNodes[0].size != part.partPrefab.attachNodes[1].size;
         }
 
-        public static bool Contains(string[] CheckParams, IEnumerable<string> partParams)
+        public static bool Contains(string[] CheckParams, bool contains, IEnumerable<string> partParams)
         {
             foreach(string s in partParams)
             {
-                if (CheckParams.Contains(s.Trim(), StringComparer.OrdinalIgnoreCase))
+                if (contains == CheckParams.Contains(s.Trim(), StringComparer.OrdinalIgnoreCase))
                     return true;
             }
             return false;
         }
 
-        public static bool Contains<T>(string[] CheckParams, IEnumerable<T> partParams, Func<T, string> ToStringFunc)
+        public static bool Contains<T>(string[] CheckParams, bool contains, IEnumerable<T> partParams, Func<T, string> ToStringFunc)
         {
             foreach (T t in partParams)
             {
-                if (CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
+                if (contains == CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
                     return true;
             }
             return false;
         }
 
-        public static bool Contains<T>(string[] CheckParams, IEnumerable<T> partParams, Func<T, string> ToStringFunc, Func<T, bool> selectorFunc)
+        public static bool Contains<T>(string[] CheckParams, bool contains, IEnumerable<T> partParams, Func<T, string> ToStringFunc, Func<T, bool> selectorFunc)
         {
             foreach (T t in partParams)
             {
-                if (selectorFunc(t) && CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
+                if (selectorFunc(t) && contains == CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
                     return true;
             }
             return false;

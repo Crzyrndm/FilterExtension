@@ -69,7 +69,7 @@ namespace FilterExtensions.ConfigNodes
             if (cat == null)
                 return;
             RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkFilters(p));
+            PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkPartFilters(p));
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="part"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        public bool checkFilters(AvailablePart part, int depth = 0)
+        public bool checkPartFilters(AvailablePart part, int depth = 0)
         {
             if (Editor.blackListedParts != null)
             {
@@ -120,7 +120,57 @@ namespace FilterExtensions.ConfigNodes
                     return false;
             }
 
-            return ((!template.Any() || template.Any(t => t.checkFilter(part, depth))) && filters.Any(f => f.checkFilter(part, depth))); // part passed a template if present, and a subcategory filter
+            return checkTemplate(part, depth);
+        }
+
+        /// <summary>
+        /// Go through the category template filters. If the template list is empty or the part matches one of the template filters, go on to check against the filters of this subcategory
+        /// </summary>
+        /// <param name="ap"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        private bool checkTemplate(AvailablePart ap, int depth = 0)
+        {
+            if (template.Count == 0)
+                return checkFilters(ap, depth);
+            else
+            {
+                Filter t;
+                for (int i = 0; i < template.Count; ++i)
+                {
+                    t = template[i];
+                    if (t.filterResult(ap, depth))
+                    {
+                        return checkFilters(ap, depth);
+                    }
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Go through the filters of this subcategory. If the filter list is empty or the part matches one of the filters we can accept that part into this subcategory
+        /// Templates have already been checked at this point
+        /// if there is no template or filter, hasFilters property will be false and this subcategory will be removed prior to this point
+        /// </summary>
+        /// <param name="ap"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        private bool checkFilters(AvailablePart ap, int depth = 0)
+        {
+            if (filters.Count == 0)
+                return true;
+            else
+            {
+                Filter f;
+                for (int i = 0; i < filters.Count; ++i)
+                {
+                    f = filters[i];
+                    if (f.filterResult(ap, depth))
+                        return true;
+                }
+                return false;
+            }
         }
 
         /// <summary>
@@ -144,7 +194,7 @@ namespace FilterExtensions.ConfigNodes
                     if (pmf.CheckForForceBlock(subCategoryTitle))
                         return false;
                 }
-                if (checkFilters(PartLoader.Instance.parts[i]))
+                if (checkPartFilters(PartLoader.Instance.parts[i]))
                     return true;
             }
 
