@@ -46,5 +46,15 @@ namespace FilterExtensions.Utility
             value = null;
             return false;
         }
+
+        public static bool PMListContains(this PartModuleList list, string moduleName)
+        {
+            for (int i = 0; i < list.Count; ++i)
+            {
+                if (list[i] != null && list[i].GetType().Name == moduleName)
+                    return true;
+            }
+            return false;
+        }
     }
 }

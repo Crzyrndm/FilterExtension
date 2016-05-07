@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSP.UI.Screens;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,15 +9,15 @@ namespace FilterExtensions
 {
     using ConfigNodes;
     using Utility;
-    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
-    class Editor : MonoBehaviour
+    public class Editor : MonoBehaviour
     {
         public static Editor instance;
         public static bool subcategoriesChecked;
         public bool ready = false;
-        void Start()
+
+        public void Start()
         {
             instance = this;
             StartCoroutine(editorInit());
@@ -27,14 +28,16 @@ namespace FilterExtensions
         /// </summary>
         public static HashSet<string> blackListedParts;
 
-        IEnumerator editorInit()
+        private IEnumerator editorInit()
         {
             ready = false;
 
             while (PartCategorizer.Instance == null)
                 yield return null;
+
             if (Settings.debug)
-                Core.Log("Starting on Stock Filters");
+                Core.Log("Starting on Stock Filters", Core.LogLevel.Log);
+
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
@@ -55,8 +58,8 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Starting on general categories");
-            
+                Core.Log("Starting on general categories", Core.LogLevel.Log);
+
             // all FE categories
             foreach (customCategory c in Core.Instance.Categories)
             {
@@ -68,12 +71,12 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Starting on late categories");
+                Core.Log("Starting on late categories", Core.LogLevel.Log);
 
             // generate the set of parts to block
             if (blackListedParts == null)
             {
-                #warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
+#warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
                 findPartsToBlock();
             }
 
@@ -84,7 +87,7 @@ namespace FilterExtensions
                     c.initialise();
             }
 
-            // 
+            //
             foreach (PartCategorizer.Category c in PartCategorizer.Instance.filters)
                 namesAndIcons(c);
 
@@ -92,7 +95,7 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Starting on removing categories");
+                Core.Log("Starting on removing categories", Core.LogLevel.Log);
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
             {
@@ -107,7 +110,7 @@ namespace FilterExtensions
             for (int i = 0; i < 4; i++)
                 yield return null;
             if (Settings.debug)
-                Core.Log("Refreshing parts list");
+                Core.Log("Refreshing parts list", Core.LogLevel.Log);
             setSelectedCategory();
 
             subcategoriesChecked = ready = true;
@@ -166,49 +169,34 @@ namespace FilterExtensions
             }
             catch (Exception e)
             {
-                Core.Log("Category refresh failed");
-                Core.Log(e.InnerException);
-                Core.Log(e.StackTrace);
+                Core.Log("Category refresh failed\r\n{0}\r\n{1}", Core.LogLevel.Error, e.InnerException, e.StackTrace);
             }
         }
 
-        /// <summary>
-        /// checks all subcats not created by FE for visibility of parts set to "category = none"
-        /// </summary>
-        void findPartsToBlock()
+        private void findPartsToBlock()
         {
-            PartModuleFilter pmf;
-            // all parts that may not be visible
-            List<AvailablePart> partsToCheck = PartLoader.Instance.parts.FindAll(ap => ap.category == PartCategories.none
-                                                                                    && !(Core.Instance.filterModules.TryGetValue(ap.name, out pmf) && pmf.hasForceAdd()));
+            blackListedParts = new HashSet<string>();
+
             // Only checking the category which should be Filter by Function (should I find FbF explcitly?)
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
-            // has a reference to all the subcats that FE added to the category
-            customCategory customMainCat = Core.Instance.Categories.Find(C => C.categoryName == mainCat.button.categoryName);
-            // loop through the subcategories. Mark FE ones as seen incase of duplication and check the shortlisted parts against other mods categories for visibility
-            HashSet<string> subCatsSeen = new HashSet<string>();
-            for (int i = 0; i < mainCat.subcategories.Count; i++)
+
+            AvailablePart part;
+            for (int i = 0; i < PartLoader.Instance.parts.Count; ++i)
             {
-                PartCategorizer.Category subCat = mainCat.subcategories[i];
-                // if the name is an FE subcat and the category should have that FE subcat and it's not the duplicate of one already seen created by another mod, mark it seen and move on
-                if (Core.Instance.subCategoriesDict.ContainsKey(subCat.button.categoryName) && customMainCat.subCategories.Any(subItem => string.Equals(subItem.subcategoryName, subCat.button.categoryName, StringComparison.CurrentCulture)))
-                    subCatsSeen.Add(subCat.button.categoryName);
-                else // subcat created by another mod
-                {
-                    int j = 0;
-                    while (j < partsToCheck.Count)
-                    {
-                        if (subCat.exclusionFilter.FilterCriteria.Invoke(partsToCheck[j])) // if visible
-                            partsToCheck.RemoveAt(j);
-                        else
-                            j++;
-                    }
-                }
+                part = PartLoader.Instance.parts[i];
+                if (part.category == PartCategories.none && !checkPartVisible(part, mainCat))
+                    blackListedParts.Add(part.name);
             }
-            // add the blocked parts to a hashset for later lookup
-            blackListedParts = new HashSet<string>();
-            foreach (AvailablePart ap in partsToCheck)
-                blackListedParts.Add(ap.name);
+        }
+
+        private bool checkPartVisible(AvailablePart part, PartCategorizer.Category category)
+        {
+            for (int i = 0; i < category.subcategories.Count; ++i)
+            {
+                if (category.subcategories[i].exclusionFilter.FilterCriteria.Invoke(part))
+                    return true;
+            }
+            return false;
         }
     }
 }

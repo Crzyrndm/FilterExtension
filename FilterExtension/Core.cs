@@ -14,7 +14,7 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
-        public static readonly Version version = new Version(2, 5, 0, 0);
+        public static readonly Version version = new Version(2, 5, 1, 0);
         
         private static Core instance;
         public static Core Instance
@@ -58,7 +58,7 @@ namespace FilterExtensions
         {
             instance = this;
             DontDestroyOnLoad(this);
-            Log(string.Empty);
+            Log(string.Empty, LogLevel.Warn);
 
             getConfigs();
             getPartData();
@@ -141,7 +141,7 @@ namespace FilterExtensions
                     if (!partPathDict.ContainsKey(p.name))
                         partPathDict.Add(p.name, p.partUrl);
                     else
-                        Log(p.name + " duplicated part key in part path dictionary");
+                        Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
 
                     if (PartType.isEngine(p))
                         processEnginePropellants(p);
@@ -152,8 +152,8 @@ namespace FilterExtensions
                             resources.AddUnique(r.resourceName);
                     }
                 }
-                if (p.partPrefab.Modules.Contains("PartModuleFilter"))
-                    filterModules.Add(p.name, (PartModuleFilter)p.partPrefab.Modules["PartModuleFilter"]);
+                if (p.partPrefab.Modules.Contains<PartModuleFilter>())
+                    filterModules.Add(p.name, p.partPrefab.Modules.GetModule<PartModuleFilter>());
             }
             generateEngineTypes();
 
@@ -490,18 +490,35 @@ namespace FilterExtensions
                 icon = tmp;
         }
 
+        public enum LogLevel
+        {
+            Log,
+            Warn,
+            Error
+        }
+
         /// <summary>
         /// Debug.Log with FE id/version inserted
         /// </summary>
         /// <param name="o"></param>
-        internal static void Log(object o)
+        internal static void Log(object o, LogLevel level = LogLevel.Log)
         {
-            Debug.Log(string.Format("[Filter Extensions {0}]: {1}", version, o));
+            if (level == LogLevel.Log)
+                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, o);
+            else if (level == LogLevel.Warn)
+                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, o);
+            else
+                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, o);
         }
 
-        internal static void Log(string format, params object[] o)
+        internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
         {
-            Debug.Log(string.Format("[Filter Extensions {0}]: ", version) + string.Format(format, o));
+            if (level == LogLevel.Log)
+                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+            else if (level == LogLevel.Warn)
+                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+            else
+                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
         }
     }
 }

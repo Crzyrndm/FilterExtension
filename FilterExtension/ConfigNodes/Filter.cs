@@ -57,9 +57,14 @@ namespace FilterExtensions.ConfigNodes
             return new Filter(this);
         }
 
-        internal bool checkFilter(AvailablePart part, int depth = 0)
+        public bool filterResult(AvailablePart part, int depth = 0)
         {
-            return invert ? !checks.All(c => c.checkPart(part, depth)) : checks.All(c => c.checkPart(part, depth));
+            for(int i = 0; i < checks.Count; ++i )
+            {
+                if(!checks[i].checkResult(part, depth))
+                    return invert;
+            }
+            return !invert;
         }
 
         /// <summary>

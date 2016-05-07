@@ -167,93 +167,63 @@ namespace FilterExtensions.ConfigNodes
             checks = new List<Check>();
         }
 
-        public bool checkPart(AvailablePart part, int depth = 0)
+        public bool checkResult(AvailablePart part, int depth = 0)
         {
-            bool result = true;
             switch (type.typeEnum)
             {
                 case CheckType.moduleTitle: // check by module title
-                    result = PartType.checkModuleTitle(part, values, contains);
-                    break;
+                    return invert ^ PartType.checkModuleTitle(part, values, contains);
                 case CheckType.moduleName:
-                    result = PartType.checkModuleName(part, values, contains);
-                    break;
+                    return invert ^ PartType.checkModuleName(part, values, contains);
                 case CheckType.partName: // check by part name (cfg name)
-                    result = PartType.checkName(part, values);
-                    break;
+                    return invert ^ PartType.checkName(part, values);
                 case CheckType.partTitle: // check by part title (in game name)
-                    result = PartType.checkTitle(part, values);
-                    break;
+                    return invert ^ PartType.checkTitle(part, values);
                 case CheckType.resource: // check for a resource
-                    result = PartType.checkResource(part, values, contains);
-                    break;
+                    return invert ^ PartType.checkResource(part, values, contains);
                 case CheckType.propellant: // check for engine propellant
-                    result = PartType.checkPropellant(part, values, contains);
-                    break;
+                    return invert ^ PartType.checkPropellant(part, values, contains);
                 case CheckType.tech: // check by tech
-                    result = PartType.checkTech(part, values);
-                    break;
+                    return invert ^ PartType.checkTech(part, values);
                 case CheckType.manufacturer: // check by manufacturer
-                    result = PartType.checkManufacturer(part, values);
-                    break;
+                    return invert ^ PartType.checkManufacturer(part, values);
                 case CheckType.folder: // check by mod root folder
-                    result = PartType.checkFolder(part, values);
-                    break;
+                    return invert ^ PartType.checkFolder(part, values);
                 case CheckType.path: // check by part folder location
-                    result = PartType.checkPath(part, values);
-                    break;
+                    return invert ^ PartType.checkPath(part, values);
                 case CheckType.category:
-                    result = PartType.checkCategory(part, values);
-                    break;
+                    return invert ^ PartType.checkCategory(part, values);
                 case CheckType.size: // check by largest stack node size
-                    result = PartType.checkPartSize(part, values, contains, equality);
-                    break;
+                    return invert ^ PartType.checkPartSize(part, values, contains, equality);
                 case CheckType.crew:
-                    result = PartType.checkCrewCapacity(part, values, equality);
-                    break;
+                    return invert ^ PartType.checkCrewCapacity(part, values, equality);
                 case CheckType.custom: // for when things get tricky
-                    result = PartType.checkCustom(part, values);
-                    break;
+                    return invert ^ PartType.checkCustom(part, values);
                 case CheckType.mass:
-                    result = PartType.checkMass(part, values, equality);
-                    break;
+                    return invert ^ PartType.checkMass(part, values, equality);
                 case CheckType.cost:
-                    result = PartType.checkCost(part, values, equality);
-                    break;
+                    return invert ^ PartType.checkCost(part, values, equality);
                 case CheckType.crashTolerance:
-                    result = PartType.checkCrashTolerance(part, values, equality);
-                    break;
+                    return invert ^ PartType.checkCrashTolerance(part, values, equality);
                 case CheckType.maxTemp:
-                    result = PartType.checkTemperature(part, values, equality);
-                    break;
+                    return invert ^ PartType.checkTemperature(part, values, equality);
                 case CheckType.profile:
-                    result = PartType.checkBulkHeadProfiles(part, values, contains);
-                    break;
-                case CheckType.check:
-                    for (int i = 0; i < checks.Count; i++ )
-                    {
-                        if (!checks[i].checkPart(part))
-                        {
-                            result = false;
-                            break;
-                        }
-                    }
-                    break;
+                    return invert ^ PartType.checkBulkHeadProfiles(part, values, contains);
                 case CheckType.subcategory:
-                    result = PartType.checkSubcategory(part, values, depth);
-                    break;
+                    return invert ^ PartType.checkSubcategory(part, values, depth);
                 case CheckType.tag:
-                    result = PartType.checkTags(part, values, contains);
-                    break;
+                    return invert ^ PartType.checkTags(part, values, contains);
+                case CheckType.check:
+                    for (int i = 0; i < checks.Count; i++)
+                    {
+                        if (invert == checks[i].checkResult(part))
+                            return false;
+                    }
+                    return true;
                 default:
-                    Core.Log("invalid Check type specified");
-                    result = false;
-                    break;
+                    Core.Log("invalid Check type specified", Core.LogLevel.Warn);
+                    return invert ^ false;
             }
-            
-            if (invert)
-                return !result;
-            return result;
         }
 
         /// <summary>
