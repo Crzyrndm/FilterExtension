@@ -52,14 +52,6 @@ namespace FilterExtensions
             windowInstance = null;
         }
 
-        public void OnGUI()
-        {
-            if (!showWindow)
-                return;
-            GUI.skin = HighLogic.Skin;
-            settingsRect = GUILayout.Window(6548792, settingsRect, drawWindow, "Filter Extensions Settings");
-        }
-
         public static void LoadSettings()
         {
             if (File.Exists(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg"))
@@ -96,19 +88,6 @@ namespace FilterExtensions
             if (!Directory.Exists(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath))
                 Directory.CreateDirectory(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath);
             settingsNode.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg");
-        }
-
-        private void drawWindow(int id)
-        {
-            debug = GUILayout.Toggle(debug, "Enable logging");
-            setAdvanced = GUILayout.Toggle(setAdvanced, "Default to Advanced mode");
-            hideUnpurchased = GUILayout.Toggle(hideUnpurchased, "Hide unpurchased parts");
-            replaceFbM = GUILayout.Toggle(replaceFbM, "Sort parts by folder in manufacturer tab (requires restart)");
-
-            GUIUtils.DrawLabelPlusBox("Default Category", ref categoryDefault);
-            GUIUtils.DrawLabelPlusBox("Default Sub-category", ref subCategoryDefault);
-
-            GUI.DragWindow();
         }
 
         void bundleLoaded(KSPAssets.Loaders.AssetLoader.Loader loader)
