@@ -117,9 +117,7 @@ namespace FilterExtensions
         static void toggleSettingsVisible()
         {
             if (windowInstance != null)
-            {
                 windowInstance.enabled = !windowInstance.enabled;
-            }
         }
 
         private void InstantiateCanvas()

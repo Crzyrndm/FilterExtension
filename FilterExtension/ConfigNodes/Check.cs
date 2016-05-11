@@ -64,26 +64,26 @@ namespace FilterExtensions.ConfigNodes
             {
                 { "name",           new CheckParameters(CheckType.partName, "name") },
                 { "title",          new CheckParameters(CheckType.partTitle, "title") },
-                { "moduleName",     new CheckParameters(CheckType.moduleName, "moduleName", Contains:true) },
-                { "moduleTitle",    new CheckParameters(CheckType.moduleTitle, "moduleTitle", Contains:true) },
-                { "resource",       new CheckParameters(CheckType.resource, "resource", Contains:true) },
+                { "moduleName",     new CheckParameters(CheckType.moduleName, "moduleName", Contains:true, Exact:true) },
+                { "moduleTitle",    new CheckParameters(CheckType.moduleTitle, "moduleTitle", Contains:true, Exact:true) },
+                { "resource",       new CheckParameters(CheckType.resource, "resource", Contains:true, Exact:true) },
                 { "propellant",     new CheckParameters(CheckType.propellant, "propellant", Contains:true, Exact:true) },
                 { "tech",           new CheckParameters(CheckType.tech, "tech") },
                 { "manufacturer",   new CheckParameters(CheckType.manufacturer, "manufacturer") },
                 { "folder",         new CheckParameters(CheckType.folder, "folder") },
                 { "path",           new CheckParameters(CheckType.path, "path") },
                 { "category",       new CheckParameters(CheckType.category, "category") },
-                { "size",           new CheckParameters(CheckType.size, "size", Contains:true, Equality:true) },
+                { "size",           new CheckParameters(CheckType.size, "size", Contains:true, Exact:true, Equality:true) },
                 { "crew",           new CheckParameters(CheckType.crew, "crew", Equality:true) },
                 { "custom",         new CheckParameters(CheckType.custom, "custom") },
                 { "mass",           new CheckParameters(CheckType.mass, "mass", Equality:true) },
                 { "cost",           new CheckParameters(CheckType.cost, "cost", Equality:true) },
                 { "crash",          new CheckParameters(CheckType.crashTolerance, "crash", Equality:true) },
                 { "maxTemp",        new CheckParameters(CheckType.maxTemp, "maxTemp", Equality:true) },
-                { "profile",        new CheckParameters(CheckType.profile, "profile", Contains:true) },
+                { "profile",        new CheckParameters(CheckType.profile, "profile", Contains:true, Exact:true) },
                 { "check",          new CheckParameters(CheckType.check, "check") },
                 { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") },
-                { "tag",            new CheckParameters(CheckType.tag, "tag", Contains:true) }
+                { "tag",            new CheckParameters(CheckType.tag, "tag", Contains:true, Exact:true) }
             };
 
         public CheckParameters type { get; set; }
