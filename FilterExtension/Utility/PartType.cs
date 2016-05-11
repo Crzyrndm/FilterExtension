@@ -106,9 +106,12 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part module type against a string list
         /// </summary>
-        public static bool checkModuleName(AvailablePart part, string[] value, bool contains = true)
+        public static bool checkModuleName(AvailablePart part, string[] values, bool contains = true, bool exact = false)
         {
-            return contains == value.Any(s => checkModuleNameType(part, s));
+            if (!exact)
+                return contains == values.Any(s => checkModuleNameType(part, s));
+            else
+                return values.All(s => checkModuleNameType(part, s)) && part.partPrefab.Modules.Count == values.Length;
         }
         
         /// <summary>
@@ -550,12 +553,12 @@ namespace FilterExtensions.Utility
             return Contains(values, part.bulkheadProfiles.Split(','), contains, exact);
         }
 
-        public static bool checkTags(AvailablePart part, string[] values, bool contains = true)
+        public static bool checkTags(AvailablePart part, string[] values, bool contains = true, bool exact = false)
         {
             if (string.IsNullOrEmpty(part.tags))
                 return false;
 
-            return Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries), contains);
+            return Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries), contains, exact);
         }
 
         /// <summary>
@@ -630,14 +633,14 @@ namespace FilterExtensions.Utility
             }
             else
             {
-                if (partParams.Count() != CheckParams.Length)
-                    return false;
+                int i = 0;
                 foreach (string s in partParams)
                 {
                     if (!CheckParams.Contains(s.Trim(), StringComparer.OrdinalIgnoreCase))
                         return false;
+                    ++i;
                 }
-                return true;
+                return i == CheckParams.Length;
             }
         }
 
@@ -654,14 +657,14 @@ namespace FilterExtensions.Utility
             }
             else
             {
-                if (partParams.Count() != CheckParams.Length)
-                    return false;
+                int i = 0;
                 foreach (T t in partParams)
                 {
                     if (!CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
                         return false;
+                    ++i;
                 }
-                return true;
+                return i == CheckParams.Length;
             }
         }
 
@@ -678,14 +681,14 @@ namespace FilterExtensions.Utility
             }
             else
             {
-                if (partParams.Count() != CheckParams.Length)
-                    return false;
+                int i = 0;
                 foreach (T t in partParams)
                 {
                     if (selectorFunc(t) && !CheckParams.Contains(ToStringFunc(t).Trim(), StringComparer.OrdinalIgnoreCase))
                         return false;
+                    ++i;
                 }
-                return true;
+                return i == CheckParams.Length;
             }
         }
     }

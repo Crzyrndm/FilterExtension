@@ -182,15 +182,15 @@ namespace FilterExtensions.ConfigNodes
             switch (type.typeEnum)
             {
                 case CheckType.moduleTitle: // check by module title
-                    return invert ^ PartType.checkModuleTitle(part, values, contains);
+                    return invert ^ PartType.checkModuleTitle(part, values, contains, exact);
                 case CheckType.moduleName:
-                    return invert ^ PartType.checkModuleName(part, values, contains);
+                    return invert ^ PartType.checkModuleName(part, values, contains, exact);
                 case CheckType.partName: // check by part name (cfg name)
                     return invert ^ PartType.checkName(part, values);
                 case CheckType.partTitle: // check by part title (in game name)
                     return invert ^ PartType.checkTitle(part, values);
                 case CheckType.resource: // check for a resource
-                    return invert ^ PartType.checkResource(part, values, contains);
+                    return invert ^ PartType.checkResource(part, values, contains, exact);
                 case CheckType.propellant: // check for engine propellant
                     return invert ^ PartType.checkPropellant(part, values, contains, exact);
                 case CheckType.tech: // check by tech
@@ -204,7 +204,7 @@ namespace FilterExtensions.ConfigNodes
                 case CheckType.category:
                     return invert ^ PartType.checkCategory(part, values);
                 case CheckType.size: // check by largest stack node size
-                    return invert ^ PartType.checkPartSize(part, values, contains, equality);
+                    return invert ^ PartType.checkPartSize(part, values, contains, equality, exact);
                 case CheckType.crew:
                     return invert ^ PartType.checkCrewCapacity(part, values, equality);
                 case CheckType.custom: // for when things get tricky
@@ -222,7 +222,7 @@ namespace FilterExtensions.ConfigNodes
                 case CheckType.subcategory:
                     return invert ^ PartType.checkSubcategory(part, values, depth);
                 case CheckType.tag:
-                    return invert ^ PartType.checkTags(part, values, contains);
+                    return invert ^ PartType.checkTags(part, values, contains, exact);
                 case CheckType.check:
                     for (int i = 0; i < checks.Count; i++)
                     {
