@@ -48,13 +48,15 @@ namespace FilterExtensions.ConfigNodes
             public string typeString { get; private set; }
             public bool usesContains { get; private set; }
             public bool usesEquality { get; private set; }
+            public bool usesExact { get; private set; }
 
-            public CheckParameters(CheckType Type, string TypeStr, bool Contains = false, bool Equality = false)
+            public CheckParameters(CheckType Type, string TypeStr, bool Contains = false, bool Equality = false, bool Exact = false)
             {
                 typeEnum = Type;
                 typeString = TypeStr;
                 usesContains = Contains;
                 usesEquality = Equality;
+                usesExact = Exact;
             }
         }
 
@@ -62,32 +64,33 @@ namespace FilterExtensions.ConfigNodes
             {
                 { "name",           new CheckParameters(CheckType.partName, "name") },
                 { "title",          new CheckParameters(CheckType.partTitle, "title") },
-                { "moduleName",     new CheckParameters(CheckType.moduleName, "moduleName", true) },
-                { "moduleTitle",    new CheckParameters(CheckType.moduleTitle, "moduleTitle", true) },
-                { "resource",       new CheckParameters(CheckType.resource, "resource", true) },
-                { "propellant",     new CheckParameters(CheckType.propellant, "propellant", true) },
+                { "moduleName",     new CheckParameters(CheckType.moduleName, "moduleName", Contains:true, Exact:true) },
+                { "moduleTitle",    new CheckParameters(CheckType.moduleTitle, "moduleTitle", Contains:true, Exact:true) },
+                { "resource",       new CheckParameters(CheckType.resource, "resource", Contains:true, Exact:true) },
+                { "propellant",     new CheckParameters(CheckType.propellant, "propellant", Contains:true, Exact:true) },
                 { "tech",           new CheckParameters(CheckType.tech, "tech") },
                 { "manufacturer",   new CheckParameters(CheckType.manufacturer, "manufacturer") },
                 { "folder",         new CheckParameters(CheckType.folder, "folder") },
                 { "path",           new CheckParameters(CheckType.path, "path") },
                 { "category",       new CheckParameters(CheckType.category, "category") },
-                { "size",           new CheckParameters(CheckType.size, "size", true, true) },
-                { "crew",           new CheckParameters(CheckType.crew, "crew", false, true) },
+                { "size",           new CheckParameters(CheckType.size, "size", Contains:true, Exact:true, Equality:true) },
+                { "crew",           new CheckParameters(CheckType.crew, "crew", Equality:true) },
                 { "custom",         new CheckParameters(CheckType.custom, "custom") },
-                { "mass",           new CheckParameters(CheckType.mass, "mass", false, true) },
-                { "cost",           new CheckParameters(CheckType.cost, "cost", false, true) },
-                { "crash",          new CheckParameters(CheckType.crashTolerance, "crash", false, true) },
-                { "maxTemp",        new CheckParameters(CheckType.maxTemp, "maxTemp", false, true) },
-                { "profile",        new CheckParameters(CheckType.profile, "profile", true) },
+                { "mass",           new CheckParameters(CheckType.mass, "mass", Equality:true) },
+                { "cost",           new CheckParameters(CheckType.cost, "cost", Equality:true) },
+                { "crash",          new CheckParameters(CheckType.crashTolerance, "crash", Equality:true) },
+                { "maxTemp",        new CheckParameters(CheckType.maxTemp, "maxTemp", Equality:true) },
+                { "profile",        new CheckParameters(CheckType.profile, "profile", Contains:true, Exact:true) },
                 { "check",          new CheckParameters(CheckType.check, "check") },
                 { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") },
-                { "tag",            new CheckParameters(CheckType.tag, "tag", true) }
+                { "tag",            new CheckParameters(CheckType.tag, "tag", Contains:true, Exact:true) }
             };
 
         public CheckParameters type { get; set; }
         public string[] values { get; set; }
         public bool invert { get; set; }
         public bool contains { get; set; }
+        public bool exact { get; set; }
         public Equality equality { get; set; }
         public List<Check> checks { get; set; } 
 
@@ -121,6 +124,11 @@ namespace FilterExtensions.ConfigNodes
             else
                 contains = true;
 
+            if (type.usesExact && node.TryGetValue("exact", ref tmpBool))
+                exact = tmpBool;
+            else
+                exact = false;
+
             if (type.usesEquality && node.TryGetValue("equality", ref tmpStr))
             {
                 try
@@ -142,6 +150,7 @@ namespace FilterExtensions.ConfigNodes
             invert = c.invert;
             contains = c.contains;
             equality = c.equality;
+            exact = c.exact;
 
             if (c.values != null)
                 values = (string[])c.values.Clone();
@@ -154,7 +163,7 @@ namespace FilterExtensions.ConfigNodes
             }
         }
 
-        public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals)
+        public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals, bool Exact = false)
         {
             type = getCheckType(Type);
             values = Value.Split(',');
@@ -163,6 +172,7 @@ namespace FilterExtensions.ConfigNodes
 
             invert = Invert;
             contains = Contains;
+            exact = Exact;
             equality = Compare;
             checks = new List<Check>();
         }
@@ -172,17 +182,17 @@ namespace FilterExtensions.ConfigNodes
             switch (type.typeEnum)
             {
                 case CheckType.moduleTitle: // check by module title
-                    return invert ^ PartType.checkModuleTitle(part, values, contains);
+                    return invert ^ PartType.checkModuleTitle(part, values, contains, exact);
                 case CheckType.moduleName:
-                    return invert ^ PartType.checkModuleName(part, values, contains);
+                    return invert ^ PartType.checkModuleName(part, values, contains, exact);
                 case CheckType.partName: // check by part name (cfg name)
                     return invert ^ PartType.checkName(part, values);
                 case CheckType.partTitle: // check by part title (in game name)
                     return invert ^ PartType.checkTitle(part, values);
                 case CheckType.resource: // check for a resource
-                    return invert ^ PartType.checkResource(part, values, contains);
+                    return invert ^ PartType.checkResource(part, values, contains, exact);
                 case CheckType.propellant: // check for engine propellant
-                    return invert ^ PartType.checkPropellant(part, values, contains);
+                    return invert ^ PartType.checkPropellant(part, values, contains, exact);
                 case CheckType.tech: // check by tech
                     return invert ^ PartType.checkTech(part, values);
                 case CheckType.manufacturer: // check by manufacturer
@@ -194,7 +204,7 @@ namespace FilterExtensions.ConfigNodes
                 case CheckType.category:
                     return invert ^ PartType.checkCategory(part, values);
                 case CheckType.size: // check by largest stack node size
-                    return invert ^ PartType.checkPartSize(part, values, contains, equality);
+                    return invert ^ PartType.checkPartSize(part, values, contains, equality, exact);
                 case CheckType.crew:
                     return invert ^ PartType.checkCrewCapacity(part, values, equality);
                 case CheckType.custom: // for when things get tricky
@@ -212,7 +222,7 @@ namespace FilterExtensions.ConfigNodes
                 case CheckType.subcategory:
                     return invert ^ PartType.checkSubcategory(part, values, depth);
                 case CheckType.tag:
-                    return invert ^ PartType.checkTags(part, values, contains);
+                    return invert ^ PartType.checkTags(part, values, contains, exact);
                 case CheckType.check:
                     for (int i = 0; i < checks.Count; i++)
                     {

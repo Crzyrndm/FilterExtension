@@ -283,11 +283,9 @@ namespace FilterExtensions
                 string propList = string.Join(",", ls);
 
                 List<Check> checks = new List<Check>();
-                Array.ForEach(ls, s => checks.Add(new Check("propellant", s)));
+                checks.Add(new Check("propellant", propList, Exact:true)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
-                checks.Add(new Check("propellant", propList, true, false)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
-
-                string name = propList; // rename function needs to be parsed from
+                string name = propList;
                 string icon = propList;
                 SetNameAndIcon(ref name, ref icon);
 

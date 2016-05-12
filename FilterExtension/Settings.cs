@@ -3,15 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FilterExtensions
 {
     using Utility;
     using KSP.UI.Screens;
+    using KSP.UI;
 
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     class Settings : MonoBehaviour
     {
+        static Canvas settingsCanvasPrefab;
+        static Canvas windowInstance;
+
         Rect settingsRect = new Rect(Screen.width / 2, Screen.height / 2, 400, 0);
         static bool showWindow;
         private static ApplicationLauncherButton btnLauncher;
@@ -22,31 +27,29 @@ namespace FilterExtensions
         public static bool debug = false;
         public static bool setAdvanced = true;
         public static bool replaceFbM = true;
-        public static string categoryDefault = "";
-        public static string subCategoryDefault = "";
+        public static string categoryDefault = string.Empty;
+        public static string subCategoryDefault = string.Empty;
 
         public void Start()
         {
             showWindow = false;
             if (btnLauncher == null)
-                btnLauncher = ApplicationLauncher.Instance.AddModApplication(() => showWindow = !showWindow, () => showWindow = !showWindow,
+                btnLauncher = ApplicationLauncher.Instance.AddModApplication(toggleSettingsVisible, toggleSettingsVisible,
                                                                         null, null, null, null, ApplicationLauncher.AppScenes.SPACECENTER,
                                                                         GameDatabase.Instance.GetTexture("000_FilterExtensions/Icons/FilterCreator", false));
 
             LoadSettings();
+
+            if (settingsCanvasPrefab == null)
+                KSPAssets.Loaders.AssetLoader.LoadAssets(bundleLoaded, KSPAssets.Loaders.AssetLoader.GetAssetDefinitionWithName("000_FilterExtensions/fesettings", "SettingsPanel"));
+            else
+                InstantiateCanvas();
         }
         
         public void OnDestroy()
         {
             SaveSettings();
-        }
-
-        public void OnGUI()
-        {
-            if (!showWindow)
-                return;
-            GUI.skin = HighLogic.Skin;
-            settingsRect = GUILayout.Window(6548792, settingsRect, drawWindow, "Filter Extensions Settings");
+            windowInstance = null;
         }
 
         public static void LoadSettings()
@@ -87,17 +90,108 @@ namespace FilterExtensions
             settingsNode.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg");
         }
 
-        private void drawWindow(int id)
+        void bundleLoaded(KSPAssets.Loaders.AssetLoader.Loader loader)
         {
-            debug = GUILayout.Toggle(debug, "Enable logging");
-            setAdvanced = GUILayout.Toggle(setAdvanced, "Default to Advanced mode");
-            hideUnpurchased = GUILayout.Toggle(hideUnpurchased, "Hide unpurchased parts");
-            replaceFbM = GUILayout.Toggle(replaceFbM, "Sort parts by folder in manufacturer tab (requires restart)");
+            for (int i = 0; i < loader.definitions.Length; ++i)
+            {
+                UnityEngine.Object obj = loader.objects[i];
+                if (obj == null || obj.name != "SettingsPanel")
+                    continue;
 
-            GUIUtils.DrawLabelPlusBox("Default Category", ref categoryDefault);
-            GUIUtils.DrawLabelPlusBox("Default Sub-category", ref subCategoryDefault);
+                Canvas c = (obj as GameObject).GetComponent<Canvas>();
+                if (c != null)
+                {
+                    settingsCanvasPrefab = c;
+                    break;
+                }
+            }
+            if (settingsCanvasPrefab == null)
+            {
+                Core.Log("No settings canvas prefab found", Core.LogLevel.Warn);
+                return;
+            }
+            settingsCanvasPrefab.enabled = false;
+            InstantiateCanvas();
+        }
 
-            GUI.DragWindow();
+        static void toggleSettingsVisible()
+        {
+            if (windowInstance != null)
+                windowInstance.enabled = !windowInstance.enabled;
+        }
+
+        private void InstantiateCanvas()
+        {
+            windowInstance = Instantiate(settingsCanvasPrefab);
+
+            Toggle[] boolSettings = windowInstance.GetComponentsInChildren<Toggle>();
+            foreach (Toggle t in boolSettings)
+            {
+                switch (t.name)
+                {
+                    case "tgl_Debug":
+                        t.isOn = Settings.debug;
+                        t.onValueChanged.AddListener(dbg_toggleChanged);
+                        break;
+                    case "tgl_unpurchased":
+                        t.isOn = Settings.hideUnpurchased;
+                        t.onValueChanged.AddListener(hide_toggleChanged);
+                        break;
+                    case "tgl_advanced":
+                        t.isOn = Settings.setAdvanced;
+                        t.onValueChanged.AddListener(setAdv_toggleChanged);
+                        break;
+                    case "tgl_replaceFBM":
+                        t.isOn = Settings.hideUnpurchased;
+                        t.onValueChanged.AddListener(rplFbM_toggleChanged);
+                        break;
+                }
+            }
+            InputField[] textSettings = windowInstance.GetComponentsInChildren<InputField>();
+            foreach (InputField input in textSettings)
+            {
+                switch (input.name)
+                {
+                    case "input_category":
+                        input.text = Settings.categoryDefault;
+                        input.onValueChange.AddListener(cat_txtInputChanged);
+                        break;
+                    case "input_subcategory":
+                        input.text = Settings.subCategoryDefault;
+                        input.onValueChange.AddListener(subCat_txtInputChanged);
+                        break;
+                }
+            }
+        }
+
+        public void dbg_toggleChanged(bool newValue)
+        {
+            Settings.debug = newValue;
+        }
+
+        public void hide_toggleChanged(bool newValue)
+        {
+            Settings.hideUnpurchased = newValue;
+        }
+
+        public void setAdv_toggleChanged(bool newValue)
+        {
+            Settings.setAdvanced = newValue;
+        }
+
+        public void rplFbM_toggleChanged(bool newValue)
+        {
+            Settings.replaceFbM = newValue;
+        }
+
+        public void cat_txtInputChanged(string newValue)
+        {
+            Settings.categoryDefault = newValue;
+        }
+
+        public void subCat_txtInputChanged(string newValue)
+        {
+            Settings.subCategoryDefault = newValue;
         }
     }
 }
