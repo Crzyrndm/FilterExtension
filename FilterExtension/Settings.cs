@@ -4,6 +4,8 @@ using System.Linq;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace FilterExtensions
 {
@@ -16,9 +18,9 @@ namespace FilterExtensions
     {
         static Canvas settingsCanvasPrefab;
         static Canvas windowInstance;
+        RectTransform windowPosition;
 
-        Rect settingsRect = new Rect(Screen.width / 2, Screen.height / 2, 400, 0);
-        static bool showWindow;
+
         private static ApplicationLauncherButton btnLauncher;
 
         public const string RelativeSettingsPath = "GameData/000_FilterExtensions/PluginData/";
@@ -32,7 +34,6 @@ namespace FilterExtensions
 
         public void Start()
         {
-            showWindow = false;
             if (btnLauncher == null)
                 btnLauncher = ApplicationLauncher.Instance.AddModApplication(toggleSettingsVisible, toggleSettingsVisible,
                                                                         null, null, null, null, ApplicationLauncher.AppScenes.SPACECENTER,
@@ -123,6 +124,13 @@ namespace FilterExtensions
         private void InstantiateCanvas()
         {
             windowInstance = Instantiate(settingsCanvasPrefab);
+            windowPosition = windowInstance.transform.GetChild(0) as RectTransform; // windowInstance.gameObject.GetChild("Panel");
+            EventTrigger.Entry entry = new EventTrigger.Entry();
+            entry.eventID = EventTriggerType.Drag;
+            entry.callback = new EventTrigger.TriggerEvent();
+            entry.callback.AddListener((x) => windowDrag(x));
+            windowPosition.gameObject.GetComponent<EventTrigger>().triggers.Add(entry);
+
 
             Toggle[] boolSettings = windowInstance.GetComponentsInChildren<Toggle>();
             foreach (Toggle t in boolSettings)
@@ -192,6 +200,11 @@ namespace FilterExtensions
         public void subCat_txtInputChanged(string newValue)
         {
             Settings.subCategoryDefault = newValue;
+        }
+
+        public void windowDrag(UnityEngine.EventSystems.BaseEventData data)
+        {
+            windowPosition.position += new Vector3(((PointerEventData)data).delta.x, ((PointerEventData)data).delta.y);
         }
     }
 }
