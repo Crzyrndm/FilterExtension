@@ -14,7 +14,7 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
-        public static readonly Version version = new Version(2, 5, 1, 0);
+        public static readonly Version version = new Version(2, 5, 3, 0);
         
         private static Core instance;
         public static Core Instance

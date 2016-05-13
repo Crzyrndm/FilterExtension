@@ -67,19 +67,19 @@ namespace FilterExtensions.Utility
                     return value.Contains("Pods", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Propulsion:
                     if (isEngine(part))
-                        return value.Contains("Engines", StringComparer.OrdinalIgnoreCase);
+                        return value.Contains("Engines", StringComparer.OrdinalIgnoreCase) || value.Contains("Engine", StringComparer.OrdinalIgnoreCase);
                     else
-                        return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase);
+                        return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase) || value.Contains("FuelTank", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Engine:
-                    return value.Contains("Engines", StringComparer.OrdinalIgnoreCase);
+                    return value.Contains("Engines", StringComparer.OrdinalIgnoreCase) || value.Contains("Engine", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.FuelTank:
-                    return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase);
+                    return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase) || value.Contains("FuelTank", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Control:
                     return value.Contains("Control", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Structural:
                     return value.Contains("Structural", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Aero:
-                    return value.Contains("Aerodynamics", StringComparer.OrdinalIgnoreCase);
+                    return value.Contains("Aerodynamics", StringComparer.OrdinalIgnoreCase) || value.Contains("Aero", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Utility:
                     return value.Contains("Utility", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Science:
