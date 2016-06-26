@@ -79,12 +79,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\GameData"
-set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData"
+    <PostBuildEvent>set SOURCE="D:\Libraries\GitHub\FilterExtension\GameData"
+set DESTINATION="D:\Libraries\Desktop\Kerbal Space Program Dev\GameData"
 xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y
 
-set SOURCE="D:\Users\Joshua\GitHub\FilterExtension\Testing"
-set DESTINATION="D:\Users\Joshua\Desktop\Kerbal Space Program Dev\GameData\000_FilterExtensions Configs\Testing"
+set SOURCE="D:\Libraries\GitHub\FilterExtension\Testing"
+set DESTINATION="D:\Libraries\Desktop\Kerbal Space Program Dev\GameData\000_FilterExtensions Configs\Testing"
 xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
