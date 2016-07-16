@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.IO;
 using UnityEngine;
@@ -40,11 +40,12 @@ namespace FilterExtensions
                                                                         GameDatabase.Instance.GetTexture("000_FilterExtensions/Icons/FilterCreator", false));
 
             LoadSettings();
+            StartCoroutine(LoadBundleAssets());
 
-            if (settingsCanvasPrefab == null)
-                KSPAssets.Loaders.AssetLoader.LoadAssets(bundleLoaded, KSPAssets.Loaders.AssetLoader.GetAssetDefinitionWithName("000_FilterExtensions/fesettings", "SettingsPanel"));
-            else
-                InstantiateCanvas();
+            //if (settingsCanvasPrefab == null)
+            //    KSPAssets.Loaders.AssetLoader.LoadAssets(bundleLoaded, KSPAssets.Loaders.AssetLoader.GetAssetDefinitionWithName("000_FilterExtensions/fesettings", "SettingsPanel"));
+            //else
+            
         }
         
         public void OnDestroy()
@@ -91,29 +92,63 @@ namespace FilterExtensions
             settingsNode.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg");
         }
 
-        void bundleLoaded(KSPAssets.Loaders.AssetLoader.Loader loader)
+        public IEnumerator LoadBundleAssets()
         {
-            for (int i = 0; i < loader.definitions.Length; ++i)
-            {
-                UnityEngine.Object obj = loader.objects[i];
-                if (obj == null || obj.name != "SettingsPanel")
-                    continue;
-
-                Canvas c = (obj as GameObject).GetComponent<Canvas>();
-                if (c != null)
-                {
-                    settingsCanvasPrefab = c;
-                    break;
-                }
-            }
             if (settingsCanvasPrefab == null)
             {
-                Core.Log("No settings canvas prefab found", Core.LogLevel.Warn);
-                return;
+                while (!Caching.ready)
+                    yield return null;
+                using (WWW www = WWW.LoadFromCacheOrDownload("file://" + KSPUtil.ApplicationRootPath + Path.DirectorySeparatorChar + "GameData"
+                                                                            + Path.DirectorySeparatorChar + "000_FilterExtensions" + Path.DirectorySeparatorChar + "fesettings.ksp", 1))
+                {
+                    yield return www;
+
+                    AssetBundle assetBundle = www.assetBundle;
+                    GameObject[] objects = assetBundle.LoadAllAssets<GameObject>();
+                    for (int i = 0; i < objects.Length; ++i)
+                    {
+                        Debug.Log(objects[i].name);
+                        if (objects[i].name == "SettingsPanel")
+                        {
+                            settingsCanvasPrefab = objects[i].GetComponent<Canvas>();
+                            settingsCanvasPrefab.enabled = false;
+                            Debug.Log("settings prefab loaded");
+                        }
+                    }
+                    InstantiateCanvas();
+                    yield return new WaitForSeconds(10.0f);
+                    assetBundle.Unload(false);
+                }
             }
-            settingsCanvasPrefab.enabled = false;
-            InstantiateCanvas();
+            else
+            {
+                InstantiateCanvas();
+            }
         }
+
+        //void bundleLoaded(KSPAssets.Loaders.AssetLoader.Loader loader)
+        //{
+        //    for (int i = 0; i < loader.definitions.Length; ++i)
+        //    {
+        //        UnityEngine.Object obj = loader.objects[i];
+        //        if (obj == null || obj.name != "SettingsPanel")
+        //            continue;
+
+        //        Canvas c = (obj as GameObject).GetComponent<Canvas>();
+        //        if (c != null)
+        //        {
+        //            settingsCanvasPrefab = c;
+        //            break;
+        //        }
+        //    }
+        //    if (settingsCanvasPrefab == null)
+        //    {
+        //        Core.Log("No settings canvas prefab found", Core.LogLevel.Warn);
+        //        return;
+        //    }
+        //    settingsCanvasPrefab.enabled = false;
+        //    InstantiateCanvas();
+        //}
 
         static void toggleSettingsVisible()
         {
