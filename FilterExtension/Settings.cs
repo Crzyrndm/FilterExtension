@@ -1,26 +1,18 @@
-﻿using System;
+﻿using KSP.UI.Screens;
 using System.Collections;
-using System.Linq;
 using System.IO;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace FilterExtensions
 {
-    using Utility;
-    using KSP.UI.Screens;
-    using KSP.UI;
-
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     class Settings : MonoBehaviour
     {
         static Canvas settingsCanvasPrefab;
         static Canvas windowInstance;
         RectTransform windowPosition;
-
-
         private static ApplicationLauncherButton btnLauncher;
 
         public const string RelativeSettingsPath = "GameData/000_FilterExtensions/PluginData/";
@@ -40,18 +32,46 @@ namespace FilterExtensions
                                                                         GameDatabase.Instance.GetTexture("000_FilterExtensions/Icons/FilterCreator", false));
 
             LoadSettings();
-            StartCoroutine(LoadBundleAssets());
-
-            //if (settingsCanvasPrefab == null)
-            //    KSPAssets.Loaders.AssetLoader.LoadAssets(bundleLoaded, KSPAssets.Loaders.AssetLoader.GetAssetDefinitionWithName("000_FilterExtensions/fesettings", "SettingsPanel"));
-            //else
-            
+            StartCoroutine(LoadBundleAssets());            
         }
         
         public void OnDestroy()
         {
             SaveSettings();
             windowInstance = null;
+        }
+
+        public IEnumerator LoadBundleAssets()
+        {
+            if (settingsCanvasPrefab == null)
+            {
+                while (!Caching.ready)
+                    yield return null;
+                using (WWW www = new WWW("file://" + KSPUtil.ApplicationRootPath + Path.DirectorySeparatorChar
+                    + "GameData" + Path.DirectorySeparatorChar + "000_FilterExtensions" + Path.DirectorySeparatorChar + "fesettings.ksp"))
+                {
+                    yield return www;
+
+                    AssetBundle assetBundle = www.assetBundle;
+                    GameObject[] objects = assetBundle.LoadAllAssets<GameObject>();
+                    for (int i = 0; i < objects.Length; ++i)
+                    {
+                        if (objects[i].name == "SettingsPanel")
+                        {
+                            settingsCanvasPrefab = objects[i].GetComponent<Canvas>();
+                            settingsCanvasPrefab.enabled = false; // only show once the toolbar button is pressed
+                            Core.Log("settings Canvas prefab loaded", Core.LogLevel.Warn);
+                        }
+                    }
+                    InstantiateCanvas();
+                    yield return new WaitForSeconds(10.0f);
+                    assetBundle.Unload(false);
+                }
+            }
+            else
+            {
+                InstantiateCanvas();
+            }
         }
 
         public static void LoadSettings()
@@ -92,64 +112,6 @@ namespace FilterExtensions
             settingsNode.Save(KSPUtil.ApplicationRootPath.Replace("\\", "/") + RelativeSettingsPath + "Settings.cfg");
         }
 
-        public IEnumerator LoadBundleAssets()
-        {
-            if (settingsCanvasPrefab == null)
-            {
-                while (!Caching.ready)
-                    yield return null;
-                using (WWW www = WWW.LoadFromCacheOrDownload("file://" + KSPUtil.ApplicationRootPath + Path.DirectorySeparatorChar + "GameData"
-                                                                            + Path.DirectorySeparatorChar + "000_FilterExtensions" + Path.DirectorySeparatorChar + "fesettings.ksp", 1))
-                {
-                    yield return www;
-
-                    AssetBundle assetBundle = www.assetBundle;
-                    GameObject[] objects = assetBundle.LoadAllAssets<GameObject>();
-                    for (int i = 0; i < objects.Length; ++i)
-                    {
-                        Debug.Log(objects[i].name);
-                        if (objects[i].name == "SettingsPanel")
-                        {
-                            settingsCanvasPrefab = objects[i].GetComponent<Canvas>();
-                            settingsCanvasPrefab.enabled = false;
-                            Debug.Log("settings prefab loaded");
-                        }
-                    }
-                    InstantiateCanvas();
-                    yield return new WaitForSeconds(10.0f);
-                    assetBundle.Unload(false);
-                }
-            }
-            else
-            {
-                InstantiateCanvas();
-            }
-        }
-
-        //void bundleLoaded(KSPAssets.Loaders.AssetLoader.Loader loader)
-        //{
-        //    for (int i = 0; i < loader.definitions.Length; ++i)
-        //    {
-        //        UnityEngine.Object obj = loader.objects[i];
-        //        if (obj == null || obj.name != "SettingsPanel")
-        //            continue;
-
-        //        Canvas c = (obj as GameObject).GetComponent<Canvas>();
-        //        if (c != null)
-        //        {
-        //            settingsCanvasPrefab = c;
-        //            break;
-        //        }
-        //    }
-        //    if (settingsCanvasPrefab == null)
-        //    {
-        //        Core.Log("No settings canvas prefab found", Core.LogLevel.Warn);
-        //        return;
-        //    }
-        //    settingsCanvasPrefab.enabled = false;
-        //    InstantiateCanvas();
-        //}
-
         static void toggleSettingsVisible()
         {
             if (windowInstance != null)
@@ -159,13 +121,14 @@ namespace FilterExtensions
         private void InstantiateCanvas()
         {
             windowInstance = Instantiate(settingsCanvasPrefab);
-            windowPosition = windowInstance.transform.GetChild(0) as RectTransform; // windowInstance.gameObject.GetChild("Panel");
+            windowPosition = windowInstance.transform.GetChild(0) as RectTransform;
+
+            // drag events
             EventTrigger.Entry entry = new EventTrigger.Entry();
             entry.eventID = EventTriggerType.Drag;
             entry.callback = new EventTrigger.TriggerEvent();
             entry.callback.AddListener((x) => windowDrag(x));
             windowPosition.gameObject.GetComponent<EventTrigger>().triggers.Add(entry);
-
 
             Toggle[] boolSettings = windowInstance.GetComponentsInChildren<Toggle>();
             foreach (Toggle t in boolSettings)

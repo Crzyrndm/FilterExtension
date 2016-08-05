@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
@@ -18,7 +17,7 @@ namespace FilterExtensions.ConfigNodes
         {
             get
             {
-                return filters.Any() || template.Any();
+                return (filters?.Count ?? 0) > 0 || (template?.Count ?? 0) > 0;
             }
         }
 

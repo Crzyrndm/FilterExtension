@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
-using UnityEngine;
 
 namespace FilterExtensions.Utility
 {
     using ModuleWheels;
-    
+
     public static class PartType
     {
         /// <summary>
@@ -17,13 +15,12 @@ namespace FilterExtensions.Utility
         {
             if (depth > 10)
             {
-                Core.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-                        , Core.LogLevel.Error);
+                Core.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", Core.LogLevel.Error);
                 return false;
             }
             foreach (string s in value)
             {
-                FilterExtensions.ConfigNodes.customSubCategory subcategory;
+                ConfigNodes.customSubCategory subcategory;
                 if (Core.Instance.subCategoriesDict.TryGetValue(s, out subcategory) && subcategory.checkPartFilters(part, ++depth))
                     return true;
             }

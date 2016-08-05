@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
 
 namespace FilterExtensions.Utility
 {
@@ -26,7 +23,7 @@ namespace FilterExtensions.Utility
         }
 
         /// <summary>
-        /// TryGetValue for a list
+        /// TryGetValue for a list with predicate
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
