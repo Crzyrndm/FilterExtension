@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
@@ -77,8 +75,12 @@ namespace FilterExtensions.ConfigNodes
         {
             if (fLA.Count != fLB.Count && fLA.Count != 0)
                 return false;
-
-            return fLA.All(f => fLB.Contains(f));
+            for (int i = fLA.Count - 1; i >= 0; --i)
+            {
+                if (!fLB.Contains(fLA[i]))
+                    return false;
+            }
+            return true;
         }
 
         public bool Equals(Filter f2)
@@ -88,15 +90,20 @@ namespace FilterExtensions.ConfigNodes
 
             if (invert != f2.invert)
                 return false;
-            return checks.All(c => f2.checks.Contains(c));
+            for (int i = checks.Count -1; i >= 0; --i)
+            {
+                if (!f2.checks.Contains(checks[i]))
+                    return false;
+            }
+            return true;
         }
 
         public override int GetHashCode()
         {
             int hash = 0;
-            foreach (Check c in checks)
+            for (int i = checks.Count - 1; i >= 0; --i)
             {
-                hash *= c.GetHashCode();
+                hash *= checks[i].GetHashCode();
             }
 
             return hash ^ invert.GetHashCode();

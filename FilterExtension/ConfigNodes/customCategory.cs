@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
-    using Utility;
     using KSP.UI.Screens;
+    using Utility;
 
     public class customCategory : IEquatable<customCategory>, ICloneable
     {
@@ -239,7 +239,7 @@ namespace FilterExtensions.ConfigNodes
 
         public bool hasSubCategories()
         {
-            return (subCategories != null && subCategories.Any());
+            return (subCategories?.Count ?? 0) > 0;
         }
 
         public override bool Equals(object obj)

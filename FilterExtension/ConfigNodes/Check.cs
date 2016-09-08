@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 
 namespace FilterExtensions.ConfigNodes
 {
@@ -252,7 +250,7 @@ namespace FilterExtensions.ConfigNodes
 
         public bool isEmpty()
         {
-            return !checks.Any() && (values == null || values.Length == 0);
+            return (checks?.Count ?? 0) == 0 && (values == null || values.Length == 0);
         }
 
         public ConfigNode toConfigNode()
@@ -292,7 +290,7 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            return type.GetHashCode() ^ values.GetHashCode() ^ invert.GetHashCode() ^ contains.GetHashCode() ^ equality.GetHashCode() ^ (int)checks.Average(c => c.GetHashCode());
+            return type.GetHashCode() ^ values.GetHashCode() ^ invert.GetHashCode() ^ contains.GetHashCode() ^ equality.GetHashCode() ^ checks.GetHashCode();
         }
     }
 }
