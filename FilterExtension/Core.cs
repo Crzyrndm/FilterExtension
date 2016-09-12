@@ -406,20 +406,27 @@ namespace FilterExtensions
         /// </summary>
         private static void loadIcons()
         {
-            GameDatabase.TextureInfo[] texArray = GameDatabase.Instance.databaseTexture.Where(t => t.texture != null && t.texture.height == 32 && t.texture.width == 32).ToArray();
-            Dictionary<string, GameDatabase.TextureInfo> texDict = texArray.ToDictionary(k => k.name);
-
+            GameDatabase.TextureInfo texInfo = null;
             Texture2D selectedTex = null;
-            foreach (GameDatabase.TextureInfo t in texArray)
+            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
+            for (int i = GameDatabase.Instance.databaseTexture.Count - 1; i >= 0; --i)
             {
-                GameDatabase.TextureInfo texInfo;
-                if (texDict.TryGetValue(t.name + "_selected", out texInfo))
+                texInfo = GameDatabase.Instance.databaseTexture[i];
+                if (texInfo.texture != null && texInfo.texture.width == 32 && texInfo.texture.height == 32)
+                {
+                    texDict.TryAdd(texInfo.name, texInfo);
+                }
+            }
+
+            foreach (KeyValuePair<string, GameDatabase.TextureInfo> kvp in texDict)
+            {
+                if (texDict.TryGetValue(kvp.Value.name + "_selected", out texInfo))
                     selectedTex = texInfo.texture;
                 else
-                    selectedTex = t.texture;
+                    selectedTex = kvp.Value.texture;
 
-                string name = t.name.Split(new char[] { '/', '\\' }).Last();
-                RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, t.texture, selectedTex, false);
+                string name = kvp.Value.name.Split(new char[] { '/', '\\' }).Last();
+                RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, kvp.Value.texture, selectedTex, false);
                 Instance.iconDict.TryAdd(icon.name, icon);
             }
         }
