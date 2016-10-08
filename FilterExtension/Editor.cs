@@ -41,7 +41,7 @@ namespace FilterExtensions
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
-            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though I may clear the category
+            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though FE may clear the category
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat;
@@ -76,8 +76,29 @@ namespace FilterExtensions
             // generate the set of parts to block
             if (blackListedParts == null)
             {
-#warning not known until now which parts are never visible so some completely empty subcategories may be present on the first VAB entry
                 findPartsToBlock();
+                // since this wasn't created until now, the already created categories may be completely empty
+                // remove them now
+                //PartCategorizer.Category cat;
+                //for (int i = PartCategorizer.Instance.categories.Count - 1; i >= 0; --i)
+                //{
+                //    cat = PartCategorizer.Instance.categories[i];
+                //    for (int j = cat.subcategories.Count - 1; j >= 0; --j)
+                //    {
+                //        bool hasParts = false;
+                //        foreach (AvailablePart part in PartLoader.Instance.parts)
+                //        {
+                //            if (cat.subcategories[j].exclusionFilter.FilterCriteria.Invoke(part))
+                //                hasParts = true;
+                //        }
+                //        if (hasParts)
+                //            continue;
+                //        cat.subcategories[j].DeleteSubcategory();
+                //    }
+                //    if (cat.subcategories.Count > 0)
+                //        continue;
+                //    cat.DeleteCategory();
+                //}
             }
 
             // this is to be used for altering subcategories in a category added by another mod
@@ -169,7 +190,7 @@ namespace FilterExtensions
             }
             catch (Exception e)
             {
-                Core.Log("Category refresh failed\r\n{0}\r\n{1}", Core.LogLevel.Error, e.InnerException, e.StackTrace);
+                Core.Log($"Category refresh failed\r\n{e.InnerException}\r\n{e.StackTrace}", Core.LogLevel.Error);
             }
         }
 
@@ -177,7 +198,7 @@ namespace FilterExtensions
         {
             blackListedParts = new HashSet<string>();
 
-            // Only checking the category which should be Filter by Function (should I find FbF explcitly?)
+            // Only checking the category which should be Filter by Function (should I find FbF explicitly?)
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
 
             AvailablePart part;

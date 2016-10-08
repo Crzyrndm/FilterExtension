@@ -177,11 +177,18 @@ namespace FilterExtensions.ConfigNodes
                     return;
                 }
                 else if (behaviour == categoryBehaviour.Replace)
-                    category.subcategories.Clear();
+                {
+                    for (int i = category.subcategories.Count - 1; i >= 0; --i)
+                    {
+                        category.subcategories[i].DeleteSubcategory();
+                    }
+                }
             }
 
             for (int i = 0; i < subCategories.Count; i++)
                 initSubcategory(i, subCategories[i], category);
+
+
         }
 
         public void initSubcategory(int index, subCategoryItem toInit, PartCategorizer.Category category)

@@ -83,6 +83,14 @@ namespace FilterExtensions.Utility
                     return value.Contains("Science", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.none:
                     return value.Contains("None", StringComparer.OrdinalIgnoreCase);
+                case PartCategories.Communication:
+                    return value.Contains("Communication", StringComparer.OrdinalIgnoreCase);
+                case PartCategories.Ground:
+                    return value.Contains("Ground", StringComparer.OrdinalIgnoreCase);
+                case PartCategories.Thermal:
+                    return value.Contains("Thermal", StringComparer.OrdinalIgnoreCase);
+                case PartCategories.Electrical:
+                    return value.Contains("Electrical", StringComparer.OrdinalIgnoreCase);
             }
             return false;
         }
@@ -110,20 +118,34 @@ namespace FilterExtensions.Utility
             else
                 return values.All(s => checkModuleNameType(part, s)) && part.partPrefab.Modules.Count == values.Length;
         }
-        
+
         /// <summary>
         /// provides a typed check for stock modules which then allows for inheritance to work
         /// </summary>
+        static Dictionary<string, PartModule> loaded_modules;
         public static bool checkModuleNameType(AvailablePart part, string value)
         {
+            if (loaded_modules == null)
+            {
+                loaded_modules = new Dictionary<string, PartModule>();
+                foreach (AvailablePart ap in PartLoader.LoadedPartsList)
+                {
+                    foreach (PartModule pm in ap.partPrefab.Modules)
+                    {
+                        if (!loaded_modules.ContainsKey(pm.moduleName))
+                        {
+                            loaded_modules.Add(pm.moduleName, pm);
+                        }
+                    }
+                }
+            }
+
             switch (value)
             {
                 case "ModuleAblator":
                     return part.partPrefab.Modules.Contains<ModuleAblator>();
                 case "ModuleActiveRadiator":
                     return part.partPrefab.Modules.Contains<ModuleActiveRadiator>();
-                case "ModuleAerodynamicLift":
-                    return part.partPrefab.Modules.Contains<ModuleAerodynamicLift>();
                 case "ModuleAeroSurface":
                     return part.partPrefab.Modules.Contains<ModuleAeroSurface>();
                 case "ModuleAlternator":
@@ -194,8 +216,6 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleGPS>();
                 case "ModuleGrappleNode":
                     return part.partPrefab.Modules.Contains<ModuleGrappleNode>();
-                case "ModuleHighDefCamera":
-                    return part.partPrefab.Modules.Contains<ModuleHighDefCamera>();
                 case "ModuleJettison":
                     return part.partPrefab.Modules.Contains<ModuleJettison>();
                 case "ModuleJointMotor":
@@ -290,8 +310,19 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleWheelSubmodule>();
                 case "ModuleWheelSuspension":
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
-                default:
-                    return part.partPrefab.Modules.PMListContains(value);
+                default: // use specialisation where I can to avoid the slow type checking this entails
+                    if (loaded_modules.ContainsKey(value))
+                    {
+                        Type string_type = loaded_modules[value].GetType();
+                        Type pm_type;
+                        foreach (PartModule pm in part.partPrefab.Modules)
+                        {
+                            pm_type = pm.GetType();
+                            if (string_type == pm_type || string_type.IsAssignableFrom(pm_type))
+                                return true;
+                        }
+                    }
+                    return false;
             }
         }
 
@@ -318,7 +349,7 @@ namespace FilterExtensions.Utility
         {
             if (part.partPrefab.Resources == null)
                 return false;
-            return Contains(values, part.partPrefab.Resources.list, r => r.resourceName, r => r.amount > 0, contains, exact);
+            return Contains(values, part.partPrefab.Resources, r => r.resourceName, r => r.amount > 0, contains, exact);
         }
 
         /// <summary>

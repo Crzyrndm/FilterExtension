@@ -508,21 +508,21 @@ namespace FilterExtensions
         internal static void Log(object o, LogLevel level = LogLevel.Log)
         {
             if (level == LogLevel.Log)
-                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, o);
+                Debug.LogFormat($"[Filter Extensions {version}]: {o}");
             else if (level == LogLevel.Warn)
-                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, o);
+                Debug.LogWarningFormat($"[Filter Extensions {version}]: {o}");
             else
-                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, o);
+                Debug.LogErrorFormat($"[Filter Extensions {version}]: {o}");
         }
 
         internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
         {
             if (level == LogLevel.Log)
-                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+                Debug.LogFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
             else if (level == LogLevel.Warn)
-                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+                Debug.LogWarningFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
             else
-                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+                Debug.LogErrorFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
         }
     }
 }

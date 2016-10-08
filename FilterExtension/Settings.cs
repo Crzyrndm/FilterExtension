@@ -136,19 +136,19 @@ namespace FilterExtensions
                 switch (t.name)
                 {
                     case "tgl_Debug":
-                        t.isOn = Settings.debug;
+                        t.isOn = debug;
                         t.onValueChanged.AddListener(dbg_toggleChanged);
                         break;
                     case "tgl_unpurchased":
-                        t.isOn = Settings.hideUnpurchased;
+                        t.isOn = hideUnpurchased;
                         t.onValueChanged.AddListener(hide_toggleChanged);
                         break;
                     case "tgl_advanced":
-                        t.isOn = Settings.setAdvanced;
+                        t.isOn = setAdvanced;
                         t.onValueChanged.AddListener(setAdv_toggleChanged);
                         break;
                     case "tgl_replaceFBM":
-                        t.isOn = Settings.hideUnpurchased;
+                        t.isOn = hideUnpurchased;
                         t.onValueChanged.AddListener(rplFbM_toggleChanged);
                         break;
                 }
@@ -159,12 +159,12 @@ namespace FilterExtensions
                 switch (input.name)
                 {
                     case "input_category":
-                        input.text = Settings.categoryDefault;
-                        input.onValueChange.AddListener(cat_txtInputChanged);
+                        input.text = categoryDefault;
+                        input.onValueChanged.AddListener(cat_txtInputChanged);
                         break;
                     case "input_subcategory":
-                        input.text = Settings.subCategoryDefault;
-                        input.onValueChange.AddListener(subCat_txtInputChanged);
+                        input.text = subCategoryDefault;
+                        input.onValueChanged.AddListener(subCat_txtInputChanged);
                         break;
                 }
             }
@@ -172,32 +172,32 @@ namespace FilterExtensions
 
         public void dbg_toggleChanged(bool newValue)
         {
-            Settings.debug = newValue;
+            debug = newValue;
         }
 
         public void hide_toggleChanged(bool newValue)
         {
-            Settings.hideUnpurchased = newValue;
+            hideUnpurchased = newValue;
         }
 
         public void setAdv_toggleChanged(bool newValue)
         {
-            Settings.setAdvanced = newValue;
+            setAdvanced = newValue;
         }
 
         public void rplFbM_toggleChanged(bool newValue)
         {
-            Settings.replaceFbM = newValue;
+            replaceFbM = newValue;
         }
 
         public void cat_txtInputChanged(string newValue)
         {
-            Settings.categoryDefault = newValue;
+            categoryDefault = newValue;
         }
 
         public void subCat_txtInputChanged(string newValue)
         {
-            Settings.subCategoryDefault = newValue;
+            subCategoryDefault = newValue;
         }
 
         public void windowDrag(UnityEngine.EventSystems.BaseEventData data)
