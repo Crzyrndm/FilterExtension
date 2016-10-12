@@ -45,14 +45,9 @@ namespace FilterExtensions
         {
             if (settingsCanvasPrefab == null)
             {
-                while (!Caching.ready)
-                    yield return null;
-                using (WWW www = new WWW("file://" + KSPUtil.ApplicationRootPath + Path.DirectorySeparatorChar
-                    + "GameData" + Path.DirectorySeparatorChar + "000_FilterExtensions" + Path.DirectorySeparatorChar + "fesettings.ksp"))
+                AssetBundle assetBundle = AssetBundle.LoadFromFile(KSPUtil.ApplicationRootPath + "GameData" + Path.DirectorySeparatorChar + "000_FilterExtensions" + Path.DirectorySeparatorChar + "fesettings");
+                if (assetBundle != null)
                 {
-                    yield return www;
-
-                    AssetBundle assetBundle = www.assetBundle;
                     GameObject[] objects = assetBundle.LoadAllAssets<GameObject>();
                     for (int i = 0; i < objects.Length; ++i)
                     {

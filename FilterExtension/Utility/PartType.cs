@@ -84,15 +84,20 @@ namespace FilterExtensions.Utility
                 case PartCategories.none:
                     return value.Contains("None", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Communication:
-                    return value.Contains("Communication", StringComparer.OrdinalIgnoreCase);
+                    return value.Contains("Communications", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Ground:
                     return value.Contains("Ground", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Thermal:
                     return value.Contains("Thermal", StringComparer.OrdinalIgnoreCase);
                 case PartCategories.Electrical:
                     return value.Contains("Electrical", StringComparer.OrdinalIgnoreCase);
+                case PartCategories.Coupling:
+                    return value.Contains("Coupling", StringComparer.OrdinalIgnoreCase);
+                case PartCategories.Payload:
+                    return value.Contains("Payload", StringComparer.OrdinalIgnoreCase);
+                default:
+                    return false;
             }
-            return false;
         }
 
 
@@ -116,7 +121,7 @@ namespace FilterExtensions.Utility
             if (!exact)
                 return contains == values.Any(s => checkModuleNameType(part, s));
             else
-                return values.All(s => checkModuleNameType(part, s)) && part.partPrefab.Modules.Count == values.Length;
+                return part.partPrefab.Modules.Count == values.Length && values.All(s => checkModuleNameType(part, s));
         }
 
         /// <summary>
@@ -125,21 +130,6 @@ namespace FilterExtensions.Utility
         static Dictionary<string, PartModule> loaded_modules;
         public static bool checkModuleNameType(AvailablePart part, string value)
         {
-            if (loaded_modules == null)
-            {
-                loaded_modules = new Dictionary<string, PartModule>();
-                foreach (AvailablePart ap in PartLoader.LoadedPartsList)
-                {
-                    foreach (PartModule pm in ap.partPrefab.Modules)
-                    {
-                        if (!loaded_modules.ContainsKey(pm.moduleName))
-                        {
-                            loaded_modules.Add(pm.moduleName, pm);
-                        }
-                    }
-                }
-            }
-
             switch (value)
             {
                 case "ModuleAblator":
@@ -200,8 +190,8 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleDragModifier>();
                 case "ModuleEffectTest":
                     return part.partPrefab.Modules.Contains<ModuleEffectTest>();
-                case "ModuleEngines":
-                    return part.partPrefab.Modules.Contains<ModuleEngines>();
+                //case "ModuleEngines":
+                //    return part.partPrefab.Modules.Contains<ModuleEngines>();
                 case "ModuleEnginesFX":
                     return part.partPrefab.Modules.Contains<ModuleEnginesFX>();
                 case "ModuleEnviroSensor":
@@ -311,6 +301,20 @@ namespace FilterExtensions.Utility
                 case "ModuleWheelSuspension":
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
                 default: // use specialisation where I can to avoid the slow type checking this entails
+                    if (loaded_modules == null)
+                    {
+                        loaded_modules = new Dictionary<string, PartModule>();
+                        foreach (AvailablePart ap in PartLoader.LoadedPartsList)
+                        {
+                            foreach (PartModule pm in ap.partPrefab.Modules)
+                            {
+                                if (!loaded_modules.ContainsKey(pm.moduleName))
+                                {
+                                    loaded_modules.Add(pm.moduleName, pm);
+                                }
+                            }
+                        }
+                    }
                     if (loaded_modules.ContainsKey(value))
                     {
                         Type string_type = loaded_modules[value].GetType();

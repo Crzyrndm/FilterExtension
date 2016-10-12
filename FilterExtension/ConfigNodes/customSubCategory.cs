@@ -182,10 +182,10 @@ namespace FilterExtensions.ConfigNodes
         {
             PartModuleFilter pmf;
             AvailablePart p;
-            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
+            for (int i = 0; i < PartLoader.Instance.loadedParts.Count; i++)
             {
                 pmf = null;
-                p = PartLoader.Instance.parts[i];
+                p = PartLoader.Instance.loadedParts[i];
                 if (Core.Instance.filterModules.TryGetValue(p.name, out pmf))
                 {
                     if (pmf.CheckForForceAdd(subCategoryTitle))
@@ -193,7 +193,7 @@ namespace FilterExtensions.ConfigNodes
                     if (pmf.CheckForForceBlock(subCategoryTitle))
                         return false;
                 }
-                if (checkPartFilters(PartLoader.Instance.parts[i]))
+                if (checkPartFilters(p))
                     return true;
             }
 

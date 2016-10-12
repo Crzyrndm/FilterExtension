@@ -34,6 +34,7 @@ namespace FilterExtensions
 
             while (PartCategorizer.Instance == null)
                 yield return null;
+            yield return null;
 
             if (Settings.debug)
                 Core.Log("Starting on Stock Filters", Core.LogLevel.Log);
@@ -202,9 +203,9 @@ namespace FilterExtensions
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
 
             AvailablePart part;
-            for (int i = 0; i < PartLoader.Instance.parts.Count; ++i)
+            for (int i = 0; i < PartLoader.Instance.loadedParts.Count; ++i)
             {
-                part = PartLoader.Instance.parts[i];
+                part = PartLoader.Instance.loadedParts[i];
                 if (part.category == PartCategories.none && !checkPartVisible(part, mainCat))
                     blackListedParts.Add(part.name);
             }

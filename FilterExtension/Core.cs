@@ -13,7 +13,7 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
-        public static readonly Version version = new Version(2, 6, 0, 0);
+        public static readonly Version version = new Version(2, 7, 0, 0);
         
         private static Core instance;
         public static Core Instance
@@ -46,10 +46,6 @@ namespace FilterExtensions
         public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
         // Dictionary of all filtering part modules by part name
         public Dictionary<string, PartModuleFilter> filterModules = new Dictionary<string, PartModuleFilter>();
-
-
-        // Config has options to disable the FbM replacement, and the default Category/SC and sort method
-
 
         const string fallbackIcon = "stockIcon_fallback";
 
@@ -121,9 +117,9 @@ namespace FilterExtensions
         {
             List<string> modNames = new List<string>();
 
-            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
+            for (int i = 0; i < PartLoader.Instance.loadedParts.Count; i++)
             {
-                AvailablePart p = PartLoader.Instance.parts[i];
+                AvailablePart p = PartLoader.Instance.loadedParts[i];
                 if (p == null)
                     continue;
                 
