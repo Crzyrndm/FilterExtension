@@ -190,8 +190,8 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleDragModifier>();
                 case "ModuleEffectTest":
                     return part.partPrefab.Modules.Contains<ModuleEffectTest>();
-                //case "ModuleEngines":
-                //    return part.partPrefab.Modules.Contains<ModuleEngines>();
+                case "ModuleEngines":
+                    return part.partPrefab.Modules.Contains<ModuleEngines>();
                 case "ModuleEnginesFX":
                     return part.partPrefab.Modules.Contains<ModuleEnginesFX>();
                 case "ModuleEnviroSensor":

@@ -34,9 +34,8 @@ namespace FilterExtensions
 
             while (PartCategorizer.Instance == null)
                 yield return null;
-            yield return null;
 
-            if (Settings.debug)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on Stock Filters", Core.LogLevel.Log);
 
             // stock filters
@@ -48,6 +47,10 @@ namespace FilterExtensions
                 customCategory cat;
                 if (Core.Instance.Categories.TryGetValue(c => c.categoryName == C.button.categoryName, out cat) && cat.type == customCategory.categoryType.Stock)
                     cat.initialise();
+                else if (C.button.categoryName == "Filter by Manufacturer" && (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().replaceFbM))
+                {
+                    Core.Instance.FilterByManufacturer.initialise();
+                }
             }
 
             // custom categories
@@ -58,10 +61,10 @@ namespace FilterExtensions
             // frames after the flag is set to wait before initialising. Minimum of two for things to work consistently
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Settings.debug)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on general categories", Core.LogLevel.Log);
 
-            // all FE categories
+            // all non stock FE categories
             foreach (customCategory c in Core.Instance.Categories)
             {
                 if (c.type == customCategory.categoryType.New)
@@ -71,35 +74,13 @@ namespace FilterExtensions
             // wait again so icon edits don't occur immediately and cause breakages
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Settings.debug)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on late categories", Core.LogLevel.Log);
 
             // generate the set of parts to block
             if (blackListedParts == null)
             {
                 findPartsToBlock();
-                // since this wasn't created until now, the already created categories may be completely empty
-                // remove them now
-                //PartCategorizer.Category cat;
-                //for (int i = PartCategorizer.Instance.categories.Count - 1; i >= 0; --i)
-                //{
-                //    cat = PartCategorizer.Instance.categories[i];
-                //    for (int j = cat.subcategories.Count - 1; j >= 0; --j)
-                //    {
-                //        bool hasParts = false;
-                //        foreach (AvailablePart part in PartLoader.Instance.parts)
-                //        {
-                //            if (cat.subcategories[j].exclusionFilter.FilterCriteria.Invoke(part))
-                //                hasParts = true;
-                //        }
-                //        if (hasParts)
-                //            continue;
-                //        cat.subcategories[j].DeleteSubcategory();
-                //    }
-                //    if (cat.subcategories.Count > 0)
-                //        continue;
-                //    cat.DeleteCategory();
-                //}
             }
 
             // this is to be used for altering subcategories in a category added by another mod
@@ -116,7 +97,7 @@ namespace FilterExtensions
             // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Settings.debug)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on removing categories", Core.LogLevel.Log);
             List<PartCategorizer.Category> catsToDelete = PartCategorizer.Instance.filters.FindAll(c => c.subcategories.Count == 0);
             foreach (PartCategorizer.Category cat in catsToDelete)
@@ -126,12 +107,12 @@ namespace FilterExtensions
             }
 
             // make the categories visible
-            if (Settings.setAdvanced)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().setAdvanced)
                 PartCategorizer.Instance.SetAdvancedMode();
 
             for (int i = 0; i < 4; i++)
                 yield return null;
-            if (Settings.debug)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Refreshing parts list", Core.LogLevel.Log);
             setSelectedCategory();
 
@@ -170,20 +151,20 @@ namespace FilterExtensions
             try
             {
                 PartCategorizer.Category cat;
-                if (Settings.categoryDefault != string.Empty)
+                if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().categoryDefault != string.Empty)
                 {
-                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == Settings.categoryDefault);
+                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().categoryDefault);
                     if (cat != null)
                         cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
                 }
 
-                if (Settings.subCategoryDefault != string.Empty)
+                if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().subCategoryDefault != string.Empty)
                 {
                     // set the subcategory button
                     cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.Value);
                     if (cat != null)
                     {
-                        cat = cat.subcategories.FirstOrDefault(sC => sC.button.categoryName == Settings.subCategoryDefault);
+                        cat = cat.subcategories.FirstOrDefault(sC => sC.button.categoryName == HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().subCategoryDefault);
                         if (cat != null)
                             cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
                     }
@@ -202,12 +183,33 @@ namespace FilterExtensions
             // Only checking the category which should be Filter by Function (should I find FbF explicitly?)
             PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
 
-            AvailablePart part;
-            for (int i = 0; i < PartLoader.Instance.loadedParts.Count; ++i)
+            foreach (AvailablePart part in PartLoader.LoadedPartsList)
             {
-                part = PartLoader.Instance.loadedParts[i];
                 if (part.category == PartCategories.none && !checkPartVisible(part, mainCat))
+                {
                     blackListedParts.Add(part.name);
+                }
+            }
+
+            // since this wasn't initialised until now, the already created categories may be completely empty
+            // culling them now
+            PartCategorizer.Category cat;
+            for (int i = PartCategorizer.Instance.categories.Count - 1; i >= 0; --i)
+            {
+                cat = PartCategorizer.Instance.categories[i];
+
+                for (int j = cat.subcategories.Count - 1; j >= 0; --j)
+                {
+                    Core.Log(cat.subcategories[j]);
+                    Core.Log(cat.subcategories[j].button.categoryName);
+                    //        if (checkIsEmptyCategory(cat.subcategories[j]))
+                    //        {
+                    //            cat.subcategories[j].DeleteSubcategory();
+                    //        }
+                }
+            //    if (cat.subcategories.Count > 0)
+            //        continue;
+            //    cat.DeleteCategory();
             }
         }
 
@@ -219,6 +221,16 @@ namespace FilterExtensions
                     return true;
             }
             return false;
+        }
+
+        private bool checkIsEmptyCategory(PartCategorizer.Category category)
+        {
+            foreach (AvailablePart part in PartLoader.LoadedPartsList)
+            {
+                if (checkPartVisible(part, category))
+                    return false;
+            }
+            return true;
         }
     }
 }
