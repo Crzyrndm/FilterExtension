@@ -118,11 +118,18 @@ namespace FilterExtensions
         private void getPartData()
         {
             List<string> modNames = new List<string>();
+            Editor.blackListedParts = new HashSet<string>();
 
             foreach (AvailablePart p in PartLoader.LoadedPartsList)
             {
                 if (p == null)
                     continue;
+                if (string.Equals(p.TechRequired, "Unresearchable", StringComparison.OrdinalIgnoreCase))
+                {
+                    Log(p.name);
+                    Editor.blackListedParts.Add(p.name);
+                    continue;
+                }
                 
                 if (string.IsNullOrEmpty(p.partUrl))
                     RepairAvailablePartUrl(p);
@@ -135,7 +142,9 @@ namespace FilterExtensions
 
                     // associate the path to the part
                     if (!partPathDict.ContainsKey(p.name))
+                    {
                         partPathDict.Add(p.name, p.partUrl);
+                    }
                     else
                         Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
 

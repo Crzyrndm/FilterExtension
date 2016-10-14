@@ -394,7 +394,9 @@ namespace FilterExtensions.Utility
         {
             string path;
             if (Core.Instance.partPathDict.TryGetValue(part.name, out path))
+            {
                 return value.Contains(path.Substring(0, path.IndexOfAny(new char[] { '\\', '/' })));
+            }
             return false;
         }
 

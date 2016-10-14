@@ -77,12 +77,6 @@ namespace FilterExtensions
             if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on late categories", Core.LogLevel.Log);
 
-            // generate the set of parts to block
-            if (blackListedParts == null)
-            {
-                findPartsToBlock();
-            }
-
             // this is to be used for altering subcategories in a category added by another mod
             foreach (customCategory c in Core.Instance.Categories)
             {
@@ -173,43 +167,6 @@ namespace FilterExtensions
             catch (Exception e)
             {
                 Core.Log($"Category refresh failed\r\n{e.InnerException}\r\n{e.StackTrace}", Core.LogLevel.Error);
-            }
-        }
-
-        private void findPartsToBlock()
-        {
-            blackListedParts = new HashSet<string>();
-
-            // Only checking the category which should be Filter by Function (should I find FbF explicitly?)
-            PartCategorizer.Category mainCat = PartCategorizer.Instance.filters[0];
-
-            foreach (AvailablePart part in PartLoader.LoadedPartsList)
-            {
-                if (part.category == PartCategories.none && !checkPartVisible(part, mainCat))
-                {
-                    blackListedParts.Add(part.name);
-                }
-            }
-
-            // since this wasn't initialised until now, the already created categories may be completely empty
-            // culling them now
-            PartCategorizer.Category cat;
-            for (int i = PartCategorizer.Instance.categories.Count - 1; i >= 0; --i)
-            {
-                cat = PartCategorizer.Instance.categories[i];
-
-                for (int j = cat.subcategories.Count - 1; j >= 0; --j)
-                {
-                    Core.Log(cat.subcategories[j]);
-                    Core.Log(cat.subcategories[j].button.categoryName);
-                    //        if (checkIsEmptyCategory(cat.subcategories[j]))
-                    //        {
-                    //            cat.subcategories[j].DeleteSubcategory();
-                    //        }
-                }
-            //    if (cat.subcategories.Count > 0)
-            //        continue;
-            //    cat.DeleteCategory();
             }
         }
 
