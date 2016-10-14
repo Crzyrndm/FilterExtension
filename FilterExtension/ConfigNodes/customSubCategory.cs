@@ -24,6 +24,10 @@ namespace FilterExtensions.ConfigNodes
         public customSubCategory(ConfigNode node)
         {
             subCategoryTitle = node.GetValue("name");
+            if (subCategoryTitle == string.Empty)
+            {
+                subCategoryTitle = node.GetValue("categoryName"); // for playing nice with stock generated subcats
+            }
             iconName = node.GetValue("icon");
 
             bool tmp;
@@ -34,6 +38,13 @@ namespace FilterExtensions.ConfigNodes
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
+            }
+            foreach (ConfigNode subNode in node.GetNodes("PARTS"))
+            {
+                Check ch = new Check("name", string.Join(",", subNode.GetValues("part")));
+                Filter f = new Filter(false);
+                f.checks.Add(ch);
+                filters.Add(f);
             }
             template = new List<Filter>();
         }

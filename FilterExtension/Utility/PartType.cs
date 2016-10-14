@@ -353,7 +353,7 @@ namespace FilterExtensions.Utility
         {
             if (part.partPrefab.Resources == null)
                 return false;
-            return Contains(values, part.partPrefab.Resources, r => r.resourceName, r => r.amount > 0, contains, exact);
+            return Contains(values, part.partPrefab.Resources, r => r.resourceName, contains, exact);
         }
 
         /// <summary>
@@ -589,7 +589,6 @@ namespace FilterExtensions.Utility
         {
             if (string.IsNullOrEmpty(part.tags))
                 return false;
-
             return Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries), contains, exact);
         }
 
