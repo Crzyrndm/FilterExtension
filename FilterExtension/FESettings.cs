@@ -22,7 +22,7 @@ namespace FilterExtensions
         public bool setAdvanced = true;
 
         [GameParameters.CustomParameterUI("Locate parts by mod"
-            , toolTip = "Enable to split parts by mod in the \"Filter by Manufacturer\" category")]
+            , toolTip = "Enable to split parts by mod folder in the \"Filter by Manufacturer\" category")]
         public bool replaceFbM = true;
 
         [GameParameters.CustomStringParameterUI("Default category"

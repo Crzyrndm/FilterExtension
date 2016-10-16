@@ -44,7 +44,7 @@ namespace FilterExtensions.Utility
                         testVal = isMultiCoupler(part);
                         break;
                     case "purchased":
-                        testVal = !Editor.instance.ready || ResearchAndDevelopment.PartModelPurchased(part);
+                        testVal = ResearchAndDevelopment.PartModelPurchased(part);
                         break;
                 }
                 if (testVal)

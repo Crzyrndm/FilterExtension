@@ -13,13 +13,21 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class Editor : MonoBehaviour
     {
-        public static Editor instance;
         public static bool subcategoriesChecked;
+        public static bool eventRegistered;
         public bool ready = false;
 
-        public void Start()
+        public void Awake()
         {
-            instance = this;
+            if (!eventRegistered)
+            {
+                eventRegistered = true;
+                GameEvents.onGUIEditorToolbarReady.Add(StartEditor);
+            }
+        }
+
+        public void StartEditor()
+        {
             StartCoroutine(editorInit());
         }
 
@@ -28,12 +36,15 @@ namespace FilterExtensions
         /// </summary>
         public static HashSet<string> blackListedParts;
 
-        private IEnumerator editorInit()
+        public IEnumerator editorInit()
         {
-            ready = false;
+            //ready = false;
 
-            while (PartCategorizer.Instance == null)
-                yield return null;
+            //while (PartCategorizer.Instance == null)
+            //{
+            //    Debug.Log("PartCategorizer is null");
+            //    yield return null;
+            //}
 
             if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on Stock Filters", Core.LogLevel.Log);
@@ -41,7 +52,6 @@ namespace FilterExtensions
             // stock filters
             // If I edit them later everything breaks
             // custom categories can't be created at this point
-            // The event which most mods will be hooking into fires after this, so they still get their subCategories even though FE may clear the category
             foreach (PartCategorizer.Category C in PartCategorizer.Instance.filters)
             {
                 customCategory cat;
@@ -116,7 +126,7 @@ namespace FilterExtensions
         /// <summary>
         /// In the editor, checks all subcategories of a category and edits their names/icons if required
         /// </summary>
-        public void namesAndIcons(PartCategorizer.Category category)
+        public static void namesAndIcons(PartCategorizer.Category category)
         {
             HashSet<string> toRemove = new HashSet<string>();
             foreach (PartCategorizer.Category c in category.subcategories)

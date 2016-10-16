@@ -2,12 +2,30 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using KSP.UI.Screens;
 
 namespace FE_Testing
 {
+    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
+    public class RegisterTestCategory : MonoBehaviour
+    {
+        static readonly List<string> allowedParts = new List<string>() { "asasmodule1-2", "fuelTank3-2", "basicFin" };
+
+        public void Start()
+        {
+            GameEvents.onGUIEditorToolbarReady.Add(AddSubCat);
+        }
+
+        public void AddSubCat()
+        {
+            Debug.Log("[FE_Testing Testing] Test subcat created");
+            PartCategorizer.AddCustomSubcategoryFilter(
+                PartCategorizer.Instance.filters.Find(c => string.Equals(c.button.categoryName, "Filter by Function", StringComparison.OrdinalIgnoreCase))
+                , "testing", new RUI.Icons.Selectable.Icon("abc", null, null, true), p => allowedParts.Contains(p.name));
+        }
+    }
+
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class FE_Test_Script : MonoBehaviour
     {
