@@ -308,7 +308,7 @@ namespace FilterExtensions.Utility
                         {
                             foreach (PartModule pm in ap.partPrefab.Modules)
                             {
-                                if (!loaded_modules.ContainsKey(pm.moduleName))
+                                if (!string.IsNullOrEmpty(pm.moduleName) && !loaded_modules.ContainsKey(pm.moduleName))
                                 {
                                     loaded_modules.Add(pm.moduleName, pm);
                                 }
