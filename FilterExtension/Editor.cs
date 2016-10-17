@@ -19,11 +19,7 @@ namespace FilterExtensions
 
         public void Awake()
         {
-            if (!eventRegistered)
-            {
-                eventRegistered = true;
-                GameEvents.onGUIEditorToolbarReady.Add(StartEditor);
-            }
+            GameEvents.onGUIEditorToolbarReady.Add(StartEditor);
         }
 
         public void StartEditor()
@@ -38,13 +34,7 @@ namespace FilterExtensions
 
         public IEnumerator editorInit()
         {
-            //ready = false;
-
-            //while (PartCategorizer.Instance == null)
-            //{
-            //    Debug.Log("PartCategorizer is null");
-            //    yield return null;
-            //}
+            GameEvents.onGUIEditorToolbarReady.Remove(StartEditor);
 
             if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
                 Core.Log("Starting on Stock Filters", Core.LogLevel.Log);

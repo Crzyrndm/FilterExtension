@@ -300,7 +300,7 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleWheelSubmodule>();
                 case "ModuleWheelSuspension":
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
-                default: // use specialisation where I can to avoid the slow type checking this entails
+                default: // use specialisation where I can to avoid the "slow" type checking this entails
                     if (loaded_modules == null)
                     {
                         loaded_modules = new Dictionary<string, PartModule>();
