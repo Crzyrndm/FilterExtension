@@ -24,6 +24,10 @@ namespace FilterExtensions.ConfigNodes
         public customSubCategory(ConfigNode node)
         {
             subCategoryTitle = node.GetValue("name");
+            if (subCategoryTitle == string.Empty)
+            {
+                subCategoryTitle = node.GetValue("categoryName"); // for playing nice with stock generated subcats
+            }
             iconName = node.GetValue("icon");
 
             bool tmp;
@@ -34,6 +38,13 @@ namespace FilterExtensions.ConfigNodes
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
                 filters.Add(new Filter(subNode));
+            }
+            foreach (ConfigNode subNode in node.GetNodes("PARTS"))
+            {
+                Check ch = new Check("name", string.Join(",", subNode.GetValues("part")));
+                Filter f = new Filter(false);
+                f.checks.Add(ch);
+                filters.Add(f);
             }
             template = new List<Filter>();
         }
@@ -107,11 +118,11 @@ namespace FilterExtensions.ConfigNodes
                 if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
                     return false;
             }
-            if (!unPurchasedOverride && Settings.hideUnpurchased && !ResearchAndDevelopment.PartModelPurchased(part) && !ResearchAndDevelopment.IsExperimentalPart(part))
+            if (!unPurchasedOverride && HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().hideUnpurchased && !(ResearchAndDevelopment.PartModelPurchased(part) || ResearchAndDevelopment.IsExperimentalPart(part)))
                 return false;
 
-            PartModuleFilter pmf;
-            if (Core.Instance.filterModules.TryGetValue(part.name, out pmf))
+            PartModuleFilter pmf = part.partPrefab.Modules.GetModule<PartModuleFilter>();
+            if (pmf != null)
             {
                 if (pmf.CheckForForceAdd(subCategoryTitle))
                     return true;
@@ -181,23 +192,21 @@ namespace FilterExtensions.ConfigNodes
         public bool checkSubCategoryHasParts(string category)
         {
             PartModuleFilter pmf;
-            AvailablePart p;
-            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
+            foreach (AvailablePart p in PartLoader.LoadedPartsList)
             {
-                pmf = null;
-                p = PartLoader.Instance.parts[i];
-                if (Core.Instance.filterModules.TryGetValue(p.name, out pmf))
+                pmf = p.partPrefab.Modules.GetModule<PartModuleFilter>();
+                if (pmf != null)
                 {
                     if (pmf.CheckForForceAdd(subCategoryTitle))
                         return true;
                     if (pmf.CheckForForceBlock(subCategoryTitle))
                         return false;
                 }
-                if (checkPartFilters(PartLoader.Instance.parts[i]))
+                if (checkPartFilters(p))
                     return true;
             }
 
-            if (Settings.debug)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
             {
                 if (!string.IsNullOrEmpty(category))
                     Core.Log(subCategoryTitle + " in category " + category + " has no valid parts and was not initialised", Core.LogLevel.Warn);
@@ -219,6 +228,7 @@ namespace FilterExtensions.ConfigNodes
         /// <returns>true if there is a matching check in the category</returns>
         public static bool checkForCheckMatch(customSubCategory subcategory, Check.CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
         {
+            
             for (int j = 0; j < subcategory.filters.Count; j++)
             {
                 Filter f = subcategory.filters[j];

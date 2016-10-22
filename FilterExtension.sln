@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilterExtensions", "FilterExtension\FilterExtensions.csproj", "{8633A568-654E-409D-A7B2-95839F2EBD3D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F544880B-94BB-48C7-9331-76452A1AE9B7} = {F544880B-94BB-48C7-9331-76452A1AE9B7}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FE_Testing", "FE_Testing\FE_Testing.csproj", "{F544880B-94BB-48C7-9331-76452A1AE9B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{8633A568-654E-409D-A7B2-95839F2EBD3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8633A568-654E-409D-A7B2-95839F2EBD3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8633A568-654E-409D-A7B2-95839F2EBD3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F544880B-94BB-48C7-9331-76452A1AE9B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F544880B-94BB-48C7-9331-76452A1AE9B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F544880B-94BB-48C7-9331-76452A1AE9B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F544880B-94BB-48C7-9331-76452A1AE9B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

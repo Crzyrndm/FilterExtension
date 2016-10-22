@@ -1,36 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8633A568-654E-409D-A7B2-95839F2EBD3D}</ProjectGuid>
+    <ProjectGuid>{F544880B-94BB-48C7-9331-76452A1AE9B7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FilterExtensions</RootNamespace>
-    <AssemblyName>FilterExtensions</AssemblyName>
+    <RootNamespace>FE_Testing</RootNamespace>
+    <AssemblyName>FE_Testing</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\GameData\000_FilterExtensions\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\GameData\000_FilterExtensions\</OutputPath>
+    <OutputPath>..\Testing\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
@@ -38,10 +36,6 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\Desktop\Kerbal Space Program Dev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="KSPAssets">
-      <HintPath>..\..\..\Desktop\Kerbal Space Program Dev\KSP_Data\Managed\KSPAssets.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -54,29 +48,15 @@
       <HintPath>..\..\..\Desktop\Kerbal Space Program Dev\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\Desktop\Kerbal Space Program Dev\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigNodes\customCategory.cs" />
-    <Compile Include="ConfigNodes\Check.cs" />
-    <Compile Include="Core.cs" />
-    <Compile Include="PartModuleFilter.cs" />
-    <Compile Include="FESettings.cs" />
-    <Compile Include="Utility\Extensions.cs" />
-    <Compile Include="Utility\GUIUtils.cs" />
-    <Compile Include="Utility\PartType.cs" />
-    <Compile Include="ConfigNodes\Filter.cs" />
-    <Compile Include="ConfigNodes\customSubCategory.cs" />
+    <Compile Include="FE_Test_Script.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Editor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>set SOURCE="D:\Libraries\GitHub\FilterExtension\GameData"
-set DESTINATION="D:\Libraries\Desktop\Kerbal Space Program Dev\GameData"
+    <PostBuildEvent>set SOURCE="D:\Libraries\GitHub\FilterExtension\Testing"
+set DESTINATION="D:\Libraries\Desktop\Kerbal Space Program Dev\GameData\000_FilterExtensions Configs\Testing"
 xcopy %25SOURCE%25 %25DESTINATION%25 /E /C /R /I /K /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

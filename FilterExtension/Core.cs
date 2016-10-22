@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq; // Majority of Core only runs once.
 
 namespace FilterExtensions
@@ -13,7 +14,7 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
-        public static readonly Version version = new Version(2, 6, 0, 0);
+        public static readonly Version version = new Version(2, 7, 1, 0);
         
         private static Core instance;
         public static Core Instance
@@ -26,6 +27,7 @@ namespace FilterExtensions
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
         public List<customCategory> Categories = new List<customCategory>();
+        public customCategory FilterByManufacturer;
         // storing all subCategory definitions for categories to reference
         public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
         // all subcategories with duplicated filters
@@ -44,20 +46,18 @@ namespace FilterExtensions
         public List<string> resources = new List<string>();
         // Dictionary of icons created on entering the main menu
         public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
-        // Dictionary of all filtering part modules by part name
-        public Dictionary<string, PartModuleFilter> filterModules = new Dictionary<string, PartModuleFilter>();
-
-
-        // Config has options to disable the FbM replacement, and the default Category/SC and sort method
-
 
         const string fallbackIcon = "stockIcon_fallback";
 
-        void Awake()
+        IEnumerator Start()
         {
             instance = this;
             DontDestroyOnLoad(this);
             Log(string.Empty, LogLevel.Warn);
+
+            yield return null;
+            yield return null;
+            yield return null;
 
             getConfigs();
             getPartData();
@@ -71,8 +71,6 @@ namespace FilterExtensions
         /// </summary>
         private void getConfigs()
         {
-            Settings.LoadSettings();
-
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("FilterRename");
             for (int i = 0; i < nodes.Length; i++)
             {
@@ -120,12 +118,18 @@ namespace FilterExtensions
         private void getPartData()
         {
             List<string> modNames = new List<string>();
+            Editor.blackListedParts = new HashSet<string>();
 
-            for (int i = 0; i < PartLoader.Instance.parts.Count; i++)
+            foreach (AvailablePart p in PartLoader.LoadedPartsList)
             {
-                AvailablePart p = PartLoader.Instance.parts[i];
                 if (p == null)
                     continue;
+                if (string.Equals(p.TechRequired, "Unresearchable", StringComparison.OrdinalIgnoreCase))
+                {
+                    Log(p.name);
+                    Editor.blackListedParts.Add(p.name);
+                    continue;
+                }
                 
                 if (string.IsNullOrEmpty(p.partUrl))
                     RepairAvailablePartUrl(p);
@@ -138,7 +142,9 @@ namespace FilterExtensions
 
                     // associate the path to the part
                     if (!partPathDict.ContainsKey(p.name))
+                    {
                         partPathDict.Add(p.name, p.partUrl);
+                    }
                     else
                         Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
 
@@ -151,13 +157,10 @@ namespace FilterExtensions
                             resources.AddUnique(r.resourceName);
                     }
                 }
-                if (p.partPrefab.Modules.Contains<PartModuleFilter>())
-                    filterModules.Add(p.name, p.partPrefab.Modules.GetModule<PartModuleFilter>());
             }
             generateEngineTypes();
 
-            if (Settings.replaceFbM)
-                processFilterByManufacturer(modNames);
+            processFilterByManufacturer(modNames);
         }
 
         /// <summary>
@@ -330,25 +333,16 @@ namespace FilterExtensions
                 }
             }
 
-            customCategory fbm = Categories.FirstOrDefault(C => C.categoryName == "Filter by Manufacturer");
-            if (fbm == null)
-            {
-                ConfigNode manufacturerSubs = new ConfigNode("SUBCATEGORIES");
-                for (int i = 0; i < subCatNames.Count; i++)
-                    manufacturerSubs.AddValue("list", i.ToString() + "," + subCatNames[i]);
+            ConfigNode manufacturerSubs = new ConfigNode("SUBCATEGORIES");
+            for (int i = 0; i < subCatNames.Count; i++)
+                manufacturerSubs.AddValue("list", i.ToString() + "," + subCatNames[i]);
 
-                ConfigNode filterByManufacturer = new ConfigNode("CATEGORY");
-                filterByManufacturer.AddValue("name", "Filter by Manufacturer");
-                filterByManufacturer.AddValue("type", "stock");
-                filterByManufacturer.AddValue("value", "replace");
-                filterByManufacturer.AddNode(manufacturerSubs);
-                Categories.Add(new customCategory(filterByManufacturer));
-            }
-            else
-            {
-                for (int i = 0; i < modNames.Count; i++)
-                    fbm.subCategories.AddUnique(new subCategoryItem(modNames[i])); // append the mod names
-            }
+            ConfigNode filterByManufacturer = new ConfigNode("CATEGORY");
+            filterByManufacturer.AddValue("name", "Filter by Manufacturer");
+            filterByManufacturer.AddValue("type", "stock");
+            filterByManufacturer.AddValue("value", "replace");
+            filterByManufacturer.AddNode(manufacturerSubs);
+            FilterByManufacturer = new customCategory(filterByManufacturer);
         }
 
         /// <summary>
@@ -508,21 +502,21 @@ namespace FilterExtensions
         internal static void Log(object o, LogLevel level = LogLevel.Log)
         {
             if (level == LogLevel.Log)
-                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, o);
+                Debug.LogFormat($"[Filter Extensions {version}]: {o}");
             else if (level == LogLevel.Warn)
-                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, o);
+                Debug.LogWarningFormat($"[Filter Extensions {version}]: {o}");
             else
-                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, o);
+                Debug.LogErrorFormat($"[Filter Extensions {version}]: {o}");
         }
 
         internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
         {
             if (level == LogLevel.Log)
-                Debug.LogFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+                Debug.LogFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
             else if (level == LogLevel.Warn)
-                Debug.LogWarningFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+                Debug.LogWarningFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
             else
-                Debug.LogErrorFormat("[Filter Extensions {0}]: {1}", version, string.Format(format, o));
+                Debug.LogErrorFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
         }
     }
 }
