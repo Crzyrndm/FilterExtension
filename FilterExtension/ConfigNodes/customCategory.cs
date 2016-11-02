@@ -44,9 +44,11 @@ namespace FilterExtensions.ConfigNodes
 
             makeTemplate(node);
 
-            bool.TryParse(node.GetValue("all"), out tmpBool);
-            this.all = tmpBool;
-            
+            if (bool.TryParse(node.GetValue("all"), out tmpBool))
+            {
+                this.all = tmpBool;
+            }
+
             ConfigNode[] subcategoryList = node.GetNodes("SUBCATEGORIES");
             subCategories = new List<subCategoryItem>();
             if (subcategoryList != null)
@@ -55,7 +57,7 @@ namespace FilterExtensions.ConfigNodes
                 List<string> stringList = new List<string>();
                 for (int i = 0; i < subcategoryList.Length; i++)
                     stringList.AddRange(subcategoryList[i].GetValues());
-                
+
                 subCategoryItem[] subs = new subCategoryItem[1000];
                 for (int i = 0; i < stringList.Count; i++)
                 {
@@ -97,9 +99,11 @@ namespace FilterExtensions.ConfigNodes
                 case "stock":
                     type = categoryType.Stock;
                     break;
+
                 case "mod":
                     type = categoryType.Mod;
                     break;
+
                 case "new":
                 default:
                     type = categoryType.New;
@@ -169,7 +173,7 @@ namespace FilterExtensions.ConfigNodes
                 category.displayType = EditorPartList.State.PartsList;
                 category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
             }
-            else 
+            else
             {
                 if (!PartCategorizer.Instance.filters.TryGetValue(c => c.button.categoryName == categoryName, out category))
                 {
@@ -187,8 +191,6 @@ namespace FilterExtensions.ConfigNodes
 
             for (int i = 0; i < subCategories.Count; i++)
                 initSubcategory(i, subCategories[i], category);
-
-
         }
 
         public void initSubcategory(int index, subCategoryItem toInit, PartCategorizer.Category category)
@@ -284,6 +286,7 @@ namespace FilterExtensions.ConfigNodes
         {
             applyTemplate = true;
         }
+
         public subCategoryItem(string name, bool useTemplate = true)
         {
             subcategoryName = name;
