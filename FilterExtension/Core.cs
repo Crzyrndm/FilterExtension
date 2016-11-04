@@ -1,21 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq; // Majority of Core only runs once.
 
 namespace FilterExtensions
 {
     using ConfigNodes;
+    using KSP.UI.Screens;
     using UnityEngine;
     using Utility;
-
-    using KSP.UI.Screens;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class Core : MonoBehaviour
     {
         public static readonly Version version = new Version(2, 7, 1, 0);
-        
+
         private static Core instance;
         public static Core Instance
         {
@@ -27,29 +26,39 @@ namespace FilterExtensions
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
         public List<customCategory> Categories = new List<customCategory>();
+
         public customCategory FilterByManufacturer;
+
         // storing all subCategory definitions for categories to reference
         public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
+
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
+
         // renaming categories
         public Dictionary<string, string> Rename = new Dictionary<string, string>();
+
         // icons for categories
         public Dictionary<string, string> setIcon = new Dictionary<string, string>();
+
         // removing categories
         public HashSet<string> removeSubCategory = new HashSet<string>();
+
         // url for each part by internal name
         public Dictionary<string, string> partPathDict = new Dictionary<string, string>();
+
         // entry for each unique combination of propellants
         public List<List<string>> propellantCombos = new List<List<string>>();
+
         // entry for each unique resource
         public List<string> resources = new List<string>();
+
         // Dictionary of icons created on entering the main menu
         public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
 
-        const string fallbackIcon = "stockIcon_fallback";
+        private const string fallbackIcon = "stockIcon_fallback";
 
-        IEnumerator Start()
+        private IEnumerator Start()
         {
             instance = this;
             DontDestroyOnLoad(this);
@@ -80,7 +89,7 @@ namespace FilterExtensions
                 {
                     string[] s = names[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
                     if (s.Length >= 2 && !Rename.ContainsKey(s[0]))
-                            Rename.Add(s[0], s[1]);
+                        Rename.Add(s[0], s[1]);
                 }
             }
 
@@ -130,10 +139,10 @@ namespace FilterExtensions
                     Editor.blackListedParts.Add(p.name);
                     continue;
                 }
-                
+
                 if (string.IsNullOrEmpty(p.partUrl))
                     RepairAvailablePartUrl(p);
-                
+
                 // if the url is still borked, can't associate a mod to the part
                 if (!string.IsNullOrEmpty(p.partUrl))
                 {
@@ -169,38 +178,35 @@ namespace FilterExtensions
         private void processFilterDefinitions()
         {
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("CATEGORY");
-            for (int i = 0; i < nodes.Length; i++)
+            foreach (ConfigNode node in nodes)
             {
-                ConfigNode node = nodes[i];
                 customCategory C = new customCategory(node);
                 if (C.subCategories == null)
                     continue;
                 if (!Categories.Any(n => n.categoryName == C.categoryName))
                     Categories.Add(C);
             }
-            
+
             //load all subCategory configs
             nodes = GameDatabase.Instance.GetConfigNodes("SUBCATEGORY");
-            for (int i = 0; i < nodes.Length; i++)
+            foreach (ConfigNode node in nodes)
             {
-                ConfigNode node = nodes[i];
                 customSubCategory sC = new customSubCategory(node);
                 if (!sC.hasFilters || string.IsNullOrEmpty(sC.subCategoryTitle))
                     continue;
-                
+
                 customSubCategory subcategory;
                 if (subCategoriesDict.TryGetValue(sC.subCategoryTitle, out subcategory)) // if something does have the same title
                     subcategory.filters.AddRange(sC.filters);
                 else // if nothing else has the same title
                     subCategoriesDict.Add(sC.subCategoryTitle, sC);
             }
-            
+
             customCategory Cat = Categories.Find(C => C.categoryName == "Filter by Resource");
             if (Cat != null)
             {
-                for (int i = 0; i < resources.Count; i++)
+                foreach (string s in resources)
                 {
-                    string s = resources[i];
                     // add spaces before each capital letter
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
 
@@ -226,9 +232,8 @@ namespace FilterExtensions
                 }
             }
 
-            for (int i = 0; i < Categories.Count; i++)
+            foreach (customCategory C in Categories)
             {
-                customCategory C = Categories[i];
                 if (C == null || !C.all)
                     continue;
 
@@ -260,9 +265,8 @@ namespace FilterExtensions
         private void processEnginePropellants(AvailablePart p)
         {
             List<ModuleEngines> engines = p.partPrefab.Modules.GetModules<ModuleEngines>();
-            for (int i = 0; i < engines.Count; i++)
+            foreach (ModuleEngines e in engines)
             {
-                ModuleEngines e = engines[i];
                 List<string> propellants = new List<string>();
                 for (int j = 0; j < e.propellants.Count; j++)
                     propellants.Add(e.propellants[j].name);
@@ -279,13 +283,12 @@ namespace FilterExtensions
         private void generateEngineTypes()
         {
             List<subCategoryItem> engines = new List<subCategoryItem>();
-            for (int i = 0; i < propellantCombos.Count; i++)
+            foreach (List<string> ls in propellantCombos)
             {
-                string[] ls = propellantCombos[i].ToArray();
-                string propList = string.Join(",", ls);
+                string propList = string.Join(",", ls.ToArray());
 
                 List<Check> checks = new List<Check>();
-                checks.Add(new Check("propellant", propList, Exact:true)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
+                checks.Add(new Check("propellant", propList, Exact: true)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
 
                 string name = propList;
                 string icon = propList;
