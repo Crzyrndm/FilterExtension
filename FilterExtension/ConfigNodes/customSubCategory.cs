@@ -5,6 +5,7 @@ using System.Linq;
 namespace FilterExtensions.ConfigNodes
 {
     using KSP.UI.Screens;
+
     public class customSubCategory : IEquatable<customSubCategory>, ICloneable
     {
         public string subCategoryTitle { get; set; } // title of this subcategory
@@ -23,6 +24,11 @@ namespace FilterExtensions.ConfigNodes
 
         public customSubCategory(ConfigNode node)
         {
+            ConfigNode checkNode = node.GetNode("SUBCATEGORY");
+            if (checkNode != null)
+            {
+                UnityEngine.Debug.LogError($"[Filter Extensions]: nested subcategories are invalid\r\n{node.ToString()}");
+            }
             subCategoryTitle = node.GetValue("name");
             if (subCategoryTitle == string.Empty)
             {
@@ -228,7 +234,6 @@ namespace FilterExtensions.ConfigNodes
         /// <returns>true if there is a matching check in the category</returns>
         public static bool checkForCheckMatch(customSubCategory subcategory, Check.CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
         {
-            
             for (int j = 0; j < subcategory.filters.Count; j++)
             {
                 Filter f = subcategory.filters[j];

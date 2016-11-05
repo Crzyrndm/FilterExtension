@@ -193,7 +193,10 @@ namespace FilterExtensions
             {
                 customSubCategory sC = new customSubCategory(node);
                 if (!sC.hasFilters || string.IsNullOrEmpty(sC.subCategoryTitle))
+                {
+                    Log(sC.subCategoryTitle);
                     continue;
+                }
 
                 customSubCategory subcategory;
                 if (subCategoriesDict.TryGetValue(sC.subCategoryTitle, out subcategory)) // if something does have the same title
