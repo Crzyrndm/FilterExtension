@@ -828,25 +828,26 @@ namespace FilterExtensions.Utility
 
         public static char[] splitChars = new char[] { ',', ' ', '.' };
 
-        public static bool NodeCheck(AvailablePart part, string[] nodePath)
+        public static bool NodeCheck(AvailablePart part, string[] parameters)
         {
-            if (nodePath.Length < 2)
+            if (parameters.Length < 2)
                 return false;
-            PartModule m = part.partPrefab.Modules[nodePath[0]];
-            if (m == null)
+            if (!part.partPrefab.Modules.Contains(parameters[0]))
                 return false;
-            return CheckField(m.Fields, new ArraySegment<string>(nodePath, 1, nodePath.Length - 1));
+            PartModule m = part.partPrefab.Modules[parameters[0]];
+            return CheckField(m.Fields, new Extensions.Span<string>(parameters, 1, parameters.Length - 1));
         }
 
-        public static bool CheckField(BaseFieldList fields, ArraySegment<string> field)
+        public static bool CheckField(BaseFieldList fieldList, Extensions.Span<string> paramList)
         {
-            BaseField f = fields[field.Array[0]];
+            Core.Log(paramList[0]);
+            BaseField f = fieldList[paramList[0]];
             if (f == null)
             {
                 Core.Log("f == null");
                 return true;
             }
-            else if (field.Array.Length == 1)
+            else if (paramList.Length == 1)
             {
                 Core.Log("field found");
                 return true; // field is not null
@@ -854,7 +855,7 @@ namespace FilterExtensions.Utility
             else // 2
             {
                 Core.Log($"field found, original value = { f.originalValue.ToString() }");
-                return f.originalValue.ToString() == field.Array[1];
+                return f.originalValue.ToString() == paramList[1];
             }
         }
     }

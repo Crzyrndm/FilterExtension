@@ -5,6 +5,26 @@ namespace FilterExtensions.Utility
 {
     public static class Extensions
     {
+        public struct Span<T>
+        {
+            private IList<T> spanningCollection;
+            private int offset;
+            public int Length { get; }
+
+            public Span(IList<T> collection, int offset, int length)
+            {
+                spanningCollection = collection;
+                this.offset = offset;
+                Length = length;
+            }
+
+            public T this[int index]
+            {
+                get { return spanningCollection[index + offset]; }
+                set { spanningCollection[index + offset] = value; }
+            }
+        }
+
         /// <summary>
         /// adds the (key, value) set to the Dictionary if the key is unique
         /// </summary>
