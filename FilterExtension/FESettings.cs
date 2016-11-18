@@ -1,12 +1,11 @@
-﻿using System.Collections;
-using System.Reflection;
+﻿using FilterExtensions.Utility;
+using System.Collections;
 using System.Collections.Generic;
-
-using FilterExtensions.Utility;
+using System.Reflection;
 
 namespace FilterExtensions
 {
-    class FESettings : GameParameters.CustomParameterNode
+    internal class FESettings : GameParameters.CustomParameterNode
     {
         [GameParameters.CustomParameterUI("Hide unpurchased parts"
             , gameMode = GameParameters.GameMode.CAREER
@@ -31,7 +30,7 @@ namespace FilterExtensions
         public string categoryDefault = string.Empty;
 
         [GameParameters.CustomStringParameterUI("Default subcategory"
-            , toolTip = "The category to open on entering the editor"
+            , toolTip = "The subcategory to open on entering the editor. Will only be populated once a default category is chosen and the window is reopened"
             , lines = 1)]
         public string subCategoryDefault = string.Empty;
 

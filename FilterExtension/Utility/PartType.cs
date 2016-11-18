@@ -26,7 +26,7 @@ namespace FilterExtensions.Utility
             }
             return false;
         }
-        
+
         /// <summary>
         /// steamlined/combined checks on parts, or checks that don't need extra options
         /// </summary>
@@ -40,9 +40,11 @@ namespace FilterExtensions.Utility
                     case "adapter":
                         testVal = isAdapter(part);
                         break;
+
                     case "multicoupler":
                         testVal = isMultiCoupler(part);
                         break;
+
                     case "purchased":
                         testVal = ResearchAndDevelopment.PartModelPurchased(part);
                         break;
@@ -52,7 +54,7 @@ namespace FilterExtensions.Utility
             }
             return false;
         }
-        
+
         /// <summary>
         /// checks the stock part category
         /// </summary>
@@ -62,46 +64,60 @@ namespace FilterExtensions.Utility
             {
                 case PartCategories.Pods:
                     return value.Contains("Pods", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Propulsion:
                     if (isEngine(part))
                         return value.Contains("Engines", StringComparer.OrdinalIgnoreCase) || value.Contains("Engine", StringComparer.OrdinalIgnoreCase);
                     else
                         return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase) || value.Contains("FuelTank", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Engine:
                     return value.Contains("Engines", StringComparer.OrdinalIgnoreCase) || value.Contains("Engine", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.FuelTank:
                     return value.Contains("Fuel Tanks", StringComparer.OrdinalIgnoreCase) || value.Contains("FuelTank", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Control:
                     return value.Contains("Control", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Structural:
                     return value.Contains("Structural", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Aero:
                     return value.Contains("Aerodynamics", StringComparer.OrdinalIgnoreCase) || value.Contains("Aero", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Utility:
                     return value.Contains("Utility", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Science:
                     return value.Contains("Science", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.none:
                     return value.Contains("None", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Communication:
                     return value.Contains("Communications", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Ground:
                     return value.Contains("Ground", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Thermal:
                     return value.Contains("Thermal", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Electrical:
                     return value.Contains("Electrical", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Coupling:
                     return value.Contains("Coupling", StringComparer.OrdinalIgnoreCase);
+
                 case PartCategories.Payload:
                     return value.Contains("Payload", StringComparer.OrdinalIgnoreCase);
+
                 default:
                     return false;
             }
         }
 
-
-        
         /// <summary>
         /// check the user visible names of each part module against a string list
         /// </summary>
@@ -112,7 +128,7 @@ namespace FilterExtensions.Utility
 
             return Contains(values, part.moduleInfos, m => m.moduleName, contains, exact);
         }
-        
+
         /// <summary>
         /// check the part module type against a string list
         /// </summary>
@@ -127,179 +143,264 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// provides a typed check for stock modules which then allows for inheritance to work
         /// </summary>
-        static Dictionary<string, PartModule> loaded_modules;
+        private static Dictionary<string, PartModule> loaded_modules;
+
         public static bool checkModuleNameType(AvailablePart part, string value)
         {
             switch (value)
             {
                 case "ModuleAblator":
                     return part.partPrefab.Modules.Contains<ModuleAblator>();
+
                 case "ModuleActiveRadiator":
                     return part.partPrefab.Modules.Contains<ModuleActiveRadiator>();
+
                 case "ModuleAeroSurface":
                     return part.partPrefab.Modules.Contains<ModuleAeroSurface>();
+
                 case "ModuleAlternator":
                     return part.partPrefab.Modules.Contains<ModuleAlternator>();
+
                 case "ModuleAnalysisResource":
                     return part.partPrefab.Modules.Contains<ModuleAnalysisResource>();
+
                 case "ModuleAnchoredDecoupler":
                     return part.partPrefab.Modules.Contains<ModuleAnchoredDecoupler>();
+
                 case "ModuleAnimateGeneric":
                     return part.partPrefab.Modules.Contains<ModuleAnimateGeneric>();
+
                 case "ModuleAnimateHeat":
                     return part.partPrefab.Modules.Contains<ModuleAnimateHeat>();
+
                 case "ModuleAnimationGroup":
                     return part.partPrefab.Modules.Contains<ModuleAnimationGroup>();
+
                 case "ModuleAnimatorLandingGear":
                     return part.partPrefab.Modules.Contains<ModuleAnimatorLandingGear>();
+
                 case "ModuleAsteroid":
                     return part.partPrefab.Modules.Contains<ModuleAsteroid>();
+
                 case "ModuleAsteroidAnalysis":
                     return part.partPrefab.Modules.Contains<ModuleAsteroidAnalysis>();
+
                 case "ModuleAsteroidDrill":
                     return part.partPrefab.Modules.Contains<ModuleAsteroidDrill>();
+
                 case "ModuleAsteroidInfo":
                     return part.partPrefab.Modules.Contains<ModuleAsteroidInfo>();
+
                 case "ModuleAsteroidResource":
                     return part.partPrefab.Modules.Contains<ModuleAsteroidResource>();
+
                 case "ModuleBiomeScanner":
                     return part.partPrefab.Modules.Contains<ModuleBiomeScanner>();
+
                 case "ModuleCargoBay":
                     return part.partPrefab.Modules.Contains<ModuleCargoBay>();
+
                 case "ModuleCommand":
                     return part.partPrefab.Modules.Contains<ModuleCommand>();
+
                 case "ModuleConductionMultiplier":
                     return part.partPrefab.Modules.Contains<ModuleConductionMultiplier>();
+
                 case "ModuleControlSurface":
                     return part.partPrefab.Modules.Contains<ModuleControlSurface>();
+
                 case "ModuleCoreHeat":
                     return part.partPrefab.Modules.Contains<ModuleCoreHeat>();
+
                 case "ModuleDataTransmitter":
                     return part.partPrefab.Modules.Contains<ModuleDataTransmitter>();
+
                 case "ModuleDecouple":
                     return part.partPrefab.Modules.Contains<ModuleDecouple>();
+
                 case "ModuleDeployableRadiator":
                     return part.partPrefab.Modules.Contains<ModuleDeployableRadiator>();
+
                 case "ModuleDeployableSolarPanel":
                     return part.partPrefab.Modules.Contains<ModuleDeployableSolarPanel>();
+
                 case "ModuleDisplaceTweak":
                     return part.partPrefab.Modules.Contains<ModuleDisplaceTweak>();
+
                 case "ModuleDockingNode":
                     return part.partPrefab.Modules.Contains<ModuleDockingNode>();
+
                 case "ModuleDragModifier":
                     return part.partPrefab.Modules.Contains<ModuleDragModifier>();
+
                 case "ModuleEffectTest":
                     return part.partPrefab.Modules.Contains<ModuleEffectTest>();
+
                 case "ModuleEngines":
                     return part.partPrefab.Modules.Contains<ModuleEngines>();
+
                 case "ModuleEnginesFX":
                     return part.partPrefab.Modules.Contains<ModuleEnginesFX>();
+
                 case "ModuleEnviroSensor":
                     return part.partPrefab.Modules.Contains<ModuleEnviroSensor>();
+
                 case "ModuleFuelJettison":
                     return part.partPrefab.Modules.Contains<ModuleFuelJettison>();
+
                 case "ModuleGenerator":
                     return part.partPrefab.Modules.Contains<ModuleGenerator>();
+
                 case "ModuleGimbal":
                     return part.partPrefab.Modules.Contains<ModuleGimbal>();
+
                 case "ModuleGPS":
                     return part.partPrefab.Modules.Contains<ModuleGPS>();
+
                 case "ModuleGrappleNode":
                     return part.partPrefab.Modules.Contains<ModuleGrappleNode>();
+
                 case "ModuleJettison":
                     return part.partPrefab.Modules.Contains<ModuleJettison>();
+
                 case "ModuleJointMotor":
                     return part.partPrefab.Modules.Contains<ModuleJointMotor>();
+
                 case "ModuleJointMotorTest":
                     return part.partPrefab.Modules.Contains<ModuleJointMotorTest>();
+
                 case "ModuleJointPivot":
                     return part.partPrefab.Modules.Contains<ModuleJointPivot>();
+
                 case "ModuleLiftingSurface":
                     return part.partPrefab.Modules.Contains<ModuleLiftingSurface>();
+
                 case "ModuleLight":
                     return part.partPrefab.Modules.Contains<ModuleLight>();
+
                 case "ModuleOrbitalScanner":
                     return part.partPrefab.Modules.Contains<ModuleOrbitalScanner>();
+
                 case "ModuleOrbitalSurveyor":
                     return part.partPrefab.Modules.Contains<ModuleOrbitalSurveyor>();
+
                 case "ModuleOverheatDisplay":
                     return part.partPrefab.Modules.Contains<ModuleOverheatDisplay>();
+
                 case "ModuleParachute":
                     return part.partPrefab.Modules.Contains<ModuleParachute>();
+
                 case "ModulePhysicMaterial":
                     return part.partPrefab.Modules.Contains<ModulePhysicMaterial>();
+
                 case "ModuleProceduralFairing":
                     return part.partPrefab.Modules.Contains<ModuleProceduralFairing>();
+
                 case "ModuleRCS":
                     return part.partPrefab.Modules.Contains<ModuleRCS>();
+
                 case "ModuleReactionWheel":
                     return part.partPrefab.Modules.Contains<ModuleReactionWheel>();
+
                 case "ModuleRemoteController":
                     return part.partPrefab.Modules.Contains<ModuleRemoteController>();
+
                 case "ModuleResourceConverter":
                     return part.partPrefab.Modules.Contains<ModuleResourceConverter>();
+
                 case "ModuleResourceHarvester":
                     return part.partPrefab.Modules.Contains<ModuleResourceHarvester>();
+
                 case "ModuleResourceIntake":
                     return part.partPrefab.Modules.Contains<ModuleResourceIntake>();
+
                 case "ModuleResourceScanner":
                     return part.partPrefab.Modules.Contains<ModuleResourceScanner>();
+
                 case "ModuleRotatingJoint":
                     return part.partPrefab.Modules.Contains<ModuleRotatingJoint>();
+
                 case "ModuleSampleCollector":
                     return part.partPrefab.Modules.Contains<ModuleSampleCollector>();
+
                 case "ModuleSampleContainer":
                     return part.partPrefab.Modules.Contains<ModuleSampleContainer>();
+
                 case "ModuleSAS":
                     return part.partPrefab.Modules.Contains<ModuleSAS>();
+
                 case "ModuleScienceContainer":
                     return part.partPrefab.Modules.Contains<ModuleScienceContainer>();
+
                 case "ModuleScienceConverter":
                     return part.partPrefab.Modules.Contains<ModuleScienceConverter>();
+
                 case "ModuleScienceExperiment":
                     return part.partPrefab.Modules.Contains<ModuleScienceExperiment>();
+
                 case "ModuleScienceLab":
                     return part.partPrefab.Modules.Contains<ModuleScienceLab>();
+
                 case "ModuleSeeThroughObject":
                     return part.partPrefab.Modules.Contains<ModuleSeeThroughObject>();
+
                 case "ModuleStatusLight":
                     return part.partPrefab.Modules.Contains<ModuleStatusLight>();
+
                 case "ModuleSurfaceFX":
                     return part.partPrefab.Modules.Contains<ModuleSurfaceFX>();
+
                 case "ModuleTestSubject":
                     return part.partPrefab.Modules.Contains<ModuleTestSubject>();
+
                 case "ModuleToggleCrossfeed":
                     return part.partPrefab.Modules.Contains<ModuleToggleCrossfeed>();
+
                 case "ModuleTripLogger":
                     return part.partPrefab.Modules.Contains<ModuleTripLogger>();
+
                 case "ModuleWheelBase":
                     return part.partPrefab.Modules.Contains<ModuleWheelBase>();
+
                 case "FXModuleAnimateThrottle":
                     return part.partPrefab.Modules.Contains<FXModuleAnimateThrottle>();
+
                 case "FXModuleConstrainPosition":
                     return part.partPrefab.Modules.Contains<FXModuleConstrainPosition>();
+
                 case "FXModuleLookAtConstraint":
                     return part.partPrefab.Modules.Contains<FXModuleLookAtConstraint>();
+
                 case "ModuleWheelBogey":
                     return part.partPrefab.Modules.Contains<ModuleWheelBogey>();
+
                 case "ModuleWheelBrakes":
                     return part.partPrefab.Modules.Contains<ModuleWheelBrakes>();
+
                 case "ModuleWheelDamage":
                     return part.partPrefab.Modules.Contains<ModuleWheelDamage>();
+
                 case "ModuleWheelDeployment":
                     return part.partPrefab.Modules.Contains<ModuleWheelDeployment>();
+
                 case "ModuleWheelLock":
                     return part.partPrefab.Modules.Contains<ModuleWheelLock>();
+
                 case "ModuleWheelMotor":
                     return part.partPrefab.Modules.Contains<ModuleWheelMotor>();
+
                 case "ModuleWheelMotorSteering":
                     return part.partPrefab.Modules.Contains<ModuleWheelMotorSteering>();
+
                 case "ModuleWheelSteering":
                     return part.partPrefab.Modules.Contains<ModuleWheelSteering>();
+
                 case "ModuleWheelSubmodule":
                     return part.partPrefab.Modules.Contains<ModuleWheelSubmodule>();
+
                 case "ModuleWheelSuspension":
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
+
                 default: // use specialisation where I can to avoid the "slow" type checking this entails
                     if (loaded_modules == null)
                     {
@@ -337,7 +438,7 @@ namespace FilterExtensions.Utility
         {
             return value.Contains(part.name.Replace('.', '_'), StringComparer.OrdinalIgnoreCase);
         }
-        
+
         /// <summary>
         /// check the user viewable part title contains any of the listed values for a partial match
         /// </summary>
@@ -362,7 +463,7 @@ namespace FilterExtensions.Utility
         public static bool checkPropellant(AvailablePart part, string[] values, bool contains = true, bool exact = false)
         {
             ModuleEngines e;
-            for (int i = 0; i < part.partPrefab.Modules.Count; ++i )
+            for (int i = 0; i < part.partPrefab.Modules.Count; ++i)
             {
                 e = part.partPrefab.Modules[i] as ModuleEngines;
                 if (e != null && Contains(values, e.propellants, p => p.name, contains, exact))
@@ -433,12 +534,12 @@ namespace FilterExtensions.Utility
                     if (equality == ConfigNodes.Check.Equality.GreaterThan)
                     {
                         part.partPrefab.attachNodes.Any(n => n.size > i);
-                            return true;
+                        return true;
                     }
                     else if (equality == ConfigNodes.Check.Equality.LessThan)
                     {
                         part.partPrefab.attachNodes.Any(n => n.size < i);
-                            return true;
+                        return true;
                     }
                 }
             }
@@ -601,7 +702,7 @@ namespace FilterExtensions.Utility
         {
             return isMannedPod(part) || isDrone(part) || part.partPrefab.Modules.Contains<KerbalSeat>();
         }
-        
+
         /// <summary>
         /// checks if the part is an engine
         /// </summary>
@@ -639,7 +740,7 @@ namespace FilterExtensions.Utility
             float pos = part.partPrefab.attachNodes.Last().position.y;
             if (part.partPrefab.attachNodes.FindAll(n => n.position.y == pos).Count > 1 && part.partPrefab.attachNodes.FindAll(n => n.position.y == pos).Count < part.partPrefab.attachNodes.Count)
                 return true;
-            
+
             return false;
         }
 
@@ -722,6 +823,38 @@ namespace FilterExtensions.Utility
                     ++i;
                 }
                 return i == CheckParams.Length;
+            }
+        }
+
+        public static char[] splitChars = new char[] { ',', ' ', '.' };
+
+        public static bool NodeCheck(AvailablePart part, string[] nodePath)
+        {
+            if (nodePath.Length < 2)
+                return false;
+            PartModule m = part.partPrefab.Modules[nodePath[0]];
+            if (m == null)
+                return false;
+            return CheckField(m.Fields, new ArraySegment<string>(nodePath, 1, nodePath.Length - 1));
+        }
+
+        public static bool CheckField(BaseFieldList fields, ArraySegment<string> field)
+        {
+            BaseField f = fields[field.Array[0]];
+            if (f == null)
+            {
+                Core.Log("f == null");
+                return true;
+            }
+            else if (field.Array.Length == 1)
+            {
+                Core.Log("field found");
+                return true; // field is not null
+            }
+            else // 2
+            {
+                Core.Log($"field found, original value = { f.originalValue.ToString() }");
+                return f.originalValue.ToString() == field.Array[1];
             }
         }
     }
