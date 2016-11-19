@@ -36,6 +36,7 @@ namespace FilterExtensions.ConfigNodes
 
         public enum Equality
         {
+            String,
             Equals, // default
             LessThan,
             GreaterThan
@@ -253,7 +254,7 @@ namespace FilterExtensions.ConfigNodes
                     return true;
 
                 case CheckType.field:
-                    return invert ^ PartType.NodeCheck(part, values);
+                    return invert ^ PartType.NodeCheck(part, values, equality);
 
                 default:
                     Core.Log("invalid Check type specified", Core.LogLevel.Warn);

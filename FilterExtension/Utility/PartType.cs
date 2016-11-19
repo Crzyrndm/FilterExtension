@@ -834,7 +834,7 @@ namespace FilterExtensions.Utility
 
         public static char[] splitChars = new char[] { ',', ' ', '.' };
 
-        public static bool NodeCheck(AvailablePart part, string[] parameters)
+        public static bool NodeCheck(AvailablePart part, string[] parameters, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
             Type baseType;
             if (parameters.Length < 3
@@ -849,7 +849,30 @@ namespace FilterExtensions.Utility
                     {
                         return false;
                     }
-                    return string.Equals(parameters[2], f.originalValue.ToString(), StringComparison.OrdinalIgnoreCase);
+                    double res, org;
+                    if (f.originalValue == null)
+                    {
+                        return parameters[2].Equals("null", StringComparison.OrdinalIgnoreCase);
+                    }
+                    else if (!double.TryParse(parameters[2], out res) || !double.TryParse(f.originalValue.ToString(), out org))
+                    {
+                        return string.Equals(parameters[2], f.originalValue.ToString(), StringComparison.OrdinalIgnoreCase);
+                    }
+                    else
+                    {
+                        if (equality == ConfigNodes.Check.Equality.Equals)
+                        {
+                            return org == res;
+                        }
+                        else if (equality == ConfigNodes.Check.Equality.GreaterThan)
+                        {
+                            return org > res;
+                        }
+                        else if (equality == ConfigNodes.Check.Equality.LessThan)
+                        {
+                            return org < res;
+                        }
+                    }
                 }
             }
             return false;
