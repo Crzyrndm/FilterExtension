@@ -143,7 +143,29 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// provides a typed check for stock modules which then allows for inheritance to work
         /// </summary>
-        private static Dictionary<string, PartModule> loaded_modules;
+        private static Dictionary<string, Type> loaded_modules;
+
+        private static Dictionary<string, Type> Loaded_Modules
+        {
+            get
+            {
+                if (loaded_modules == null)
+                {
+                    loaded_modules = new Dictionary<string, Type>();
+                    foreach (AvailablePart ap in PartLoader.LoadedPartsList)
+                    {
+                        foreach (PartModule pm in ap.partPrefab.Modules)
+                        {
+                            if (!string.IsNullOrEmpty(pm.moduleName) && !Loaded_Modules.ContainsKey(pm.moduleName))
+                            {
+                                loaded_modules.Add(pm.moduleName, pm.GetType());
+                            }
+                        }
+                    }
+                }
+                return loaded_modules;
+            }
+        }
 
         public static bool checkModuleNameType(AvailablePart part, string value)
         {
@@ -402,28 +424,12 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
 
                 default: // use specialisation where I can to avoid the "slow" type checking this entails
-                    if (loaded_modules == null)
+                    if (Loaded_Modules.ContainsKey(value))
                     {
-                        loaded_modules = new Dictionary<string, PartModule>();
-                        foreach (AvailablePart ap in PartLoader.LoadedPartsList)
-                        {
-                            foreach (PartModule pm in ap.partPrefab.Modules)
-                            {
-                                if (!string.IsNullOrEmpty(pm.moduleName) && !loaded_modules.ContainsKey(pm.moduleName))
-                                {
-                                    loaded_modules.Add(pm.moduleName, pm);
-                                }
-                            }
-                        }
-                    }
-                    if (loaded_modules.ContainsKey(value))
-                    {
-                        Type string_type = loaded_modules[value].GetType();
-                        Type pm_type;
+                        Type string_type = Loaded_Modules[value];
                         foreach (PartModule pm in part.partPrefab.Modules)
                         {
-                            pm_type = pm.GetType();
-                            if (string_type == pm_type || string_type.IsAssignableFrom(pm_type))
+                            if (value == pm.moduleName || string_type.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
                                 return true;
                         }
                     }
@@ -830,33 +836,23 @@ namespace FilterExtensions.Utility
 
         public static bool NodeCheck(AvailablePart part, string[] parameters)
         {
-            if (parameters.Length < 2)
+            Type baseType;
+            if (parameters.Length < 3
+                || !Loaded_Modules.TryGetValue(parameters[0], out baseType))
                 return false;
-            if (!part.partPrefab.Modules.Contains(parameters[0]))
-                return false;
-            PartModule m = part.partPrefab.Modules[parameters[0]];
-            return CheckField(m.Fields, new Extensions.Span<string>(parameters, 1, parameters.Length - 1));
-        }
-
-        public static bool CheckField(BaseFieldList fieldList, Extensions.Span<string> paramList)
-        {
-            Core.Log(paramList[0]);
-            BaseField f = fieldList[paramList[0]];
-            if (f == null)
+            foreach (PartModule pm in part.partPrefab.Modules)
             {
-                Core.Log("f == null");
-                return true;
+                if (baseType.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
+                {
+                    BaseField f = pm.Fields[parameters[1]];
+                    if (f == null)
+                    {
+                        return false;
+                    }
+                    return string.Equals(parameters[2], f.originalValue.ToString(), StringComparison.OrdinalIgnoreCase);
+                }
             }
-            else if (paramList.Length == 1)
-            {
-                Core.Log("field found");
-                return true; // field is not null
-            }
-            else // 2
-            {
-                Core.Log($"field found, original value = { f.originalValue.ToString() }");
-                return f.originalValue.ToString() == paramList[1];
-            }
+            return false;
         }
     }
 }
