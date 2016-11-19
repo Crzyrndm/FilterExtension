@@ -834,23 +834,53 @@ namespace FilterExtensions.Utility
 
         public static char[] splitChars = new char[] { ',', ' ', '.' };
 
-        public static bool NodeCheck(AvailablePart part, string[] parameters)
+        public static bool NodeCheck(AvailablePart part, string[] parameters, ConfigNodes.Check.Equality equality = ConfigNodes.Check.Equality.Equals)
         {
-            Type baseType;
-            if (parameters.Length < 3
-                || !Loaded_Modules.TryGetValue(parameters[0], out baseType))
-                return false;
-            foreach (PartModule pm in part.partPrefab.Modules)
+            try
             {
-                if (baseType.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
+                Type baseType;
+                if (parameters.Length < 3
+                    || !Loaded_Modules.TryGetValue(parameters[0], out baseType))
+                    return false;
+                foreach (PartModule pm in part.partPrefab.Modules)
                 {
-                    BaseField f = pm.Fields[parameters[1]];
-                    if (f == null)
+                    if (baseType.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
                     {
-                        return false;
+                        BaseField f = pm.Fields[parameters[1]];
+                        if (f == null)
+                        {
+                            return false;
+                        }
+                        double res, org;
+                        if (f.originalValue == null)
+                        {
+                            return parameters[2].Equals("null", StringComparison.OrdinalIgnoreCase);
+                        }
+                        else if (!double.TryParse(parameters[2], out res) || !double.TryParse(f.originalValue.ToString(), out org))
+                        {
+                            return string.Equals(parameters[2], f.originalValue.ToString(), StringComparison.OrdinalIgnoreCase);
+                        }
+                        else
+                        {
+                            if (equality == ConfigNodes.Check.Equality.Equals)
+                            {
+                                return org == res;
+                            }
+                            else if (equality == ConfigNodes.Check.Equality.GreaterThan)
+                            {
+                                return org > res;
+                            }
+                            else if (equality == ConfigNodes.Check.Equality.LessThan)
+                            {
+                                return org < res;
+                            }
+                        }
                     }
-                    return string.Equals(parameters[2], f.originalValue.ToString(), StringComparison.OrdinalIgnoreCase);
                 }
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogException(ex);
             }
             return false;
         }
