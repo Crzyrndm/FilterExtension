@@ -30,7 +30,8 @@ namespace FilterExtensions.ConfigNodes
             profile,
             check,
             subcategory,
-            tag
+            tag,
+            field
         }
 
         public enum Equality
@@ -81,7 +82,8 @@ namespace FilterExtensions.ConfigNodes
                 { "profile",        new CheckParameters(CheckType.profile, "profile", Contains:true, Exact:true) },
                 { "check",          new CheckParameters(CheckType.check, "check") },
                 { "subcategory",    new CheckParameters(CheckType.subcategory, "subcategory") },
-                { "tag",            new CheckParameters(CheckType.tag, "tag", Contains:true, Exact:true) }
+                { "tag",            new CheckParameters(CheckType.tag, "tag", Contains:true, Exact:true)},
+                { "field",          new CheckParameters(CheckType.field, "field")}
             };
 
         public CheckParameters type { get; set; }
@@ -90,7 +92,7 @@ namespace FilterExtensions.ConfigNodes
         public bool contains { get; set; }
         public bool exact { get; set; }
         public Equality equality { get; set; }
-        public List<Check> checks { get; set; } 
+        public List<Check> checks { get; set; }
 
         public Check(ConfigNode node)
         {
@@ -164,7 +166,7 @@ namespace FilterExtensions.ConfigNodes
         public Check(string Type, string Value, bool Invert = false, bool Contains = true, Equality Compare = Equality.Equals, bool Exact = false)
         {
             type = getCheckType(Type);
-            values = Value.Split(',');
+            values = Value.Split(PartType.splitChars, StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < values.Length; ++i)
                 values[i] = values[i].Trim();
 
@@ -181,46 +183,67 @@ namespace FilterExtensions.ConfigNodes
             {
                 case CheckType.moduleTitle: // check by module title
                     return invert ^ PartType.checkModuleTitle(part, values, contains, exact);
+
                 case CheckType.moduleName:
                     return invert ^ PartType.checkModuleName(part, values, contains, exact);
+
                 case CheckType.partName: // check by part name (cfg name)
                     return invert ^ PartType.checkName(part, values);
+
                 case CheckType.partTitle: // check by part title (in game name)
                     return invert ^ PartType.checkTitle(part, values);
+
                 case CheckType.resource: // check for a resource
                     return invert ^ PartType.checkResource(part, values, contains, exact);
+
                 case CheckType.propellant: // check for engine propellant
                     return invert ^ PartType.checkPropellant(part, values, contains, exact);
+
                 case CheckType.tech: // check by tech
                     return invert ^ PartType.checkTech(part, values);
+
                 case CheckType.manufacturer: // check by manufacturer
                     return invert ^ PartType.checkManufacturer(part, values);
+
                 case CheckType.folder: // check by mod root folder
                     return invert ^ PartType.checkFolder(part, values);
+
                 case CheckType.path: // check by part folder location
                     return invert ^ PartType.checkPath(part, values);
+
                 case CheckType.category:
                     return invert ^ PartType.checkCategory(part, values);
+
                 case CheckType.size: // check by largest stack node size
                     return invert ^ PartType.checkPartSize(part, values, contains, equality, exact);
+
                 case CheckType.crew:
                     return invert ^ PartType.checkCrewCapacity(part, values, equality);
+
                 case CheckType.custom: // for when things get tricky
                     return invert ^ PartType.checkCustom(part, values);
+
                 case CheckType.mass:
                     return invert ^ PartType.checkMass(part, values, equality);
+
                 case CheckType.cost:
                     return invert ^ PartType.checkCost(part, values, equality);
+
                 case CheckType.crashTolerance:
                     return invert ^ PartType.checkCrashTolerance(part, values, equality);
+
                 case CheckType.maxTemp:
                     return invert ^ PartType.checkTemperature(part, values, equality);
+
                 case CheckType.profile:
                     return invert ^ PartType.checkBulkHeadProfiles(part, values, contains);
+
                 case CheckType.subcategory:
                     return invert ^ PartType.checkSubcategory(part, values, depth);
+
                 case CheckType.tag:
                     return invert ^ PartType.checkTags(part, values, contains, exact);
+
                 case CheckType.check:
                     for (int i = 0; i < checks.Count; i++)
                     {
@@ -228,6 +251,10 @@ namespace FilterExtensions.ConfigNodes
                             return false;
                     }
                     return true;
+
+                case CheckType.field:
+                    return invert ^ PartType.NodeCheck(part, values);
+
                 default:
                     Core.Log("invalid Check type specified", Core.LogLevel.Warn);
                     return invert ^ false;
