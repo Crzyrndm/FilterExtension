@@ -424,7 +424,7 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
 
                 default: // use specialisation where I can to avoid the "slow" type checking this entails
-                    if (Loaded_Modules.ContainsKey(value))
+                    if (value != null && Loaded_Modules.ContainsKey(value))
                     {
                         Type string_type = Loaded_Modules[value];
                         foreach (PartModule pm in part.partPrefab.Modules)
