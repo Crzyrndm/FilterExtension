@@ -429,7 +429,7 @@ namespace FilterExtensions.Utility
                         Type string_type = Loaded_Modules[value];
                         foreach (PartModule pm in part.partPrefab.Modules)
                         {
-                            if (value == pm.moduleName || string_type.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
+                            if (value == pm.moduleName || (pm.moduleName != null && string_type.IsAssignableFrom(Loaded_Modules[pm.moduleName])))
                                 return true;
                         }
                     }
