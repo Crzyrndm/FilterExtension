@@ -182,9 +182,10 @@ namespace FilterExtensions.ConfigNodes
                 }
                 else if (behaviour == categoryBehaviour.Replace)
                 {
-                    for (int i = category.subcategories.Count - 1; i >= 0; --i)
+                    category.subcategories.Clear();
+                    if (category.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True)
                     {
-                        category.subcategories[i].DeleteSubcategory();
+                        PartCategorizer.Instance.scrollListSub.Clear(true);
                     }
                 }
             }
