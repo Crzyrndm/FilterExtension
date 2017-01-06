@@ -185,7 +185,7 @@ namespace FilterExtensions.ConfigNodes
                     category.subcategories.Clear();
                     if (category.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True)
                     {
-                        PartCategorizer.Instance.scrollListSub.Clear(true);
+                        PartCategorizer.Instance.scrollListSub.Clear(false);
                     }
                 }
             }
