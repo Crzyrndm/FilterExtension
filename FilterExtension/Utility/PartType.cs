@@ -698,7 +698,7 @@ namespace FilterExtensions.Utility
         {
             if (string.IsNullOrEmpty(part.tags))
                 return false;
-            return Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries), contains, exact);
+            return Contains(values, KSP.UI.Screens.PartCategorizer.SearchTagSplit(part.tags), contains, exact);
         }
 
         /// <summary>
