@@ -78,7 +78,8 @@ namespace FilterExtensions
             {
                 if (PartCategorizer.Instance.filters[i].subcategories.Count == 0)
                 {
-                    PartCategorizer.Instance.filters[i].DeleteCategory();
+                    PartCategorizer.Instance.categories.Remove(PartCategorizer.Instance.filters[i]);
+                    PartCategorizer.Instance.scrollListMain.RemoveItem(PartCategorizer.Instance.filters[i].button.container, true);
                 }
             }
             // make the categories visible

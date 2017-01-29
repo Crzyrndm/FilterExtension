@@ -424,12 +424,12 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
 
                 default: // use specialisation where I can to avoid the "slow" type checking this entails
-                    if (Loaded_Modules.ContainsKey(value))
+                    if (value != null && Loaded_Modules.ContainsKey(value))
                     {
                         Type string_type = Loaded_Modules[value];
                         foreach (PartModule pm in part.partPrefab.Modules)
                         {
-                            if (value == pm.moduleName || string_type.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
+                            if (value == pm.moduleName || (pm.moduleName != null && string_type.IsAssignableFrom(Loaded_Modules[pm.moduleName])))
                                 return true;
                         }
                     }
@@ -698,7 +698,7 @@ namespace FilterExtensions.Utility
         {
             if (string.IsNullOrEmpty(part.tags))
                 return false;
-            return Contains(values, part.tags.Split(new char[4] { ' ', ',', '|', ';' }, StringSplitOptions.RemoveEmptyEntries), contains, exact);
+            return Contains(values, KSP.UI.Screens.PartCategorizer.SearchTagSplit(part.tags), contains, exact);
         }
 
         /// <summary>

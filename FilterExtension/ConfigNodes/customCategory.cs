@@ -182,10 +182,16 @@ namespace FilterExtensions.ConfigNodes
                 }
                 else if (behaviour == categoryBehaviour.Replace)
                 {
-                    for (int i = category.subcategories.Count - 1; i >= 0; --i)
+                    if (category.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True)
                     {
-                        category.subcategories[i].DeleteSubcategory();
+                        var subcat = category.subcategories.Find(c => c.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
+                        if (subcat != null)
+                        {
+                            subcat.OnFalseSUB(subcat);
+                        }
+                        PartCategorizer.Instance.scrollListSub.Clear(false);
                     }
+                    category.subcategories.Clear();
                 }
             }
 
@@ -230,8 +236,15 @@ namespace FilterExtensions.ConfigNodes
             catch (Exception ex)
             {
                 // extended logging for errors
-                Core.Log($"{subCategories[index]} failed to initialise\r\nCategory: {categoryName}, Subcategory: {sC.subCategoryTitle}, filter?: {sC.hasFilters}, filter count: {sC.filters.Count}, Icon: {Core.getIcon(sC.iconName)}\r\n{ex.Message}\r\n{ex.StackTrace}",
-                            Core.LogLevel.Error);
+                Core.Log($"{subCategories[index]} failed to initialise"
+                    + $"\r\nCategory: {categoryName}"
+                    + $"\r\nSubcategory: {sC.subCategoryTitle}"
+                    + $"\r\nFilter?: {sC.hasFilters}"
+                    + $"\r\nFilter count: {sC.filters.Count}"
+                    + $"\r\nIcon: {Core.getIcon(sC.iconName)}"
+                    + $"\r\n{ex.Message}"
+                    + $"\r\n{ex.StackTrace}",
+                    Core.LogLevel.Error);
             }
         }
 
