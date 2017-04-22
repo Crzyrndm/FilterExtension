@@ -1,68 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FilterExtensions.ConfigNodes
 {
+    using Checks;
     public class Filter : IEquatable<Filter>, ICloneable
     {
-        public List<Check> checks { get; set; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
-        public bool invert { get; set; }
+        List<Check> Checks { get; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
+        bool Invert { get; }
 
         public Filter(ConfigNode node)
         {
-            checks = new List<Check>();
+            Checks = new List<Check>();
             foreach (ConfigNode subNode in node.GetNodes("CHECK"))
             {
-                checks.Add(new Check(subNode));
+                var c = CheckFactory.MakeCheck(subNode);
+                if (c != null)
+                {
+                    Checks.Add(c);
+                }
             }
-            checks.RemoveAll(c => c.isEmpty());
-
-            bool tmp;
-            bool.TryParse(node.GetValue("invert"), out tmp);
-            invert = tmp;
+            bool.TryParse(node.GetValue("invert"), out bool tmp);
+            Invert = tmp;
         }
 
-        public Filter(Filter f)
-        {
-            checks = new List<Check>();
-            for (int i = 0; i < f.checks.Count; i++)
-            {
-                if (!f.checks[i].isEmpty())
-                    checks.Add(new Check(f.checks[i]));
-            }
-
-            invert = f.invert;
-        }
-
-        public Filter(bool invert)
-        {
-            checks = new List<Check>();
-            this.invert = invert;
-        }
-
-        public ConfigNode toConfigNode()
+        public ConfigNode ToConfigNode()
         {
             ConfigNode node = new ConfigNode("FILTER");
-            node.AddValue("invert", this.invert.ToString());
-            foreach (Check c in checks)
-                node.AddNode(c.toConfigNode());
-
+            node.AddValue("invert", this.Invert.ToString());
+            foreach (Check c in Checks)
+                node.AddNode(c.ToConfigNode());
             return node;
         }
 
         public object Clone()
         {
-            return new Filter(this);
+            return MemberwiseClone();
         }
 
-        public bool filterResult(AvailablePart part, int depth = 0)
+        public bool FilterResult(AvailablePart part, int depth = 0)
         {
-            for(int i = 0; i < checks.Count; ++i )
-            {
-                if(!checks[i].checkResult(part, depth))
-                    return invert;
-            }
-            return !invert;
+            return Invert ^ Checks.All(c => c.CheckResult(part, depth));
         }
 
         /// <summary>
@@ -71,42 +50,48 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="fLA"></param>
         /// <param name="fLB"></param>
         /// <returns></returns>
-        public static bool compareFilterLists(List<Filter> fLA, List<Filter> fLB)
+        public static bool CompareFilterLists(List<Filter> fLA, List<Filter> fLB)
         {
             if (fLA.Count != fLB.Count && fLA.Count != 0)
                 return false;
-            for (int i = fLA.Count - 1; i >= 0; --i)
-            {
-                if (!fLB.Contains(fLA[i]))
-                    return false;
-            }
-            return true;
+            return fLA.Intersect(fLB).Count() == fLA.Count;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Filter)
+                return Equals((Filter)obj);
+            return false;
         }
 
         public bool Equals(Filter f2)
         {
             if (f2 == null)
                 return false;
-
-            if (invert != f2.invert)
-                return false;
-            for (int i = checks.Count -1; i >= 0; --i)
-            {
-                if (!f2.checks.Contains(checks[i]))
-                    return false;
-            }
-            return true;
+            return Invert == f2.Invert && Checks.Count == f2.Checks.Count && !Checks.Except(f2.Checks).Any();
         }
 
         public override int GetHashCode()
         {
             int hash = 0;
-            for (int i = checks.Count - 1; i >= 0; --i)
+            foreach (var c in Checks)
             {
-                hash *= checks[i].GetHashCode();
+                hash *= c.GetHashCode();
             }
+            hash *= 17;
 
-            return hash ^ invert.GetHashCode();
+            return hash + Invert.GetHashCode();
+        }
+
+        public static ConfigNode MakeFilterNode(bool invert, List<ConfigNode> checkNodess)
+        {
+            ConfigNode node = new ConfigNode("FILTER");
+            node.AddValue("invert", invert);
+            foreach (var c in checkNodess)
+            {
+                node.AddNode(c);
+            }
+            return node;
         }
     }
 }

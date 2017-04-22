@@ -4,111 +4,84 @@ using System.Linq;
 
 namespace FilterExtensions.ConfigNodes
 {
+    using FilterExtensions.ConfigNodes.Checks;
     using KSP.UI.Screens;
 
-    public class customSubCategory : IEquatable<customSubCategory>, ICloneable
+    public class CustomSubCategory : IEquatable<CustomSubCategory>, ICloneable
     {
-        public string subCategoryTitle { get; set; } // title of this subcategory
-        public string iconName { get; set; } // default icon to use
-        public List<Filter> filters { get; set; } // Filters are OR'd together (pass if it meets this filter, or this filter)
-        public List<Filter> template { get; set; } // from the category, checked seperately
-        public bool unPurchasedOverride { get; set; } // allow unpurchased parts to be visible even if the global setting hides them
+        public string SubCategoryTitle { get; } // title of this subcategory
+        public string IconName { get; } // default icon to use
+        public List<Filter> Filters { get; } // Filters are OR'd together (pass if it meets this filter, or this filter)
+        bool UnPurchasedOverride { get; } // allow unpurchased parts to be visible even if the global setting hides them
+        CustomCategory Category { get; } = null;
 
-        public bool hasFilters
+        public bool HasFilters { get => (Filters?.Count ?? 0) > 0; }
+
+        public CustomSubCategory(ConfigNode node)
         {
-            get
+            SubCategoryTitle = node.GetValue("name");
+            if (SubCategoryTitle == string.Empty)
             {
-                return (filters?.Count ?? 0) > 0 || (template?.Count ?? 0) > 0;
+                SubCategoryTitle = node.GetValue("categoryName"); // for playing nice with stock generated subcats
             }
-        }
+            IconName = node.GetValue("icon");
 
-        public customSubCategory(ConfigNode node)
-        {
-            ConfigNode checkNode = node.GetNode("SUBCATEGORY");
-            if (checkNode != null)
-            {
-                UnityEngine.Debug.LogError($"[Filter Extensions]: nested subcategories are invalid\r\n{node.ToString()}");
-            }
-            subCategoryTitle = node.GetValue("name");
-            if (subCategoryTitle == string.Empty)
-            {
-                subCategoryTitle = node.GetValue("categoryName"); // for playing nice with stock generated subcats
-            }
-            iconName = node.GetValue("icon");
+            bool.TryParse(node.GetValue("showUnpurchased"), out bool tmp);
+            UnPurchasedOverride = tmp;
 
-            bool tmp;
-            bool.TryParse(node.GetValue("showUnpurchased"), out tmp);
-            unPurchasedOverride = tmp;
-
-            filters = new List<Filter>();
+            Filters = new List<Filter>();
             foreach (ConfigNode subNode in node.GetNodes("FILTER"))
             {
-                filters.Add(new Filter(subNode));
+                Filters.Add(new Filter(subNode));
             }
             foreach (ConfigNode subNode in node.GetNodes("PARTS"))
             {
-                Check ch = new Check("name", string.Join(",", subNode.GetValues("part")));
-                Filter f = new Filter(false);
-                f.checks.Add(ch);
-                filters.Add(f);
+                ConfigNode filtNode = new ConfigNode("FILTER");
+                filtNode.AddNode(CheckFactory.MakeCheckNode(CheckName.ID, string.Join(",", subNode.GetValues("part"))));
+                Filters.Add(new Filter(filtNode));
             }
-            template = new List<Filter>();
         }
 
-        public customSubCategory(customSubCategory subCat)
+        public CustomSubCategory(CustomSubCategory cloneFrom, CustomCategory category)
         {
-            subCategoryTitle = subCat.subCategoryTitle;
-            iconName = subCat.iconName;
-            filters = new List<Filter>(subCat.filters.Count);
-            subCat.filters.ForEach(f => filters.Add(new Filter(f)));
-
-            template = new List<Filter>(subCat.template.Count);
-            subCat.template.ForEach(f => template.Add(new Filter(f)));
-
-            unPurchasedOverride = subCat.unPurchasedOverride;
-        }
-
-        public customSubCategory(string name, string icon)
-        {
-            filters = new List<Filter>();
-            template = new List<Filter>();
-            this.subCategoryTitle = name;
-            this.iconName = icon;
+            SubCategoryTitle = cloneFrom.SubCategoryTitle;
+            IconName = cloneFrom.IconName;
+            Filters = cloneFrom.Filters;
+            UnPurchasedOverride = cloneFrom.UnPurchasedOverride;
+            Category = category;
         }
 
         /// <summary>
         /// called in the editor when creating the subcategory
         /// </summary>
         /// <param name="cat">The category to add this subcategory to</param>
-        public void initialise(PartCategorizer.Category cat)
+        public void Initialise(PartCategorizer.Category cat)
         {
             if (cat == null)
                 return;
-            RUI.Icons.Selectable.Icon icon = Core.getIcon(iconName);
-            PartCategorizer.AddCustomSubcategoryFilter(cat, this.subCategoryTitle, icon, p => checkPartFilters(p));
+            RUI.Icons.Selectable.Icon icon = Core.GetIcon(IconName);
+            PartCategorizer.AddCustomSubcategoryFilter(cat, this.SubCategoryTitle, icon, p => CheckPartFilters(p));
         }
 
         /// <summary>
         /// used mostly for purpose of creating a deep copy
         /// </summary>
         /// <returns></returns>
-        public ConfigNode toConfigNode()
+        public ConfigNode ToConfigNode()
         {
             ConfigNode node = new ConfigNode("SUBCATEGORY");
 
-            node.AddValue("name", subCategoryTitle);
-            node.AddValue("icon", iconName);
-            node.AddValue("showUnpurchased", unPurchasedOverride);
-
-            foreach (Filter f in this.filters)
-                node.AddNode(f.toConfigNode());
-
+            node.AddValue("name", SubCategoryTitle);
+            node.AddValue("icon", IconName);
+            node.AddValue("showUnpurchased", UnPurchasedOverride);
+            foreach (Filter f in Filters)
+                node.AddNode(f.ToConfigNode());
             return node;
         }
 
         public object Clone()
         {
-            return new customSubCategory(this);
+            return MemberwiseClone();
         }
 
         /// <summary>
@@ -117,51 +90,26 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="part"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        public bool checkPartFilters(AvailablePart part, int depth = 0)
+        public bool CheckPartFilters(AvailablePart part, int depth = 0)
         {
             if (Editor.blackListedParts != null)
             {
                 if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
                     return false;
             }
-            if (!unPurchasedOverride && HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().hideUnpurchased && !(ResearchAndDevelopment.PartModelPurchased(part) || ResearchAndDevelopment.IsExperimentalPart(part)))
+            if (!UnPurchasedOverride && HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().hideUnpurchased && !(ResearchAndDevelopment.PartModelPurchased(part) || ResearchAndDevelopment.IsExperimentalPart(part)))
                 return false;
 
             PartModuleFilter pmf = part.partPrefab.Modules.GetModule<PartModuleFilter>();
             if (pmf != null)
             {
-                if (pmf.CheckForForceAdd(subCategoryTitle))
+                if (pmf.CheckForForceAdd(SubCategoryTitle))
                     return true;
-                if (pmf.CheckForForceBlock(subCategoryTitle))
+                if (pmf.CheckForForceBlock(SubCategoryTitle))
                     return false;
             }
 
-            return checkTemplate(part, depth);
-        }
-
-        /// <summary>
-        /// Go through the category template filters. If the template list is empty or the part matches one of the template filters, go on to check against the filters of this subcategory
-        /// </summary>
-        /// <param name="ap"></param>
-        /// <param name="depth"></param>
-        /// <returns></returns>
-        private bool checkTemplate(AvailablePart ap, int depth = 0)
-        {
-            if (template.Count == 0)
-                return checkFilters(ap, depth);
-            else
-            {
-                Filter t;
-                for (int i = 0; i < template.Count; ++i)
-                {
-                    t = template[i];
-                    if (t.filterResult(ap, depth))
-                    {
-                        return checkFilters(ap, depth);
-                    }
-                }
-                return false;
-            }
+            return CheckFilters(part, depth);
         }
 
         /// <summary>
@@ -172,21 +120,30 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="ap"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        private bool checkFilters(AvailablePart ap, int depth = 0)
+        private bool CheckFilters(AvailablePart ap, int depth = 0)
         {
-            if (filters.Count == 0)
+            if (Filters.Count == 0 && (Category == null || Category.Templates.Count == 0))
                 return true;
-            else
-            {
-                Filter f;
-                for (int i = 0; i < filters.Count; ++i)
-                {
-                    f = filters[i];
-                    if (f.filterResult(ap, depth))
-                        return true;
-                }
+            if (!CheckCategoryFilter(ap, depth))
                 return false;
+            foreach (var f in Filters)
+            {
+                if (f.FilterResult(ap, depth))
+                    return true;
             }
+            return false;
+        }
+
+        private bool CheckCategoryFilter(AvailablePart ap, int depth = 0)
+        {
+            if (Category == null)
+                return true;
+            foreach (var f in Filters)
+            {
+                if (f.FilterResult(ap, depth))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -195,7 +152,7 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="sC">the subcat to check</param>
         /// <param name="category">the category for logging purposes</param>
         /// <returns>true if the subcategory contains any parts</returns>
-        public bool checkSubCategoryHasParts(string category)
+        public bool CheckSubCategoryHasParts(string category)
         {
             PartModuleFilter pmf;
             foreach (AvailablePart p in PartLoader.LoadedPartsList)
@@ -203,56 +160,31 @@ namespace FilterExtensions.ConfigNodes
                 pmf = p.partPrefab.Modules.GetModule<PartModuleFilter>();
                 if (pmf != null)
                 {
-                    if (pmf.CheckForForceAdd(subCategoryTitle))
+                    if (pmf.CheckForForceAdd(SubCategoryTitle))
                         return true;
-                    if (pmf.CheckForForceBlock(subCategoryTitle))
+                    if (pmf.CheckForForceBlock(SubCategoryTitle))
                         return false;
                 }
-                if (checkPartFilters(p))
+                if (CheckPartFilters(p))
                     return true;
             }
 
             if (HighLogic.CurrentGame.Parameters.CustomParams<FESettings>().debug)
             {
                 if (!string.IsNullOrEmpty(category))
-                    Core.Log(subCategoryTitle + " in category " + category + " has no valid parts and was not initialised", Core.LogLevel.Warn);
+                    Core.Log(SubCategoryTitle + " in category " + category + " has no valid parts and was not initialised", Core.LogLevel.Warn);
                 else
-                    Core.Log(subCategoryTitle + " has no valid parts and was not initialised", Core.LogLevel.Warn);
+                    Core.Log(SubCategoryTitle + " has no valid parts and was not initialised", Core.LogLevel.Warn);
             }
             return false;
         }
 
-        /// <summary>
-        /// check to see if any checks in a subcategory match a given check
-        /// </summary>
-        /// <param name="subcategory"></param>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        /// <param name="contains"></param>
-        /// <param name="equality"></param>
-        /// <param name="invert"></param>
-        /// <returns>true if there is a matching check in the category</returns>
-        public static bool checkForCheckMatch(customSubCategory subcategory, Check.CheckType type, string value, bool invert = false, bool contains = true, Check.Equality equality = Check.Equality.Equals)
-        {
-            for (int j = 0; j < subcategory.filters.Count; j++)
-            {
-                Filter f = subcategory.filters[j];
-                for (int k = 0; k < f.checks.Count; k++)
-                {
-                    Check c = f.checks[k];
-                    if (c.type.typeEnum == type && c.values.Contains(value) && c.values.Length == 1 && c.invert == invert && c.contains == contains && c.equality == equality)
-                        return true;
-                }
-            }
-            return false;
-        }
-
-        public bool Equals(customSubCategory sC2)
+        public bool Equals(CustomSubCategory sC2)
         {
             if (sC2 == null)
                 return false;
 
-            if (subCategoryTitle == sC2.subCategoryTitle)
+            if (SubCategoryTitle == sC2.SubCategoryTitle)
                 return true;
 
             return false;
@@ -260,7 +192,19 @@ namespace FilterExtensions.ConfigNodes
 
         public override int GetHashCode()
         {
-            return subCategoryTitle.GetHashCode();
+            return SubCategoryTitle.GetHashCode();
+        }
+
+        public static ConfigNode MakeSubcategoryNode(string name, string icon, List<ConfigNode> filters)
+        {
+            ConfigNode node = new ConfigNode("SUBCATEGORY");
+            node.AddValue("name", name);
+            node.AddValue("icon", icon);
+            foreach (var f in filters)
+            {
+                node.AddNode(f);
+            }
+            return node;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System;
 
 namespace FilterExtensions
 {
@@ -74,6 +75,14 @@ namespace FilterExtensions
             }
         }
 
+        public override string DisplaySection
+        {
+            get
+            {
+                return string.Empty;
+            }
+        }
+
         public override bool Enabled(MemberInfo member, GameParameters parameters)
         {
             return true;
@@ -97,21 +106,20 @@ namespace FilterExtensions
             if (member.Name == "categoryDefault")
             {
                 List<string> categories = new List<string>() { string.Empty };
-                foreach (ConfigNodes.customCategory C in Core.Instance.Categories)
+                foreach (ConfigNodes.CustomCategory C in Core.Instance.Categories)
                 {
-                    categories.Add(C.categoryName);
+                    categories.Add(C.CategoryName);
                 }
                 return categories;
             }
             if (member.Name == "subCategoryDefault")
             {
                 List<string> subcategories = new List<string>() { string.Empty };
-                ConfigNodes.customCategory cat;
-                if (Core.Instance.Categories.TryGetValue(C => C.categoryName == categoryDefault, out cat))
+                if (Core.Instance.Categories.TryGetValue(C => C.CategoryName == categoryDefault, out ConfigNodes.CustomCategory cat))
                 {
-                    foreach (ConfigNodes.subCategoryItem sc in cat.subCategories)
+                    foreach (ConfigNodes.SubCategoryItem sc in cat.SubCategories)
                     {
-                        subcategories.Add(sc.subcategoryName);
+                        subcategories.Add(sc.SubcategoryName);
                     }
                 }
                 return subcategories;

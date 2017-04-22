@@ -60,8 +60,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigNodes\Checks\CheckExtended.cs" />
+    <Compile Include="ConfigNodes\Checks\CheckFactory.cs" />
+    <Compile Include="ConfigNodes\Checks\CheckNumeric.cs" />
+    <Compile Include="ConfigNodes\Checks\CheckSimple.cs" />
     <Compile Include="ConfigNodes\customCategory.cs" />
-    <Compile Include="ConfigNodes\Check.cs" />
+    <Compile Include="ConfigNodes\Checks\Check.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="PartModuleFilter.cs" />
     <Compile Include="FESettings.cs" />

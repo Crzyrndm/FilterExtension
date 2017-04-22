@@ -6,6 +6,7 @@ using System.Linq; // Majority of Core only runs once.
 namespace FilterExtensions
 {
     using ConfigNodes;
+    using FilterExtensions.ConfigNodes.Checks;
     using KSP.UI.Screens;
     using UnityEngine;
     using Utility;
@@ -25,12 +26,12 @@ namespace FilterExtensions
         }
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
-        public List<customCategory> Categories = new List<customCategory>();
+        public List<CustomCategory> Categories = new List<CustomCategory>();
 
-        public customCategory FilterByManufacturer;
+        public CustomCategory FilterByManufacturer;
 
         // storing all subCategory definitions for categories to reference
-        public Dictionary<string, customSubCategory> subCategoriesDict = new Dictionary<string, customSubCategory>();
+        public Dictionary<string, CustomSubCategory> subCategoriesDict = new Dictionary<string, CustomSubCategory>();
 
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
@@ -68,17 +69,17 @@ namespace FilterExtensions
             yield return null;
             yield return null;
 
-            getConfigs();
-            getPartData();
-            processFilterDefinitions();
-            loadIcons();
-            checkAndMarkConflicts();
+            GetConfigs();
+            GetPartData();
+            ProcessFilterDefinitions();
+            LoadIcons();
+            CheckAndMarkConflicts();
         }
 
         /// <summary>
         /// Loads the settings, rename, set icon, and deletion data into an actionable format
         /// </summary>
-        private void getConfigs()
+        private void GetConfigs()
         {
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("FilterRename");
             for (int i = 0; i < nodes.Length; i++)
@@ -124,7 +125,7 @@ namespace FilterExtensions
         /// <summary>
         /// generate the associations between parts and folders, create all the mod categories, get all propellant combinations,
         /// </summary>
-        private void getPartData()
+        private void GetPartData()
         {
             List<string> modNames = new List<string>();
             Editor.blackListedParts = new HashSet<string>();
@@ -157,8 +158,8 @@ namespace FilterExtensions
                     else
                         Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
 
-                    if (PartType.isEngine(p))
-                        processEnginePropellants(p);
+                    if (PartType.IsEngine(p))
+                        ProcessEnginePropellants(p);
 
                     if (p.partPrefab.Resources != null)
                     {
@@ -167,23 +168,23 @@ namespace FilterExtensions
                     }
                 }
             }
-            generateEngineTypes();
+            GenerateEngineTypes();
 
-            processFilterByManufacturer(modNames);
+            ProcessFilterByManufacturer(modNames);
         }
 
         /// <summary>
         /// turn the loaded category and subcategory nodes into useable data
         /// </summary>
-        private void processFilterDefinitions()
+        private void ProcessFilterDefinitions()
         {
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("CATEGORY");
             foreach (ConfigNode node in nodes)
             {
-                customCategory C = new customCategory(node);
-                if (C.subCategories == null)
+                CustomCategory C = new CustomCategory(node);
+                if (C.SubCategories == null)
                     continue;
-                if (!Categories.Any(n => n.categoryName == C.categoryName))
+                if (!Categories.Any(n => n.CategoryName == C.CategoryName))
                     Categories.Add(C);
             }
 
@@ -191,21 +192,24 @@ namespace FilterExtensions
             nodes = GameDatabase.Instance.GetConfigNodes("SUBCATEGORY");
             foreach (ConfigNode node in nodes)
             {
-                customSubCategory sC = new customSubCategory(node);
-                if (!sC.hasFilters || string.IsNullOrEmpty(sC.subCategoryTitle))
+                CustomSubCategory sC = new CustomSubCategory(node);
+                if (!sC.HasFilters || string.IsNullOrEmpty(sC.SubCategoryTitle))
                 {
-                    Log(sC.subCategoryTitle);
+                    Log($"subcategory format error: {sC.SubCategoryTitle}", LogLevel.Error);
                     continue;
                 }
-
-                customSubCategory subcategory;
-                if (subCategoriesDict.TryGetValue(sC.subCategoryTitle, out subcategory)) // if something does have the same title
-                    subcategory.filters.AddRange(sC.filters);
+                if (subCategoriesDict.TryGetValue(sC.SubCategoryTitle, out CustomSubCategory subcategory)) // if something does have the same title
+                {
+                    Log($"subcategory name duplicated: {sC.SubCategoryTitle}", LogLevel.Error);
+                    continue;
+                }
                 else // if nothing else has the same title
-                    subCategoriesDict.Add(sC.subCategoryTitle, sC);
+                {
+                    subCategoriesDict.Add(sC.SubCategoryTitle, sC);
+                }
             }
 
-            customCategory Cat = Categories.Find(C => C.categoryName == "Filter by Resource");
+            CustomCategory Cat = Categories.Find(C => C.CategoryName == "Filter by Resource");
             if (Cat != null)
             {
                 foreach (string s in resources)
@@ -213,51 +217,47 @@ namespace FilterExtensions
                     // add spaces before each capital letter
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
 
-                    customSubCategory subcategory;
-                    if (subCategoriesDict.TryGetValue(name, out subcategory))
+                    if (subCategoriesDict.TryGetValue(name, out CustomSubCategory subcategory))
                     {
-                        // if the collision is already looking for the specified resource
-                        if (customSubCategory.checkForCheckMatch(subcategory, Check.CheckType.resource, s))
-                            continue;
-                        name = "res_" + name;
+                        continue;
                     }
-                    if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
+                    else if (!string.IsNullOrEmpty(name))
                     {
-                        customSubCategory sC = new customSubCategory(name, name);
-                        Check c = new Check("resource", s);
-                        Filter f = new Filter(false);
-                        f.checks.Add(c);
-                        sC.filters.Add(f);
-                        subCategoriesDict.Add(name, sC);
+                        ConfigNode checkNode = CheckFactory.MakeCheckNode(CheckResource.ID, s);
+                        ConfigNode filtNode = Filter.MakeFilterNode(false, new List<ConfigNode>(){ checkNode });
+                        ConfigNode subcatNode = CustomSubCategory.MakeSubcategoryNode(name, name, new List<ConfigNode>() { filtNode });
+                        subCategoriesDict.Add(name, new CustomSubCategory(subcatNode));
+                        Cat.SubCategories.AddUnique(new SubCategoryItem(name));
                     }
-                    if (!string.IsNullOrEmpty(name))
-                        Cat.subCategories.AddUnique(new subCategoryItem(name));
                 }
             }
 
-            foreach (customCategory C in Categories)
+            foreach (CustomCategory C in Categories)
             {
-                if (C == null || !C.all)
+                if (C == null || !C.All)
                     continue;
 
                 List<Filter> filterList = new List<Filter>();
-                if (C.subCategories != null)
+                if (C.SubCategories != null)
                 {
-                    for (int j = 0; j < C.subCategories.Count; j++)
+                    for (int j = 0; j < C.SubCategories.Count; j++)
                     {
-                        subCategoryItem s = C.subCategories[j];
+                        SubCategoryItem s = C.SubCategories[j];
                         if (s == null)
                             continue;
 
-                        customSubCategory subcategory;
-                        if (subCategoriesDict.TryGetValue(s.subcategoryName, out subcategory))
-                            filterList.AddUniqueRange(subcategory.filters);
+                        if (subCategoriesDict.TryGetValue(s.SubcategoryName, out CustomSubCategory subcategory))
+                            filterList.AddUniqueRange(subcategory.Filters);
                     }
                 }
-                customSubCategory newSub = new customSubCategory("All parts in " + C.categoryName, C.iconName);
-                newSub.filters = filterList;
-                subCategoriesDict.Add(newSub.subCategoryTitle, newSub);
-                C.subCategories.Insert(0, new subCategoryItem(newSub.subCategoryTitle));
+                List<ConfigNode> filternodes = new List<ConfigNode>();
+                foreach (var f in filterList)
+                {
+                    filternodes.Add(f.ToConfigNode());
+                }
+                CustomSubCategory newSub = new CustomSubCategory(CustomSubCategory.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, filternodes));
+                subCategoriesDict.Add(newSub.SubCategoryTitle, newSub);
+                C.SubCategories.Insert(0, new SubCategoryItem(newSub.SubCategoryTitle));
             }
         }
 
@@ -265,7 +265,7 @@ namespace FilterExtensions
         /// check for a unique propellant combination and add to the list if one is found
         /// </summary>
         /// <param name="p"></param>
-        private void processEnginePropellants(AvailablePart p)
+        private void ProcessEnginePropellants(AvailablePart p)
         {
             List<ModuleEngines> engines = p.partPrefab.Modules.GetModules<ModuleEngines>();
             foreach (ModuleEngines e in engines)
@@ -275,7 +275,7 @@ namespace FilterExtensions
                     propellants.Add(e.propellants[j].name);
                 propellants.Sort();
 
-                if (!stringListComparer(propellants))
+                if (!StringListComparer(propellants))
                     propellantCombos.Add(propellants);
             }
         }
@@ -283,27 +283,21 @@ namespace FilterExtensions
         /// <summary>
         /// create the subcategories for each unique propellant combination found
         /// </summary>
-        private void generateEngineTypes()
+        private void GenerateEngineTypes()
         {
-            List<subCategoryItem> engines = new List<subCategoryItem>();
+            List<SubCategoryItem> engines = new List<SubCategoryItem>();
             foreach (List<string> ls in propellantCombos)
             {
                 string propList = string.Join(",", ls.ToArray());
-
-                List<Check> checks = new List<Check>();
-                checks.Add(new Check("propellant", propList, Exact: true)); //, true, false)); // exact match to propellant list. Nothing extra, nothing less
-
                 string name = propList;
                 string icon = propList;
                 SetNameAndIcon(ref name, ref icon);
 
                 if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
                 {
-                    customSubCategory sC = new customSubCategory(name, icon);
-
-                    Filter f = new Filter(false);
-                    f.checks = checks;
-                    sC.filters.Add(f);
+                    var checks = new List<ConfigNode>() { CheckFactory.MakeCheckNode(CheckPropellant.ID, propList, exact: true) };
+                    var filters = new List<ConfigNode>() { Filter.MakeFilterNode(false, checks) };
+                    CustomSubCategory sC = new CustomSubCategory(CustomSubCategory.MakeSubcategoryNode(name, icon, filters));
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -313,7 +307,7 @@ namespace FilterExtensions
         /// create the subcategories for filter by manufacturer by discovered GameData folder
         /// </summary>
         /// <param name="modNames"></param>
-        private void processFilterByManufacturer(List<string> modNames)
+        private void ProcessFilterByManufacturer(List<string> modNames)
         {
             // define the mod subcategories
             List<string> subCatNames = new List<string>();
@@ -328,13 +322,9 @@ namespace FilterExtensions
                 if (!subCategoriesDict.ContainsKey(name))
                 {
                     subCatNames.Add(name);
-
-                    Check ch = new Check("folder", modNames[i]);
-                    Filter f = new Filter(false);
-                    customSubCategory sC = new customSubCategory(name, icon);
-
-                    f.checks.Add(ch);
-                    sC.filters.Add(f);
+                    var checks = new List<ConfigNode>() { CheckFactory.MakeCheckNode(CheckFolder.ID, modNames[i]) };
+                    var filters = new List<ConfigNode>() { Filter.MakeFilterNode(false, checks) };
+                    CustomSubCategory sC = new CustomSubCategory(CustomSubCategory.MakeSubcategoryNode(name, icon, filters));
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -348,7 +338,7 @@ namespace FilterExtensions
             filterByManufacturer.AddValue("type", "stock");
             filterByManufacturer.AddValue("value", "replace");
             filterByManufacturer.AddNode(manufacturerSubs);
-            FilterByManufacturer = new customCategory(filterByManufacturer);
+            FilterByManufacturer = new CustomCategory(filterByManufacturer);
         }
 
         /// <summary>
@@ -356,7 +346,7 @@ namespace FilterExtensions
         /// </summary>
         /// <param name="propellants"></param>
         /// <returns></returns>
-        private bool stringListComparer(List<string> propellants)
+        private bool StringListComparer(List<string> propellants)
         {
             for (int i = 0; i < propellantCombos.Count; i++)
             {
@@ -370,22 +360,21 @@ namespace FilterExtensions
         /// <summary>
         /// mark all subcategories that have identical filtering
         /// </summary>
-        private void checkAndMarkConflicts()
+        private void CheckAndMarkConflicts()
         {
             // Can't guarantee iteration order of dict will be the same each time so need a set of elements that have been processed
             // to ensure conflicts are only checked against elements that are already checked
             // by only checking against processed elements we know we're only adding checking for collisions between each pair once
             List<string> processedElements = new List<string>();
-            foreach (KeyValuePair<string, customSubCategory> kvpOuter in subCategoriesDict)
+            foreach (KeyValuePair<string, CustomSubCategory> kvpOuter in subCategoriesDict)
             {
                 foreach (string subcatName in processedElements)
                 {
-                    customSubCategory processedSubcat = subCategoriesDict[subcatName];
-                    if (Filter.compareFilterLists(processedSubcat.filters, kvpOuter.Value.filters))
+                    CustomSubCategory processedSubcat = subCategoriesDict[subcatName];
+                    if (Filter.CompareFilterLists(processedSubcat.Filters, kvpOuter.Value.Filters))
                     {
                         // add conflict entry for the already entered subCategory
-                        List<string> conflicts;
-                        if (conflictsDict.TryGetValue(subcatName, out conflicts))
+                        if (conflictsDict.TryGetValue(subcatName, out List<string> conflicts))
                             conflicts.Add(kvpOuter.Key);
                         else
                             conflictsDict.Add(subcatName, new List<string>() { kvpOuter.Key });
@@ -404,7 +393,7 @@ namespace FilterExtensions
         /// <summary>
         /// loads all textures that are 32x32px into a dictionary using the filename as a key
         /// </summary>
-        private static void loadIcons()
+        private static void LoadIcons()
         {
             GameDatabase.TextureInfo texInfo = null;
             Texture2D selectedTex = null;
@@ -436,13 +425,12 @@ namespace FilterExtensions
         /// </summary>
         /// <param name="name">the icon name</param>
         /// <returns>the icon if it is found, or the fallback icon if it is not</returns>
-        public static RUI.Icons.Selectable.Icon getIcon(string name)
+        public static RUI.Icons.Selectable.Icon GetIcon(string name)
         {
             if (string.IsNullOrEmpty(name))
                 return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
 
-            RUI.Icons.Selectable.Icon icon;
-            if (Instance.iconDict.TryGetValue(name, out icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
+            if (Instance.iconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 return icon;
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
@@ -453,7 +441,7 @@ namespace FilterExtensions
         /// <param name="name">the icon name</param>
         /// <param name="icon">the icon that matches the name, or the fallback if no matches were found</param>
         /// <returns>true if a matching icon was found, false if fallback was required</returns>
-        public static bool tryGetIcon(string name, out RUI.Icons.Selectable.Icon icon)
+        public static bool TryGetIcon(string name, out RUI.Icons.Selectable.Icon icon)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -487,8 +475,7 @@ namespace FilterExtensions
         /// <param name="icon"></param>
         public void SetNameAndIcon(ref string name, ref string icon)
         {
-            string tmp;
-            if (Rename.TryGetValue(name, out tmp))
+            if (Rename.TryGetValue(name, out string tmp))
                 name = tmp;
             if (setIcon.TryGetValue(name, out tmp))
                 icon = tmp;
