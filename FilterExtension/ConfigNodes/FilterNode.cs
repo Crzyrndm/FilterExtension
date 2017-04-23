@@ -4,18 +4,18 @@ using System.Linq;
 
 namespace FilterExtensions.ConfigNodes
 {
-    using Checks;
-    public class Filter : IEquatable<Filter>, ICloneable
+    using CheckNodes;
+    public class FilterNode : IEquatable<FilterNode>, ICloneable
     {
-        List<Check> Checks { get; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
+        List<CheckNode> Checks { get; } // checks are processed in serial (a && b), inversion gives (!a || !b) logic
         bool Invert { get; }
 
-        public Filter(ConfigNode node)
+        public FilterNode(ConfigNode node)
         {
-            Checks = new List<Check>();
+            Checks = new List<CheckNode>();
             foreach (ConfigNode subNode in node.GetNodes("CHECK"))
             {
-                var c = CheckFactory.MakeCheck(subNode);
+                var c = CheckNodeFactory.MakeCheck(subNode);
                 if (c != null)
                 {
                     Checks.Add(c);
@@ -29,7 +29,7 @@ namespace FilterExtensions.ConfigNodes
         {
             ConfigNode node = new ConfigNode("FILTER");
             node.AddValue("invert", this.Invert.ToString());
-            foreach (Check c in Checks)
+            foreach (CheckNode c in Checks)
                 node.AddNode(c.ToConfigNode());
             return node;
         }
@@ -50,7 +50,7 @@ namespace FilterExtensions.ConfigNodes
         /// <param name="fLA"></param>
         /// <param name="fLB"></param>
         /// <returns></returns>
-        public static bool CompareFilterLists(List<Filter> fLA, List<Filter> fLB)
+        public static bool CompareFilterLists(List<FilterNode> fLA, List<FilterNode> fLB)
         {
             if (fLA.Count != fLB.Count && fLA.Count != 0)
                 return false;
@@ -59,12 +59,12 @@ namespace FilterExtensions.ConfigNodes
 
         public override bool Equals(object obj)
         {
-            if (obj is Filter)
-                return Equals((Filter)obj);
+            if (obj is FilterNode)
+                return Equals((FilterNode)obj);
             return false;
         }
 
-        public bool Equals(Filter f2)
+        public bool Equals(FilterNode f2)
         {
             if (f2 == null)
                 return false;

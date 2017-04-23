@@ -60,20 +60,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigNodes\Checks\CheckExtended.cs" />
-    <Compile Include="ConfigNodes\Checks\CheckFactory.cs" />
-    <Compile Include="ConfigNodes\Checks\CheckNumeric.cs" />
-    <Compile Include="ConfigNodes\Checks\CheckSimple.cs" />
-    <Compile Include="ConfigNodes\customCategory.cs" />
-    <Compile Include="ConfigNodes\Checks\Check.cs" />
-    <Compile Include="Core.cs" />
-    <Compile Include="PartModuleFilter.cs" />
-    <Compile Include="FESettings.cs" />
+    <Compile Include="CategoryInstance.cs" />
+    <Compile Include="ConfigNodes\SubCategoryItem.cs" />
+    <Compile Include="ConfigNodes\SubcategoryNodeModifier.cs" />
+    <Compile Include="ConfigNodes\CategoryNode.cs" />
+    <Compile Include="ConfigNodes\CheckNodes\CheckNodeExtended.cs" />
+    <Compile Include="ConfigNodes\CheckNodes\CheckNodeFactory.cs" />
+    <Compile Include="ConfigNodes\CheckNodes\CheckNodeNumeric.cs" />
+    <Compile Include="ConfigNodes\CheckNodes\CheckNodeSimple.cs" />
+    <Compile Include="ConfigNodes\CheckNodes\CheckNode.cs" />
+    <Compile Include="LoadAndProcess.cs" />
+    <Compile Include="ModuleFilter.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="SubCategoryInstance.cs" />
     <Compile Include="Utility\Extensions.cs" />
     <Compile Include="Utility\GUIUtils.cs" />
     <Compile Include="Utility\PartType.cs" />
-    <Compile Include="ConfigNodes\Filter.cs" />
-    <Compile Include="ConfigNodes\customSubCategory.cs" />
+    <Compile Include="ConfigNodes\FilterNode.cs" />
+    <Compile Include="ConfigNodes\SubcategoryNode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Editor.cs" />
   </ItemGroup>

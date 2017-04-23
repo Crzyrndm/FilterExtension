@@ -1,18 +1,17 @@
 ﻿using FilterExtensions.Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace FilterExtensions.ConfigNodes.Checks
+namespace FilterExtensions.ConfigNodes.CheckNodes
 {
     /// <summary>
     /// adds equality to the mix
     /// </summary>
-    public abstract class CheckNumeric : Check
+    public abstract class CheckNodeNumeric : CheckNode
     {
         protected CompareType Equality { get; }
-        protected CheckNumeric(ConfigNode node) : base(node)
+        protected CheckNodeNumeric(ConfigNode node) : base(node)
         {
             Equality = LoadEquality(node);
         }
@@ -28,7 +27,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part attach nodes size
     /// </summary>
-    public class CheckSize : CheckNumeric
+    public class CheckSize : CheckNodeNumeric
     {
         public const string ID = "size";
         public override string CheckID { get => ID; }
@@ -58,7 +57,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part crew capacity
     /// </summary>
-    public class CheckCrew : CheckNumeric
+    public class CheckCrew : CheckNodeNumeric
     {
         public const string ID = "crew";
         public override string CheckID { get => ID; }
@@ -73,7 +72,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part dry mass
     /// </summary>
-    public class CheckMass : CheckNumeric
+    public class CheckMass : CheckNodeNumeric
     {
         public const string ID = "mass";
         public override string CheckID { get => ID; }
@@ -88,7 +87,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part dry cost
     /// </summary>
-    public class CheckCost : CheckNumeric
+    public class CheckCost : CheckNodeNumeric
     {
         public const string ID = "cost";
         public override string CheckID { get => ID; }
@@ -103,7 +102,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part crash tolerance
     /// </summary>
-    public class CheckCrash : CheckNumeric
+    public class CheckCrash : CheckNodeNumeric
     {
         public const string ID = "crash";
         public override string CheckID { get => ID; }
@@ -118,7 +117,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part max temperature
     /// </summary>
-    public class CheckMaxTemp : CheckNumeric
+    public class CheckMaxTemp : CheckNodeNumeric
     {
         public const string ID = "maxTemp";
         public override string CheckID { get => ID; }

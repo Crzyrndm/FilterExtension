@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace FilterExtensions.ConfigNodes.Checks
+namespace FilterExtensions.ConfigNodes.CheckNodes
 {
     /// <summary>
     /// part name check
     /// </summary>
-    public class CheckName : Check
+    public class CheckName : CheckNode
     {
         public const string ID = "name";
         public override string CheckID { get => ID; }
@@ -23,7 +23,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// Part title check
     /// </summary>
-    public class CheckTitle : Check
+    public class CheckTitle : CheckNode
     {
         public const string ID = "title";
         public override string CheckID { get => ID; }
@@ -37,7 +37,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part technology check
     /// </summary>
-    public class CheckTech : Check
+    public class CheckTech : CheckNode
     {
         public const string ID = "tech";
         public override string CheckID { get => ID; }
@@ -51,7 +51,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part manufacturer check
     /// </summary>
-    public class CheckManufacturer : Check
+    public class CheckManufacturer : CheckNode
     {
         public const string ID = "manufacturer";
         public override string CheckID { get => ID; }
@@ -65,7 +65,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part folder check
     /// </summary>
-    public class CheckFolder : Check
+    public class CheckFolder : CheckNode
     {
         public const string ID = "folder";
         public override string CheckID { get => ID; }
@@ -79,7 +79,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part path check
     /// </summary>
-    public class CheckPath : Check
+    public class CheckPath : CheckNode
     {
         public const string ID = "path";
         public override string CheckID { get => ID; }
@@ -93,7 +93,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part category check
     /// </summary>
-    public class CheckCategory : Check
+    public class CheckCategory : CheckNode
     {
         public const string ID = "category";
         public override string CheckID { get => ID; }
@@ -107,7 +107,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part profile check
     /// </summary>
-    public class CheckSubcategory : Check
+    public class CheckSubcategory : CheckNode
     {
         public const string ID = "subcategory";
         public override string CheckID { get => ID; }
@@ -121,7 +121,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// check part field by reflection
     /// </summary>
-    public class CheckField : Check
+    public class CheckField : CheckNode
     {
         public const string ID = "field";
         public override string CheckID { get => ID; }
@@ -135,7 +135,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// for checks that dont fit well into the confignode mold
     /// </summary>
-    public class CheckCustom : Check
+    public class CheckCustom : CheckNode
     {
         public const string ID = "custom";
         public override string CheckID { get => ID; }

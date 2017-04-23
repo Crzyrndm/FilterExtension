@@ -15,12 +15,12 @@ namespace FilterExtensions.Utility
         {
             if (depth > 10)
             {
-                Core.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", Core.LogLevel.Error);
+                LoadAndProcess.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", LoadAndProcess.LogLevel.Error);
                 return false;
             }
             foreach (string s in value)
             {
-                if (Core.Instance.subCategoriesDict.TryGetValue(s, out ConfigNodes.CustomSubCategory subcategory) && subcategory.CheckPartFilters(part, ++depth))
+                if (LoadAndProcess.subCategoriesDict.TryGetValue(s, out ConfigNodes.SubcategoryNode subcategory) && subcategory.CheckPartFilters(part, ++depth))
                     return true;
             }
             return false;
@@ -137,33 +137,6 @@ namespace FilterExtensions.Utility
                 return contains == values.Any(s => CheckModuleNameType(part, s));
             else
                 return part.partPrefab.Modules.Count == values.Length && values.All(s => CheckModuleNameType(part, s));
-        }
-
-        /// <summary>
-        /// provides a typed check for stock modules which then allows for inheritance to work
-        /// </summary>
-        private static Dictionary<string, Type> loaded_modules;
-
-        private static Dictionary<string, Type> Loaded_Modules
-        {
-            get
-            {
-                if (loaded_modules == null)
-                {
-                    loaded_modules = new Dictionary<string, Type>();
-                    foreach (AvailablePart ap in PartLoader.LoadedPartsList)
-                    {
-                        foreach (PartModule pm in ap.partPrefab.Modules)
-                        {
-                            if (!string.IsNullOrEmpty(pm.moduleName) && !Loaded_Modules.ContainsKey(pm.moduleName))
-                            {
-                                loaded_modules.Add(pm.moduleName, pm.GetType());
-                            }
-                        }
-                    }
-                }
-                return loaded_modules;
-            }
         }
 
         public static bool CheckModuleNameType(AvailablePart part, string value)
@@ -423,12 +396,12 @@ namespace FilterExtensions.Utility
                     return part.partPrefab.Modules.Contains<ModuleWheelSuspension>();
 
                 default: // use specialisation where I can to avoid the "slow" type checking this entails
-                    if (value != null && Loaded_Modules.ContainsKey(value))
+                    if (value != null && LoadAndProcess.Loaded_Modules.ContainsKey(value))
                     {
-                        Type string_type = Loaded_Modules[value];
+                        Type string_type = LoadAndProcess.Loaded_Modules[value];
                         foreach (PartModule pm in part.partPrefab.Modules)
                         {
-                            if (value == pm.moduleName || (pm.moduleName != null && string_type.IsAssignableFrom(Loaded_Modules[pm.moduleName])))
+                            if (value == pm.moduleName || (pm.moduleName != null && string_type.IsAssignableFrom(LoadAndProcess.Loaded_Modules[pm.moduleName])))
                                 return true;
                         }
                     }
@@ -498,7 +471,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool CheckFolder(AvailablePart part, string[] value)
         {
-            if (Core.Instance.partPathDict.TryGetValue(part.name, out string path))
+            if (LoadAndProcess.partPathDict.TryGetValue(part.name, out string path))
             {
                 return value.Contains(path.Substring(0, path.IndexOfAny(new char[] { '\\', '/' })));
             }
@@ -510,7 +483,7 @@ namespace FilterExtensions.Utility
         /// </summary>
         public static bool CheckPath(AvailablePart part, string[] value)
         {
-            if (Core.Instance.partPathDict.TryGetValue(part.name, out string path))
+            if (LoadAndProcess.partPathDict.TryGetValue(part.name, out string path))
                 return value.Any(s => path.StartsWith(s, StringComparison.OrdinalIgnoreCase));
 
             return false;
@@ -519,26 +492,26 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// checks against the attach node sizes on the part
         /// </summary>
-        public static bool CheckPartSize(AvailablePart part, string[] values, bool contains = true, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals, bool exact = false)
+        public static bool CheckPartSize(AvailablePart part, string[] values, bool contains = true, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals, bool exact = false)
         {
             if (part.partPrefab.attachNodes == null)
                 return false;
 
-            if (equality == ConfigNodes.Checks.CompareType.Equals)
+            if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                 return Contains(values, part.partPrefab.attachNodes, n => n.size.ToString(), contains, exact);
             else // only compare against the first value here
             {
                 if (values.Length > 1)
-                    Core.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", values));
+                    LoadAndProcess.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", values));
 
                 if (int.TryParse(values[0], out int i))
                 {
-                    if (equality == ConfigNodes.Checks.CompareType.GreaterThan)
+                    if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan)
                     {
                         part.partPrefab.attachNodes.Any(n => n.size > i);
                         return true;
                     }
-                    else if (equality == ConfigNodes.Checks.CompareType.LessThan)
+                    else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan)
                     {
                         part.partPrefab.attachNodes.Any(n => n.size < i);
                         return true;
@@ -551,23 +524,23 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check against the number of crew this part can hold
         /// </summary>
-        public static bool CheckCrewCapacity(AvailablePart part, string[] value, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals)
+        public static bool CheckCrewCapacity(AvailablePart part, string[] value, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals)
         {
             if (part.partPrefab == null)
                 return false;
 
-            if (equality == ConfigNodes.Checks.CompareType.Equals)
+            if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                 return value.Contains(part.partPrefab.CrewCapacity.ToString(), StringComparer.OrdinalIgnoreCase);
             else // only compare against the first value here
             {
                 if (value.Length > 1)
-                    Core.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
+                    LoadAndProcess.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
 
                 if (double.TryParse(value[0], out double d))
                 {
-                    if (equality == ConfigNodes.Checks.CompareType.GreaterThan && part.partPrefab.CrewCapacity > d)
+                    if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan && part.partPrefab.CrewCapacity > d)
                         return true;
-                    else if (equality == ConfigNodes.Checks.CompareType.LessThan && part.partPrefab.CrewCapacity < d)
+                    else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan && part.partPrefab.CrewCapacity < d)
                         return true;
                 }
             }
@@ -577,23 +550,23 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part mass against a list of values
         /// </summary>
-        public static bool CheckMass(AvailablePart part, string[] value, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals)
+        public static bool CheckMass(AvailablePart part, string[] value, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals)
         {
             if (part.partPrefab == null)
                 return false;
 
-            if (equality == ConfigNodes.Checks.CompareType.Equals)
+            if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                 return value.Contains(part.partPrefab.mass.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
+                    LoadAndProcess.Log("Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
 
                 if (double.TryParse(value[0], out double d))
                 {
-                    if (equality == ConfigNodes.Checks.CompareType.GreaterThan && part.partPrefab.mass > d)
+                    if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan && part.partPrefab.mass > d)
                         return true;
-                    else if (equality == ConfigNodes.Checks.CompareType.LessThan && part.partPrefab.mass < d)
+                    else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan && part.partPrefab.mass < d)
                         return true;
                 }
             }
@@ -603,20 +576,20 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the part cost against a string list
         /// </summary>
-        public static bool CheckCost(AvailablePart part, string[] value, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals)
+        public static bool CheckCost(AvailablePart part, string[] value, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals)
         {
-            if (equality == ConfigNodes.Checks.CompareType.Equals)
+            if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                 return value.Contains(part.cost.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
+                    LoadAndProcess.Log("Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
 
                 if (double.TryParse(value[0], out double d))
                 {
-                    if (equality == ConfigNodes.Checks.CompareType.GreaterThan && part.cost > d)
+                    if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan && part.cost > d)
                         return true;
-                    else if (equality == ConfigNodes.Checks.CompareType.LessThan && part.cost < d)
+                    else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan && part.cost < d)
                         return true;
                 }
             }
@@ -626,23 +599,23 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// check the impact speed at which the part will explode
         /// </summary>
-        public static bool CheckCrashTolerance(AvailablePart part, string[] value, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals)
+        public static bool CheckCrashTolerance(AvailablePart part, string[] value, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals)
         {
             if (part.partPrefab == null)
                 return false;
 
-            if (equality == ConfigNodes.Checks.CompareType.Equals)
+            if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                 return value.Contains(part.partPrefab.crashTolerance.ToString());
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
+                    LoadAndProcess.Log("Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
 
                 if (float.TryParse(value[0], out float f))
                 {
-                    if (equality == ConfigNodes.Checks.CompareType.GreaterThan && part.partPrefab.crashTolerance > f)
+                    if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan && part.partPrefab.crashTolerance > f)
                         return true;
-                    else if (equality == ConfigNodes.Checks.CompareType.LessThan && part.partPrefab.crashTolerance < f)
+                    else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan && part.partPrefab.crashTolerance < f)
                         return true;
                 }
             }
@@ -652,22 +625,22 @@ namespace FilterExtensions.Utility
         /// <summary>
         /// compares against the part max temp
         /// </summary>
-        public static bool CheckTemperature(AvailablePart part, string[] value, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals)
+        public static bool CheckTemperature(AvailablePart part, string[] value, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals)
         {
             if (part.partPrefab == null)
                 return false;
 
-            if (equality == ConfigNodes.Checks.CompareType.Equals)
+            if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                 return value.Contains(part.partPrefab.maxTemp.ToString(), StringComparer.OrdinalIgnoreCase);
             else
             {
                 if (value.Length > 1)
-                    Core.Log("Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", Core.LogLevel.Warn, string.Join(", ", value));
+                    LoadAndProcess.Log("Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
                 if (double.TryParse(value[0], out double d))
                 {
-                    if (equality == ConfigNodes.Checks.CompareType.GreaterThan && part.partPrefab.maxTemp > d)
+                    if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan && part.partPrefab.maxTemp > d)
                         return true;
-                    else if (equality == ConfigNodes.Checks.CompareType.LessThan && part.partPrefab.maxTemp < d)
+                    else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan && part.partPrefab.maxTemp < d)
                         return true;
                 }
             }
@@ -825,13 +798,13 @@ namespace FilterExtensions.Utility
 
         public static char[] splitChars = new char[] { ',', ' ', '.' };
 
-        public static bool NodeCheck(AvailablePart part, string[] parameters, ConfigNodes.Checks.CompareType equality = ConfigNodes.Checks.CompareType.Equals)
+        public static bool NodeCheck(AvailablePart part, string[] parameters, ConfigNodes.CheckNodes.CompareType equality = ConfigNodes.CheckNodes.CompareType.Equals)
         {
-            if (parameters.Length < 3 || !Loaded_Modules.TryGetValue(parameters[0], out Type baseType))
+            if (parameters.Length < 3 || !LoadAndProcess.Loaded_Modules.TryGetValue(parameters[0], out Type baseType))
                 return false;
             foreach (PartModule pm in part.partPrefab.Modules)
             {
-                if (baseType.IsAssignableFrom(Loaded_Modules[pm.moduleName]))
+                if (baseType.IsAssignableFrom(LoadAndProcess.Loaded_Modules[pm.moduleName]))
                 {
                     BaseField f = pm.Fields[parameters[1]];
                     if (f == null)
@@ -848,15 +821,15 @@ namespace FilterExtensions.Utility
                     }
                     else
                     {
-                        if (equality == ConfigNodes.Checks.CompareType.Equals)
+                        if (equality == ConfigNodes.CheckNodes.CompareType.Equals)
                         {
                             return org == res;
                         }
-                        else if (equality == ConfigNodes.Checks.CompareType.GreaterThan)
+                        else if (equality == ConfigNodes.CheckNodes.CompareType.GreaterThan)
                         {
                             return org > res;
                         }
-                        else if (equality == ConfigNodes.Checks.CompareType.LessThan)
+                        else if (equality == ConfigNodes.CheckNodes.CompareType.LessThan)
                         {
                             return org < res;
                         }

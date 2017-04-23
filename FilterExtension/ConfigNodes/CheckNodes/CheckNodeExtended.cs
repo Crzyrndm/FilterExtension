@@ -4,16 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace FilterExtensions.ConfigNodes.Checks
+namespace FilterExtensions.ConfigNodes.CheckNodes
 {
     /// <summary>
     /// adds contains and invert variables to the mix
     /// </summary>
-    public abstract class CheckExtended : Check
+    public abstract class CheckNodeExtended : CheckNode
     {
         protected bool Contains { get; }
         protected bool Exact { get; }
-        protected CheckExtended(ConfigNode node) : base(node)
+        protected CheckNodeExtended(ConfigNode node) : base(node)
         {
             Contains = LoadContains(node);
             Exact = LoadExact(node);
@@ -31,7 +31,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part module name
     /// </summary>
-    public class CheckModuleName : CheckExtended
+    public class CheckModuleName : CheckNodeExtended
     {
         public const string ID = "moduleName";
         public override string CheckID { get => ID; }
@@ -45,7 +45,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part module title
     /// </summary>
-    public class CheckModuleTitle : CheckExtended
+    public class CheckModuleTitle : CheckNodeExtended
     {
         public const string ID = "moduleTitle";
         public override string CheckID { get => ID; }
@@ -59,7 +59,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part profile check
     /// </summary>
-    public class CheckProfile : CheckExtended
+    public class CheckProfile : CheckNodeExtended
     {
         public const string ID = "profile";
         public override string CheckID { get => ID; }
@@ -73,7 +73,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// part profile check
     /// </summary>
-    public class CheckTag : CheckExtended
+    public class CheckTag : CheckNodeExtended
     {
         public const string ID = "tag";
         public override string CheckID { get => ID; }
@@ -87,7 +87,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// checks part resources
     /// </summary>
-    public class CheckResource : CheckExtended
+    public class CheckResource : CheckNodeExtended
     {
         public const string ID = "resource";
         public override string CheckID { get => ID; }
@@ -101,7 +101,7 @@ namespace FilterExtensions.ConfigNodes.Checks
     /// <summary>
     /// checks part engine propellants
     /// </summary>
-    public class CheckPropellant : CheckExtended
+    public class CheckPropellant : CheckNodeExtended
     {
         public const string ID = "propellant";
         public override string CheckID { get => ID; }
@@ -112,19 +112,19 @@ namespace FilterExtensions.ConfigNodes.Checks
         }
     }
 
-    public class CheckGroup : Check
+    public class CheckGroup : CheckNode
     {
         public const string ID = "check";
         public override string CheckID { get => ID; }
-        List<Check> Group { get; }
+        List<CheckNode> Group { get; }
 
         public CheckGroup(ConfigNode node) : base(node)
         {
             ConfigNode[] nodes = node.GetNodes("CHECK");
-            var checks = new List<Check>();
+            var checks = new List<CheckNode>();
             foreach (var n in nodes)
             {
-                Check c = CheckFactory.MakeCheck(n);
+                CheckNode c = CheckNodeFactory.MakeCheck(n);
                 if (c != null)
                 {
                     checks.Add(c);
@@ -148,7 +148,7 @@ namespace FilterExtensions.ConfigNodes.Checks
             return node;
         }
 
-        public override bool Equals(Check c2)
+        public override bool Equals(CheckNode c2)
         {
             if (!(c2 is CheckGroup))
                 return false;

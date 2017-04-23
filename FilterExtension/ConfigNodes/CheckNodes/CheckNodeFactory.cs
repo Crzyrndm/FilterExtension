@@ -1,8 +1,8 @@
-﻿namespace FilterExtensions.ConfigNodes.Checks
+﻿namespace FilterExtensions.ConfigNodes.CheckNodes
 {
-    public static class CheckFactory
+    public static class CheckNodeFactory
     {
-        public static Check MakeCheck(ConfigNode node)
+        public static CheckNode MakeCheck(ConfigNode node)
         {
             string checkID = node.GetValue("type");
             switch (checkID)
@@ -54,7 +54,7 @@
                 case CheckCost.ID:
                     return new CheckCost(node);
                 default:
-                    Core.Log($"unknown check type {checkID}", Core.LogLevel.Error);
+                    LoadAndProcess.Log($"unknown check type {checkID}", LoadAndProcess.LogLevel.Error);
                     return null;
             }
         }

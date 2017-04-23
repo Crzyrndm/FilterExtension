@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FilterExtensions.ConfigNodes.Checks
+namespace FilterExtensions.ConfigNodes.CheckNodes
 {
     public enum CompareType
     {
@@ -10,13 +10,13 @@ namespace FilterExtensions.ConfigNodes.Checks
         String
     }
 
-    public abstract class Check : IEquatable<Check>, ICloneable
+    public abstract class CheckNode : IEquatable<CheckNode>
     {
         public abstract string CheckID { get; }
         protected string[] Values { get; }
         protected bool Invert { get; }
 
-        public Check(ConfigNode node)
+        public CheckNode(ConfigNode node)
         {
             Values = LoadValues(node);
             Invert = LoadInvert(node);
@@ -89,12 +89,12 @@ namespace FilterExtensions.ConfigNodes.Checks
 
         public override bool Equals(object obj)
         {
-            if (obj is Check)
-                return Equals((Check)obj);
+            if (obj is CheckNode)
+                return Equals((CheckNode)obj);
             return false;
         }
 
-        public virtual bool Equals(Check c2)
+        public virtual bool Equals(CheckNode c2)
         {
             if (c2 == null)
                 return false;
@@ -107,11 +107,6 @@ namespace FilterExtensions.ConfigNodes.Checks
             hash = hash * 17 + Values?.GetHashCode() ?? 0;
             hash = hash * 17 + Invert.GetHashCode();
             return hash;
-        }
-
-        public object Clone()
-        {
-            return MemberwiseClone();
         }
     }
 }

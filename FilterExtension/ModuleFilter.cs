@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace FilterExtensions
 {
-    public class PartModuleFilter : PartModule
+    public class ModuleFilter : PartModule
     {
         /// <summary>
         /// list names of FE categories to push this part into even if it doesn't otherwise match the filters

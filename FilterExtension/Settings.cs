@@ -6,7 +6,7 @@ using System;
 
 namespace FilterExtensions
 {
-    internal class FESettings : GameParameters.CustomParameterNode
+    internal class Settings : GameParameters.CustomParameterNode
     {
         [GameParameters.CustomParameterUI("Hide unpurchased parts"
             , gameMode = GameParameters.GameMode.CAREER
@@ -106,20 +106,20 @@ namespace FilterExtensions
             if (member.Name == "categoryDefault")
             {
                 List<string> categories = new List<string>() { string.Empty };
-                foreach (ConfigNodes.CustomCategory C in Core.Instance.Categories)
+                foreach (CategoryInstance C in LoadAndProcess.Categories)
                 {
-                    categories.Add(C.CategoryName);
+                    categories.Add(C.Name);
                 }
                 return categories;
             }
             if (member.Name == "subCategoryDefault")
             {
                 List<string> subcategories = new List<string>() { string.Empty };
-                if (Core.Instance.Categories.TryGetValue(C => C.CategoryName == categoryDefault, out ConfigNodes.CustomCategory cat))
+                if (LoadAndProcess.Categories.TryGetValue(C => C.Name == categoryDefault, out CategoryInstance cat))
                 {
-                    foreach (ConfigNodes.SubCategoryItem sc in cat.SubCategories)
+                    foreach (SubCategoryInstance sc in cat.Subcategories)
                     {
-                        subcategories.Add(sc.SubcategoryName);
+                        subcategories.Add(sc.Name);
                     }
                 }
                 return subcategories;

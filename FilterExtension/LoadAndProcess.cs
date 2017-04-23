@@ -6,32 +6,20 @@ using System.Linq; // Majority of Core only runs once.
 namespace FilterExtensions
 {
     using ConfigNodes;
-    using FilterExtensions.ConfigNodes.Checks;
+    using ConfigNodes.CheckNodes;
     using KSP.UI.Screens;
     using UnityEngine;
     using Utility;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    public class Core : MonoBehaviour
+    public class LoadAndProcess : MonoBehaviour
     {
-        public static readonly Version version = new Version(2, 8, 1, 2);
-
-        private static Core instance;
-        public static Core Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
+        public static readonly Version version = new Version(2, 9, 0, 0);
 
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
-        public List<CustomCategory> Categories = new List<CustomCategory>();
+        public List<CategoryNode> CategoryNodes = new List<CategoryNode>();
 
-        public CustomCategory FilterByManufacturer;
-
-        // storing all subCategory definitions for categories to reference
-        public Dictionary<string, CustomSubCategory> subCategoriesDict = new Dictionary<string, CustomSubCategory>();
+        public CategoryNode FilterByManufacturer;
 
         // all subcategories with duplicated filters
         public Dictionary<string, List<string>> conflictsDict = new Dictionary<string, List<string>>();
@@ -45,24 +33,54 @@ namespace FilterExtensions
         // removing categories
         public HashSet<string> removeSubCategory = new HashSet<string>();
 
-        // url for each part by internal name
-        public Dictionary<string, string> partPathDict = new Dictionary<string, string>();
-
         // entry for each unique combination of propellants
         public List<List<string>> propellantCombos = new List<List<string>>();
 
         // entry for each unique resource
         public List<string> resources = new List<string>();
 
+        // url for each part by internal name
+        public static Dictionary<string, string> partPathDict = new Dictionary<string, string>();
+
         // Dictionary of icons created on entering the main menu
-        public Dictionary<string, RUI.Icons.Selectable.Icon> iconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
+        public static Dictionary<string, RUI.Icons.Selectable.Icon> IconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
+        // storing all subCategory definitions for categories to reference during compilation to instances
+        public static Dictionary<string, SubcategoryNode> subCategoriesDict = new Dictionary<string, SubcategoryNode>();
+        /// <summary>
+        /// provides a typed check for stock modules which then allows for inheritance checking to work using isAssignableFrom
+        /// </summary>
+        private static Dictionary<string, Type> loaded_modules;
+
+        public static Dictionary<string, Type> Loaded_Modules
+        {
+            // dont pay for what you dont use...
+            get
+            {
+                if (loaded_modules == null)
+                {
+                    loaded_modules = new Dictionary<string, Type>();
+                    foreach (AvailablePart ap in PartLoader.LoadedPartsList)
+                    {
+                        foreach (PartModule pm in ap.partPrefab.Modules)
+                        {
+                            if (!string.IsNullOrEmpty(pm.moduleName) && !Loaded_Modules.ContainsKey(pm.moduleName))
+                            {
+                                loaded_modules.Add(pm.moduleName, pm.GetType());
+                            }
+                        }
+                    }
+                }
+                return loaded_modules;
+            }
+        }
+
+        // static list of compiled categories to instantiate in the editor
+        public static List<CategoryInstance> Categories = new List<CategoryInstance>();
 
         private const string fallbackIcon = "stockIcon_fallback";
 
         private IEnumerator Start()
         {
-            instance = this;
-            DontDestroyOnLoad(this);
             Log(string.Empty, LogLevel.Warn);
 
             yield return null;
@@ -74,6 +92,12 @@ namespace FilterExtensions
             ProcessFilterDefinitions();
             LoadIcons();
             CheckAndMarkConflicts();
+
+            CompileCategories();
+
+            partPathDict = null;
+            subCategoriesDict = null;
+            loaded_modules = null;
         }
 
         /// <summary>
@@ -81,44 +105,19 @@ namespace FilterExtensions
         /// </summary>
         private void GetConfigs()
         {
-            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("FilterRename");
-            for (int i = 0; i < nodes.Length; i++)
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRename"))
             {
-                ConfigNode node = nodes[i];
-                string[] names = node.GetValues("name");
-                for (int j = 0; j < names.Length; j++)
-                {
-                    string[] s = names[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
-                    if (s.Length >= 2 && !Rename.ContainsKey(s[0]))
-                        Rename.Add(s[0], s[1]);
-                }
+                SubcategoryNodeModifier.MakeRenamers(node, Rename);
             }
 
-            nodes = GameDatabase.Instance.GetConfigNodes("FilterSetIcon");
-            for (int i = 0; i < nodes.Length; i++)
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterSetIcon"))
             {
-                ConfigNode node = nodes[i];
-                string[] icons = node.GetValues("icon");
-                for (int j = 0; j < icons.Length; j++)
-                {
-                    string[] s = icons[j].Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
-                    if (s.Length >= 2 && !setIcon.ContainsKey(s[0]))
-                        setIcon.Add(s[0], s[1]);
-                }
+                SubcategoryNodeModifier.MakeRenamers(node, setIcon);
             }
 
-            nodes = GameDatabase.Instance.GetConfigNodes("FilterRemove");
-            for (int i = 0; i < nodes.Length; i++)
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRemove"))
             {
-                ConfigNode node = nodes[i];
-                string[] toRemove = node.GetValues("remove");
-                for (int j = 0; j < toRemove.Length; j++)
-                {
-                    string s = toRemove[j].Trim();
-                    if (string.IsNullOrEmpty(s))
-                        continue;
-                    removeSubCategory.Add(s); // hashset doesn't need duplicate check
-                }
+                SubcategoryNodeModifier.MakeDeleters(node, removeSubCategory);
             }
         }
 
@@ -129,47 +128,40 @@ namespace FilterExtensions
         {
             List<string> modNames = new List<string>();
             Editor.blackListedParts = new HashSet<string>();
-
+            var splitter = new char[] { '/', '\\' };
             foreach (AvailablePart p in PartLoader.LoadedPartsList)
             {
                 if (p == null)
                     continue;
-                if (string.Equals(p.TechRequired, "Unresearchable", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(p.TechRequired, "Unresearchable", StringComparison.OrdinalIgnoreCase))
                 {
-                    Log(p.name);
+                    Log($"part {p.name} is noted as unreasearchable and will not be visible", LogLevel.Warn);
                     Editor.blackListedParts.Add(p.name);
                     continue;
                 }
 
                 if (string.IsNullOrEmpty(p.partUrl))
                     RepairAvailablePartUrl(p);
-
                 // if the url is still borked, can't associate a mod to the part
                 if (!string.IsNullOrEmpty(p.partUrl))
                 {
                     // list of GameData folders
-                    modNames.AddUnique(p.partUrl.Split(new char[] { '/', '\\' })[0]);
-
+                    modNames.AddUnique(p.partUrl.Split(splitter)[0]);
                     // associate the path to the part
                     if (!partPathDict.ContainsKey(p.name))
-                    {
                         partPathDict.Add(p.name, p.partUrl);
-                    }
                     else
                         Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
-
-                    if (PartType.IsEngine(p))
-                        ProcessEnginePropellants(p);
-
-                    if (p.partPrefab.Resources != null)
-                    {
-                        foreach (PartResource r in p.partPrefab.Resources)
-                            resources.AddUnique(r.resourceName);
-                    }
+                }
+                if (PartType.IsEngine(p))
+                    ProcessEnginePropellants(p);
+                if (p.partPrefab.Resources != null)
+                {
+                    foreach (PartResource r in p.partPrefab.Resources)
+                        resources.AddUnique(r.resourceName);
                 }
             }
             GenerateEngineTypes();
-
             ProcessFilterByManufacturer(modNames);
         }
 
@@ -178,27 +170,26 @@ namespace FilterExtensions
         /// </summary>
         private void ProcessFilterDefinitions()
         {
-            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("CATEGORY");
-            foreach (ConfigNode node in nodes)
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
-                CustomCategory C = new CustomCategory(node);
+                CategoryNode C = new CategoryNode(node, this);
                 if (C.SubCategories == null)
+                {
+                    Log($"no subcategories present in {C.CategoryName}", LogLevel.Error);
                     continue;
-                if (!Categories.Any(n => n.CategoryName == C.CategoryName))
-                    Categories.Add(C);
+                }
+                CategoryNodes.AddUnique(C);
             }
-
             //load all subCategory configs
-            nodes = GameDatabase.Instance.GetConfigNodes("SUBCATEGORY");
-            foreach (ConfigNode node in nodes)
+            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                CustomSubCategory sC = new CustomSubCategory(node);
+                SubcategoryNode sC = new SubcategoryNode(node);
                 if (!sC.HasFilters || string.IsNullOrEmpty(sC.SubCategoryTitle))
                 {
                     Log($"subcategory format error: {sC.SubCategoryTitle}", LogLevel.Error);
                     continue;
                 }
-                if (subCategoriesDict.TryGetValue(sC.SubCategoryTitle, out CustomSubCategory subcategory)) // if something does have the same title
+                else if (subCategoriesDict.ContainsKey(sC.SubCategoryTitle)) // if something does have the same title
                 {
                     Log($"subcategory name duplicated: {sC.SubCategoryTitle}", LogLevel.Error);
                     continue;
@@ -209,44 +200,40 @@ namespace FilterExtensions
                 }
             }
 
-            CustomCategory Cat = Categories.Find(C => C.CategoryName == "Filter by Resource");
-            if (Cat != null)
+            CategoryNode Cat = CategoryNodes.Find(C => C.CategoryName == "Filter by Resource");
+            if (Cat != null && Cat.Type == CategoryNode.CategoryType.Stock)
             {
                 foreach (string s in resources)
                 {
                     // add spaces before each capital letter
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
-
-                    if (subCategoriesDict.TryGetValue(name, out CustomSubCategory subcategory))
+                    if (subCategoriesDict.ContainsKey(name))
                     {
+                        Log($"resource name already exists, abandoning generation for {name}", LogLevel.Warn);
                         continue;
                     }
                     else if (!string.IsNullOrEmpty(name))
                     {
-                        ConfigNode checkNode = CheckFactory.MakeCheckNode(CheckResource.ID, s);
-                        ConfigNode filtNode = Filter.MakeFilterNode(false, new List<ConfigNode>(){ checkNode });
-                        ConfigNode subcatNode = CustomSubCategory.MakeSubcategoryNode(name, name, new List<ConfigNode>() { filtNode });
-                        subCategoriesDict.Add(name, new CustomSubCategory(subcatNode));
+                        ConfigNode checkNode = CheckNodeFactory.MakeCheckNode(CheckResource.ID, s);
+                        ConfigNode filtNode = FilterNode.MakeFilterNode(false, new List<ConfigNode>(){ checkNode });
+                        ConfigNode subcatNode = SubcategoryNode.MakeSubcategoryNode(name, name, false, new List<ConfigNode>() { filtNode });
+                        subCategoriesDict.Add(name, new SubcategoryNode(subcatNode));
                         Cat.SubCategories.AddUnique(new SubCategoryItem(name));
                     }
                 }
             }
 
-            foreach (CustomCategory C in Categories)
+            foreach (CategoryNode C in CategoryNodes)
             {
-                if (C == null || !C.All)
+                if (!C.All)
                     continue;
 
-                List<Filter> filterList = new List<Filter>();
+                List<FilterNode> filterList = new List<FilterNode>();
                 if (C.SubCategories != null)
                 {
-                    for (int j = 0; j < C.SubCategories.Count; j++)
+                    foreach (var s in C.SubCategories)
                     {
-                        SubCategoryItem s = C.SubCategories[j];
-                        if (s == null)
-                            continue;
-
-                        if (subCategoriesDict.TryGetValue(s.SubcategoryName, out CustomSubCategory subcategory))
+                        if (subCategoriesDict.TryGetValue(s.SubcategoryName, out SubcategoryNode subcategory))
                             filterList.AddUniqueRange(subcategory.Filters);
                     }
                 }
@@ -255,7 +242,7 @@ namespace FilterExtensions
                 {
                     filternodes.Add(f.ToConfigNode());
                 }
-                CustomSubCategory newSub = new CustomSubCategory(CustomSubCategory.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, filternodes));
+                SubcategoryNode newSub = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, false, filternodes));
                 subCategoriesDict.Add(newSub.SubCategoryTitle, newSub);
                 C.SubCategories.Insert(0, new SubCategoryItem(newSub.SubCategoryTitle));
             }
@@ -295,9 +282,9 @@ namespace FilterExtensions
 
                 if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
                 {
-                    var checks = new List<ConfigNode>() { CheckFactory.MakeCheckNode(CheckPropellant.ID, propList, exact: true) };
-                    var filters = new List<ConfigNode>() { Filter.MakeFilterNode(false, checks) };
-                    CustomSubCategory sC = new CustomSubCategory(CustomSubCategory.MakeSubcategoryNode(name, icon, filters));
+                    var checks = new List<ConfigNode>() { CheckNodeFactory.MakeCheckNode(CheckPropellant.ID, propList, exact: true) };
+                    var filters = new List<ConfigNode>() { FilterNode.MakeFilterNode(false, checks) };
+                    SubcategoryNode sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -311,10 +298,10 @@ namespace FilterExtensions
         {
             // define the mod subcategories
             List<string> subCatNames = new List<string>();
-            for (int i = 0; i < modNames.Count; i++)
+            foreach (string s in modNames)
             {
-                string name = modNames[i];
-                if (subCategoriesDict.ContainsKey(modNames[i]))
+                string name = s;
+                if (subCategoriesDict.ContainsKey(name))
                     name = "mod_" + name;
                 string icon = name;
                 SetNameAndIcon(ref name, ref icon);
@@ -322,9 +309,9 @@ namespace FilterExtensions
                 if (!subCategoriesDict.ContainsKey(name))
                 {
                     subCatNames.Add(name);
-                    var checks = new List<ConfigNode>() { CheckFactory.MakeCheckNode(CheckFolder.ID, modNames[i]) };
-                    var filters = new List<ConfigNode>() { Filter.MakeFilterNode(false, checks) };
-                    CustomSubCategory sC = new CustomSubCategory(CustomSubCategory.MakeSubcategoryNode(name, icon, filters));
+                    var checks = new List<ConfigNode>() { CheckNodeFactory.MakeCheckNode(CheckFolder.ID, name) };
+                    var filters = new List<ConfigNode>() { FilterNode.MakeFilterNode(false, checks) };
+                    SubcategoryNode sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -338,7 +325,7 @@ namespace FilterExtensions
             filterByManufacturer.AddValue("type", "stock");
             filterByManufacturer.AddValue("value", "replace");
             filterByManufacturer.AddNode(manufacturerSubs);
-            FilterByManufacturer = new CustomCategory(filterByManufacturer);
+            FilterByManufacturer = new CategoryNode(filterByManufacturer, this);
         }
 
         /// <summary>
@@ -366,12 +353,12 @@ namespace FilterExtensions
             // to ensure conflicts are only checked against elements that are already checked
             // by only checking against processed elements we know we're only adding checking for collisions between each pair once
             List<string> processedElements = new List<string>();
-            foreach (KeyValuePair<string, CustomSubCategory> kvpOuter in subCategoriesDict)
+            foreach (KeyValuePair<string, SubcategoryNode> kvpOuter in subCategoriesDict)
             {
                 foreach (string subcatName in processedElements)
                 {
-                    CustomSubCategory processedSubcat = subCategoriesDict[subcatName];
-                    if (Filter.CompareFilterLists(processedSubcat.Filters, kvpOuter.Value.Filters))
+                    SubcategoryNode processedSubcat = subCategoriesDict[subcatName];
+                    if (FilterNode.CompareFilterLists(processedSubcat.Filters, kvpOuter.Value.Filters))
                     {
                         // add conflict entry for the already entered subCategory
                         if (conflictsDict.TryGetValue(subcatName, out List<string> conflicts))
@@ -416,7 +403,22 @@ namespace FilterExtensions
 
                 string name = kvp.Value.name.Split(new char[] { '/', '\\' }).Last();
                 RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, kvp.Value.texture, selectedTex, false);
-                Instance.iconDict.TryAdd(icon.name, icon);
+                IconDict.TryAdd(icon.name, icon);
+            }
+        }
+
+        public void CompileCategories()
+        {
+            foreach (CategoryNode cn in CategoryNodes)
+            {
+                try
+                {
+                    Categories.Add(new CategoryInstance(cn, subCategoriesDict));
+                }
+                catch (Exception ex)
+                {
+                    Log(ex.Message, LogLevel.Warn);
+                }
             }
         }
 
@@ -430,7 +432,7 @@ namespace FilterExtensions
             if (string.IsNullOrEmpty(name))
                 return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
 
-            if (Instance.iconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
+            if (IconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 return icon;
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
@@ -448,7 +450,7 @@ namespace FilterExtensions
                 icon = PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
                 return false;
             }
-            if (Instance.iconDict.TryGetValue(name, out icon))
+            if (IconDict.TryGetValue(name, out icon))
                 return true;
             if (PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 return true;
