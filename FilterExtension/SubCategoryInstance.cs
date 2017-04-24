@@ -1,4 +1,5 @@
-﻿using KSP.UI.Screens;
+﻿using KSP.Localization;
+using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,13 +26,15 @@ namespace FilterExtensions
         /// <param name="allParts"></param>
         public SubCategoryInstance(ConfigNodes.SubcategoryNode protoNode, List<AvailablePart> allParts)
         {
-            Name = protoNode.SubCategoryTitle;
+            Name = Localization.Format(protoNode.SubCategoryTitle);
             Icon = protoNode.IconName;
             UnpurchasedVisible = protoNode.UnPurchasedOverride;
             foreach (AvailablePart p in allParts)
             {
                 if (protoNode.CheckPartFilters(p))
+                {
                     Parts.Add(p);
+                }
             }
         }
 
@@ -42,7 +45,9 @@ namespace FilterExtensions
         public void Initialise(PartCategorizer.Category cat)
         {
             if (cat == null)
+            {
                 return;
+            }
             RUI.Icons.Selectable.Icon icon = LoadAndProcess.GetIcon(Icon);
             PartCategorizer.AddCustomSubcategoryFilter(cat, Name, icon, p => TestPart(p));
         }
@@ -56,7 +61,9 @@ namespace FilterExtensions
         {
             if (!UnpurchasedVisible && HighLogic.CurrentGame.Parameters.CustomParams<Settings>().hideUnpurchased 
                 && !(ResearchAndDevelopment.PartModelPurchased(ap) || ResearchAndDevelopment.IsExperimentalPart(ap)))
+            {
                 return false;
+            }
             return Parts.Contains(ap);
         }
     }

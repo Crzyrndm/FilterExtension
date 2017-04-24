@@ -126,13 +126,15 @@ namespace FilterExtensions
         /// </summary>
         private void GetPartData()
         {
-            List<string> modNames = new List<string>();
+            var modNames = new List<string>();
             Editor.blackListedParts = new HashSet<string>();
-            var splitter = new char[] { '/', '\\' };
+            char[] splitter = new char[] { '/', '\\' };
             foreach (AvailablePart p in PartLoader.LoadedPartsList)
             {
                 if (p == null)
+                {
                     continue;
+                }
                 else if (string.Equals(p.TechRequired, "Unresearchable", StringComparison.OrdinalIgnoreCase))
                 {
                     Log($"part {p.name} is noted as unreasearchable and will not be visible", LogLevel.Warn);
@@ -141,7 +143,9 @@ namespace FilterExtensions
                 }
 
                 if (string.IsNullOrEmpty(p.partUrl))
+                {
                     RepairAvailablePartUrl(p);
+                }
                 // if the url is still borked, can't associate a mod to the part
                 if (!string.IsNullOrEmpty(p.partUrl))
                 {
@@ -149,16 +153,24 @@ namespace FilterExtensions
                     modNames.AddUnique(p.partUrl.Split(splitter)[0]);
                     // associate the path to the part
                     if (!partPathDict.ContainsKey(p.name))
+                    {
                         partPathDict.Add(p.name, p.partUrl);
+                    }
                     else
+                    {
                         Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
+                    }
                 }
                 if (PartType.IsEngine(p))
+                {
                     ProcessEnginePropellants(p);
+                }
                 if (p.partPrefab.Resources != null)
                 {
                     foreach (PartResource r in p.partPrefab.Resources)
+                    {
                         resources.AddUnique(r.resourceName);
+                    }
                 }
             }
             GenerateEngineTypes();
@@ -172,7 +184,7 @@ namespace FilterExtensions
         {
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CATEGORY"))
             {
-                CategoryNode C = new CategoryNode(node, this);
+                var C = new CategoryNode(node, this);
                 if (C.SubCategories == null)
                 {
                     Log($"no subcategories present in {C.CategoryName}", LogLevel.Error);
@@ -183,7 +195,7 @@ namespace FilterExtensions
             //load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                SubcategoryNode sC = new SubcategoryNode(node);
+                var sC = new SubcategoryNode(node);
                 if (!sC.HasFilters || string.IsNullOrEmpty(sC.SubCategoryTitle))
                 {
                     Log($"subcategory format error: {sC.SubCategoryTitle}", LogLevel.Error);
@@ -226,23 +238,26 @@ namespace FilterExtensions
             foreach (CategoryNode C in CategoryNodes)
             {
                 if (!C.All)
+                {
                     continue;
-
-                List<FilterNode> filterList = new List<FilterNode>();
+                }
+                var filterList = new List<FilterNode>();
                 if (C.SubCategories != null)
                 {
-                    foreach (var s in C.SubCategories)
+                    foreach (SubCategoryItem s in C.SubCategories)
                     {
                         if (subCategoriesDict.TryGetValue(s.SubcategoryName, out SubcategoryNode subcategory))
+                        {
                             filterList.AddUniqueRange(subcategory.Filters);
+                        }
                     }
                 }
-                List<ConfigNode> filternodes = new List<ConfigNode>();
-                foreach (var f in filterList)
+                var filternodes = new List<ConfigNode>();
+                foreach (FilterNode f in filterList)
                 {
                     filternodes.Add(f.ToConfigNode());
                 }
-                SubcategoryNode newSub = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, false, filternodes));
+                var newSub = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, false, filternodes));
                 subCategoriesDict.Add(newSub.SubCategoryTitle, newSub);
                 C.SubCategories.Insert(0, new SubCategoryItem(newSub.SubCategoryTitle));
             }
@@ -257,13 +272,16 @@ namespace FilterExtensions
             List<ModuleEngines> engines = p.partPrefab.Modules.GetModules<ModuleEngines>();
             foreach (ModuleEngines e in engines)
             {
-                List<string> propellants = new List<string>();
+                var propellants = new List<string>();
                 for (int j = 0; j < e.propellants.Count; j++)
+                {
                     propellants.Add(e.propellants[j].name);
+                }
                 propellants.Sort();
-
                 if (!StringListComparer(propellants))
+                {
                     propellantCombos.Add(propellants);
+                }
             }
         }
 
@@ -272,7 +290,7 @@ namespace FilterExtensions
         /// </summary>
         private void GenerateEngineTypes()
         {
-            List<SubCategoryItem> engines = new List<SubCategoryItem>();
+            var engines = new List<SubCategoryItem>();
             foreach (List<string> ls in propellantCombos)
             {
                 string propList = string.Join(",", ls.ToArray());
@@ -284,7 +302,7 @@ namespace FilterExtensions
                 {
                     var checks = new List<ConfigNode>() { CheckNodeFactory.MakeCheckNode(CheckPropellant.ID, propList, exact: true) };
                     var filters = new List<ConfigNode>() { FilterNode.MakeFilterNode(false, checks) };
-                    SubcategoryNode sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
+                    var sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -297,12 +315,14 @@ namespace FilterExtensions
         private void ProcessFilterByManufacturer(List<string> modNames)
         {
             // define the mod subcategories
-            List<string> subCatNames = new List<string>();
+            var subCatNames = new List<string>();
             foreach (string s in modNames)
             {
                 string name = s;
                 if (subCategoriesDict.ContainsKey(name))
+                {
                     name = "mod_" + name;
+                }
                 string icon = name;
                 SetNameAndIcon(ref name, ref icon);
 
@@ -311,16 +331,18 @@ namespace FilterExtensions
                     subCatNames.Add(name);
                     var checks = new List<ConfigNode>() { CheckNodeFactory.MakeCheckNode(CheckFolder.ID, name) };
                     var filters = new List<ConfigNode>() { FilterNode.MakeFilterNode(false, checks) };
-                    SubcategoryNode sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
+                    var sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
                     subCategoriesDict.Add(name, sC);
                 }
             }
 
-            ConfigNode manufacturerSubs = new ConfigNode("SUBCATEGORIES");
+            var manufacturerSubs = new ConfigNode("SUBCATEGORIES");
             for (int i = 0; i < subCatNames.Count; i++)
+            {
                 manufacturerSubs.AddValue("list", i.ToString() + "," + subCatNames[i]);
+            }
 
-            ConfigNode filterByManufacturer = new ConfigNode("CATEGORY");
+            var filterByManufacturer = new ConfigNode("CATEGORY");
             filterByManufacturer.AddValue("name", "Filter by Manufacturer");
             filterByManufacturer.AddValue("type", "stock");
             filterByManufacturer.AddValue("value", "replace");
@@ -339,7 +361,9 @@ namespace FilterExtensions
             {
                 List<string> ls = propellantCombos[i];
                 if (propellants.Count == ls.Count && !propellants.Except(ls).Any())
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -352,7 +376,7 @@ namespace FilterExtensions
             // Can't guarantee iteration order of dict will be the same each time so need a set of elements that have been processed
             // to ensure conflicts are only checked against elements that are already checked
             // by only checking against processed elements we know we're only adding checking for collisions between each pair once
-            List<string> processedElements = new List<string>();
+            var processedElements = new List<string>();
             foreach (KeyValuePair<string, SubcategoryNode> kvpOuter in subCategoriesDict)
             {
                 foreach (string subcatName in processedElements)
@@ -362,15 +386,23 @@ namespace FilterExtensions
                     {
                         // add conflict entry for the already entered subCategory
                         if (conflictsDict.TryGetValue(subcatName, out List<string> conflicts))
+                        {
                             conflicts.Add(kvpOuter.Key);
+                        }
                         else
+                        {
                             conflictsDict.Add(subcatName, new List<string>() { kvpOuter.Key });
+                        }
 
                         // add a conflict entry for the new subcategory
                         if (conflictsDict.TryGetValue(kvpOuter.Key, out conflicts))
+                        {
                             conflicts.Add(subcatName);
+                        }
                         else
+                        {
                             conflictsDict.Add(kvpOuter.Key, new List<string>() { subcatName });
+                        }
                     }
                 }
                 processedElements.Add(kvpOuter.Key);
@@ -384,7 +416,7 @@ namespace FilterExtensions
         {
             GameDatabase.TextureInfo texInfo = null;
             Texture2D selectedTex = null;
-            Dictionary<string, GameDatabase.TextureInfo> texDict = new Dictionary<string, GameDatabase.TextureInfo>();
+            var texDict = new Dictionary<string, GameDatabase.TextureInfo>();
             for (int i = GameDatabase.Instance.databaseTexture.Count - 1; i >= 0; --i)
             {
                 texInfo = GameDatabase.Instance.databaseTexture[i];
@@ -397,12 +429,16 @@ namespace FilterExtensions
             foreach (KeyValuePair<string, GameDatabase.TextureInfo> kvp in texDict)
             {
                 if (texDict.TryGetValue(kvp.Value.name + "_selected", out texInfo))
+                {
                     selectedTex = texInfo.texture;
+                }
                 else
+                {
                     selectedTex = kvp.Value.texture;
+                }
 
                 string name = kvp.Value.name.Split(new char[] { '/', '\\' }).Last();
-                RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon(name, kvp.Value.texture, selectedTex, false);
+                var icon = new RUI.Icons.Selectable.Icon(name, kvp.Value.texture, selectedTex, false);
                 IconDict.TryAdd(icon.name, icon);
             }
         }
@@ -430,10 +466,13 @@ namespace FilterExtensions
         public static RUI.Icons.Selectable.Icon GetIcon(string name)
         {
             if (string.IsNullOrEmpty(name))
+            {
                 return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
-
+            }
             if (IconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
+            {
                 return icon;
+            }
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
 
@@ -451,9 +490,13 @@ namespace FilterExtensions
                 return false;
             }
             if (IconDict.TryGetValue(name, out icon))
+            {
                 return true;
+            }
             if (PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
+            {
                 return true;
+            }
             icon = PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
             return false;
         }
@@ -467,7 +510,9 @@ namespace FilterExtensions
         {
             UrlDir.UrlConfig url = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(u => u.name.Replace('_', '.') == ap.name);
             if (url != null)
+            {
                 ap.partUrl = url.url;
+            }
         }
 
         /// <summary>
@@ -478,9 +523,13 @@ namespace FilterExtensions
         public void SetNameAndIcon(ref string name, ref string icon)
         {
             if (Rename.TryGetValue(name, out string tmp))
+            {
                 name = tmp;
+            }
             if (setIcon.TryGetValue(name, out tmp))
+            {
                 icon = tmp;
+            }
         }
 
         public enum LogLevel
@@ -497,21 +546,22 @@ namespace FilterExtensions
         internal static void Log(object o, LogLevel level = LogLevel.Log)
         {
             if (level == LogLevel.Log)
+            {
                 Debug.LogFormat($"[Filter Extensions {version}]: {o}");
+            }
             else if (level == LogLevel.Warn)
+            {
                 Debug.LogWarningFormat($"[Filter Extensions {version}]: {o}");
+            }
             else
+            {
                 Debug.LogErrorFormat($"[Filter Extensions {version}]: {o}");
+            }
         }
 
         internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
         {
-            if (level == LogLevel.Log)
-                Debug.LogFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
-            else if (level == LogLevel.Warn)
-                Debug.LogWarningFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
-            else
-                Debug.LogErrorFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
+            Log(string.Format(format, o), level);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 using KSP.UI.Screens;
+using KSP.Localization;
 
 namespace FE_Testing
 {
@@ -72,24 +73,24 @@ namespace FE_Testing
         {
             yield return new WaitForSeconds(5); // wait for the editor to complete startup
 
-            PartCategorizer.Category testCat = PartCategorizer.Instance.filters.FirstOrDefault(C => C.button.categoryName == testCatName);
+            PartCategorizer.Category testCat = PartCategorizer.Instance.filters.FirstOrDefault(C => string.Equals(Localization.Format(C.button.categoryName), testCatName));
             if (testCat == null)
             {
                 LogTestResult($"Category named \"{testCatName}\" found", false);
                 yield break;
             }
-            
+
             foreach (PartCategorizer.Category testingSubCat in testCat.subcategories)
             {
                 if (partSubCatMap.ContainsKey(testingSubCat.button.categoryName))
                 {
-                    LogTestResult(testingSubCat.button.categoryName, partExistsInSubCategory(partSubCatMap[testingSubCat.button.categoryName], testingSubCat));
+                    LogTestResult(testingSubCat.button.categoryName, PartExistsInSubCategory(partSubCatMap[testingSubCat.button.categoryName], testingSubCat));
                     partSubCatMap.Remove(testingSubCat.button.categoryName);
                 }
             }
 
             // anything that didn't run gets an automatic fail
-            foreach (var kvp in partSubCatMap)
+            foreach (KeyValuePair<string, string> kvp in partSubCatMap)
             {
                 LogTestResult(kvp.Key, false);
             }
@@ -107,7 +108,7 @@ namespace FE_Testing
             }
         }
 
-        bool partExistsInSubCategory(string partID, PartCategorizer.Category toCheck)
+        bool PartExistsInSubCategory(string partID, PartCategorizer.Category toCheck)
         {
             AvailablePart part = PartLoader.LoadedPartsList.FirstOrDefault(ap => string.Equals(ap.name, partID, StringComparison.OrdinalIgnoreCase));
             if (part == null)

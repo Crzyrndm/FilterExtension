@@ -38,54 +38,66 @@ namespace FilterExtensions.ConfigNodes
 
             CategoryName = node.GetValue("name");
             IconName = node.GetValue("icon");
-            Colour = GUIUtils.convertToColor(node.GetValue("colour"));
+            Colour = GUIUtils.ConvertToColor(node.GetValue("colour"));
 
             ConfigNode[] filtNodes = node.GetNodes("FILTER");
             if (filtNodes == null)
+            {
                 return;
+            }
             Templates = new List<FilterNode>();
             foreach (ConfigNode n in filtNodes)
+            {
                 Templates.Add(new FilterNode(n));
-
+            }
             if (bool.TryParse(node.GetValue("all"), out bool tmpBool))
             {
-                this.All = tmpBool;
+                All = tmpBool;
             }
 
             ConfigNode[] subcategoryList = node.GetNodes("SUBCATEGORIES");
             SubCategories = new List<SubCategoryItem>();
             if (subcategoryList != null)
             {
-                List<SubCategoryItem> unorderedSubCats = new List<SubCategoryItem>();
-                List<string> stringList = new List<string>();
+                var unorderedSubCats = new List<SubCategoryItem>();
+                var stringList = new List<string>();
                 for (int i = 0; i < subcategoryList.Length; i++)
+                {
                     stringList.AddRange(subcategoryList[i].GetValues());
-
+                }
                 SubCategoryItem[] subs = new SubCategoryItem[1000];
                 for (int i = 0; i < stringList.Count; i++)
                 {
                     string[] indexAndValue = stringList[i].Split(',').Select(s => s.Trim()).ToArray();
 
-                    SubCategoryItem newSubItem = new SubCategoryItem();
+                    var newSubItem = new SubCategoryItem();
                     if (int.TryParse(indexAndValue[0], out int index)) // has position index
                     {
                         if (indexAndValue.Length >= 2)
+                        {
                             newSubItem.SubcategoryName = indexAndValue[1];
+                        }
                         if (string.IsNullOrEmpty(newSubItem.SubcategoryName))
+                        {
                             continue;
-
+                        }
                         if (indexAndValue.Length >= 3 && string.Equals(indexAndValue[2], "dont template", StringComparison.CurrentCultureIgnoreCase))
+                        {
                             newSubItem.ApplyTemplate = false;
+                        }
                         subs[index] = newSubItem;
                     }
                     else // no valid position index
                     {
                         newSubItem.SubcategoryName = indexAndValue[0];
                         if (string.IsNullOrEmpty(newSubItem.SubcategoryName))
+                        {
                             continue;
-
+                        }
                         if (indexAndValue.Length >= 2 && string.Equals(indexAndValue[1], "dont template", StringComparison.CurrentCultureIgnoreCase))
+                        {
                             newSubItem.ApplyTemplate = false;
+                        }
                         unorderedSubCats.Add(newSubItem);
                     }
                 }
@@ -95,7 +107,9 @@ namespace FilterExtensions.ConfigNodes
             }
 
             if (node.TryGetValue("type", ref tmpStr))
+            {
                 tmpStr = tmpStr.ToLower();
+            }
             switch (tmpStr)
             {
                 case "stock":
@@ -114,7 +128,9 @@ namespace FilterExtensions.ConfigNodes
             if (node.TryGetValue("value", ref tmpStr))
             {
                 if (string.Equals(tmpStr, "replace", StringComparison.OrdinalIgnoreCase))
+                {
                     Behaviour = CategoryBehaviour.Replace;
+                }
                 else if (string.Equals(tmpStr, "engine", StringComparison.OrdinalIgnoreCase))
                 {
                     Behaviour = CategoryBehaviour.Engines;
@@ -126,7 +142,9 @@ namespace FilterExtensions.ConfigNodes
                     }
                 }
                 else
+                {
                     Behaviour = CategoryBehaviour.Add;
+                }
             }
         }
 
@@ -138,20 +156,30 @@ namespace FilterExtensions.ConfigNodes
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj))
+            {
                 return false;
+            }
             if (ReferenceEquals(this, obj))
+            {
                 return true;
-            if (obj.GetType() != this.GetType())
+            }
+            if (obj.GetType() != GetType())
+            {
                 return false;
+            }
             return Equals((CategoryNode)obj);
         }
 
         public bool Equals(CategoryNode C)
         {
             if (ReferenceEquals(null, C))
+            {
                 return false;
+            }
             if (ReferenceEquals(this, C))
+            {
                 return true;
+            }
 
             return CategoryName.Equals(C.CategoryName);
         }

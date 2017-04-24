@@ -22,7 +22,7 @@ namespace FilterExtensions
 
         public CategoryInstance(CategoryNode protoC, Dictionary<string, SubcategoryNode> allSubCats)
         {
-            Name = protoC.CategoryName;
+            Name = Localization.Format(protoC.CategoryName);
             Icon = protoC.IconName;
             Colour = protoC.Colour;
             Type = protoC.Type;
@@ -32,14 +32,18 @@ namespace FilterExtensions
             {
                 if (allSubCats.TryGetValue(sci.SubcategoryName, out SubcategoryNode protoSC) && protoSC != null)
                 {
-                    SubcategoryNode node = new SubcategoryNode(protoSC, sci.ApplyTemplate ? protoC : null);
-                    SubCategoryInstance instance = new SubCategoryInstance(node, PartLoader.LoadedPartsList);
+                    var node = new SubcategoryNode(protoSC, sci.ApplyTemplate ? protoC : null);
+                    var instance = new SubCategoryInstance(node, PartLoader.LoadedPartsList);
                     if (instance.Valid)
+                    {
                         Subcategories.Add(instance);
+                    }
                 }
             }
             if (!Subcategories.Any())
+            {
                 throw new ArgumentException($"No subcategories valid, abandon instantiation of {Name}");
+            }
         }
 
         public void Initialise()
@@ -70,7 +74,7 @@ namespace FilterExtensions
                 {
                     if (category.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True)
                     {
-                        var subcat = category.subcategories.Find(c => c.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
+                        PartCategorizer.Category subcat = category.subcategories.Find(c => c.button.activeButton.CurrentState == KSP.UI.UIRadioButton.State.True);
                         if (subcat != null)
                         {
                             subcat.OnFalseSUB(subcat);

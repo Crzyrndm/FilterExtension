@@ -17,10 +17,12 @@ namespace FilterExtensions.Utility
             GUILayout.EndHorizontal();
         }
 
-        public static Color convertToColor(string hex_ARGB)
+        public static Color ConvertToColor(string hex_ARGB)
         {
             if (string.IsNullOrEmpty(hex_ARGB))
+            {
                 return Color.clear;
+            }
             hex_ARGB = hex_ARGB.Replace("#", "").Replace("0x", ""); // remove any hexadecimal identifiers
 
             byte a = 255;

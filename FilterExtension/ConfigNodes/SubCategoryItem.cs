@@ -21,9 +21,13 @@ namespace FilterExtensions.ConfigNodes
         public bool Equals(SubCategoryItem sub)
         {
             if (ReferenceEquals(null, sub))
+            {
                 return false;
+            }
             if (ReferenceEquals(this, sub))
+            {
                 return true;
+            }
 
             return SubcategoryName.Equals(sub.SubcategoryName);
         }

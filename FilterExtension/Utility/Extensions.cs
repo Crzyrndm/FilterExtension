@@ -37,7 +37,9 @@ namespace FilterExtensions.Utility
         public static bool TryAdd<T, U>(this IDictionary<T, U> addTo, T key, U value)
         {
             if (addTo.ContainsKey(key))
+            {
                 return false;
+            }
             addTo.Add(key, value);
             return true;
         }
@@ -69,7 +71,9 @@ namespace FilterExtensions.Utility
             for (int i = 0; i < list.Count; ++i)
             {
                 if (list[i] != null && list[i].GetType().Name == moduleName)
+                {
                     return true;
+                }
             }
             return false;
         }

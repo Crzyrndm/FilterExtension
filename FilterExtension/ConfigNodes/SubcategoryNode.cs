@@ -34,7 +34,7 @@ namespace FilterExtensions.ConfigNodes
             }
             foreach (ConfigNode subNode in node.GetNodes("PARTS"))
             {
-                ConfigNode filtNode = new ConfigNode("FILTER");
+                var filtNode = new ConfigNode("FILTER");
                 filtNode.AddNode(CheckNodeFactory.MakeCheckNode(CheckName.ID, string.Join(",", subNode.GetValues("part"))));
                 Filters.Add(new FilterNode(filtNode));
             }
@@ -55,13 +55,15 @@ namespace FilterExtensions.ConfigNodes
         /// <returns></returns>
         public ConfigNode ToConfigNode()
         {
-            ConfigNode node = new ConfigNode("SUBCATEGORY");
+            var node = new ConfigNode("SUBCATEGORY");
 
             node.AddValue("name", SubCategoryTitle);
             node.AddValue("icon", IconName);
             node.AddValue("showUnpurchased", UnPurchasedOverride);
             foreach (FilterNode f in Filters)
+            {
                 node.AddNode(f.ToConfigNode());
+            }
             return node;
         }
 
@@ -74,12 +76,14 @@ namespace FilterExtensions.ConfigNodes
         /// <returns></returns>
         public static ConfigNode MakeSubcategoryNode(string name, string icon, bool unpurchasedVisible, List<ConfigNode> filters)
         {
-            ConfigNode node = new ConfigNode("SUBCATEGORY");
+            var node = new ConfigNode("SUBCATEGORY");
             node.AddValue("name", name);
             node.AddValue("icon", icon);
             node.AddValue("showUnpurchased", unpurchasedVisible);
-            foreach (var f in filters)
+            foreach (ConfigNode f in filters)
+            {
                 node.AddNode(f);
+            }
             return node;
         }
 
@@ -94,16 +98,22 @@ namespace FilterExtensions.ConfigNodes
             if (Editor.blackListedParts != null)
             {
                 if (part.category == PartCategories.none && Editor.blackListedParts.Contains(part.name))
+                {
                     return false;
+                }
             }
 
             ModuleFilter pmf = part.partPrefab.Modules.GetModule<ModuleFilter>();
             if (pmf != null)
             {
                 if (pmf.CheckForForceAdd(SubCategoryTitle))
+                {
                     return true;
+                }
                 if (pmf.CheckForForceBlock(SubCategoryTitle))
+                {
                     return false;
+                }
             }
 
             return CheckFilters(part, depth);
@@ -120,13 +130,19 @@ namespace FilterExtensions.ConfigNodes
         private bool CheckFilters(AvailablePart ap, int depth = 0)
         {
             if (Filters.Count == 0 && (Category == null || Category.Templates.Count == 0))
+            {
                 return true;
+            }
             if (!CheckCategoryFilter(ap, depth))
+            {
                 return false;
-            foreach (var f in Filters)
+            }
+            foreach (FilterNode f in Filters)
             {
                 if (f.FilterResult(ap, depth))
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -134,11 +150,15 @@ namespace FilterExtensions.ConfigNodes
         private bool CheckCategoryFilter(AvailablePart ap, int depth = 0)
         {
             if (Category == null)
+            {
                 return true;
-            foreach (var f in Filters)
+            }
+            foreach (FilterNode f in Filters)
             {
                 if (f.FilterResult(ap, depth))
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -146,10 +166,13 @@ namespace FilterExtensions.ConfigNodes
         public bool Equals(SubcategoryNode sC2)
         {
             if (sC2 == null)
+            {
                 return false;
-
+            }
             if (SubCategoryTitle == sC2.SubCategoryTitle)
+            {
                 return true;
+            }
 
             return false;
         }

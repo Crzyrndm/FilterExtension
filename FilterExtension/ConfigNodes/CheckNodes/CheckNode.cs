@@ -29,7 +29,9 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
             {
                 string[] Values = tmpStr.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < Values.Length; ++i)
+                {
                     Values[i] = Values[i].Trim();
+                }
                 return Values;
             }
             return null;
@@ -39,7 +41,9 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         {
             bool tmpBool = false;
             if (node.TryGetValue("invert", ref tmpBool))
+            {
                 return tmpBool;
+            }
             return false;
         }
 
@@ -47,7 +51,9 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         {
             bool tmpBool = false;
             if (node.TryGetValue("contains", ref tmpBool))
+            {
                 return tmpBool;
+            }
             return true;
         }
 
@@ -55,7 +61,9 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         {
             bool tmpBool = false;
             if (node.TryGetValue("exact", ref tmpBool))
+            {
                 return tmpBool;
+            }
             return false;
         }
 
@@ -77,7 +85,7 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
 
         public virtual ConfigNode ToConfigNode()
         {
-            ConfigNode node = new ConfigNode("CHECK");
+            var node = new ConfigNode("CHECK");
             node.AddValue("type", CheckID);
             if (Values != null)
             {
@@ -90,14 +98,18 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         public override bool Equals(object obj)
         {
             if (obj is CheckNode)
+            {
                 return Equals((CheckNode)obj);
+            }
             return false;
         }
 
         public virtual bool Equals(CheckNode c2)
         {
             if (c2 == null)
+            {
                 return false;
+            }
             return CheckID == c2.CheckID && Values == c2.Values && Invert == c2.Invert;
         }
 

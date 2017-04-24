@@ -21,47 +21,51 @@ namespace FilterExtensions
 
         public bool CheckForForceAdd(string subcategory)
         {
-            addStringToSet();
+            AddStringToSet();
             return subcategoriesToAdd.Contains(subcategory);
         }
 
         public bool CheckForForceBlock(string subcategory)
         {
-            blockStringToSet();
+            BlockStringToSet();
             return subcategoriesToBlock.Contains(subcategory);
         }
 
-        void addStringToSet()
+        void AddStringToSet()
         {
             if (subcategoriesToAdd == null)
             {
                 subcategoriesToAdd = new HashSet<string>();
                 string[] temp = filterAdd.Split(',');
                 for (int i = 0; i < temp.Length; ++i)
+                {
                     subcategoriesToAdd.Add(temp[i].Trim());
+                }
             }
         }
 
-        void blockStringToSet()
+        void BlockStringToSet()
         {
             if (subcategoriesToBlock == null)
             {
                 subcategoriesToBlock = new HashSet<string>();
                 string[] temp = filterBlock.Split(',');
                 for (int i = 0; i < temp.Length; ++i)
+                {
                     subcategoriesToBlock.Add(temp[i].Trim());
+                }
             }
         }
 
-        public bool hasForceAdd()
+        public bool HasForceAdd()
         {
-            addStringToSet();
+            AddStringToSet();
             return subcategoriesToAdd.Any();
         }
 
-        public bool hasForceBlock()
+        public bool HasForceBlock()
         {
-            blockStringToSet();
+            BlockStringToSet();
             return subcategoriesToBlock.Any();
         }
     }

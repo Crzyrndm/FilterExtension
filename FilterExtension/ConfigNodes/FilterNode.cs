@@ -15,7 +15,7 @@ namespace FilterExtensions.ConfigNodes
             Checks = new List<CheckNode>();
             foreach (ConfigNode subNode in node.GetNodes("CHECK"))
             {
-                var c = CheckNodeFactory.MakeCheck(subNode);
+                CheckNode c = CheckNodeFactory.MakeCheck(subNode);
                 if (c != null)
                 {
                     Checks.Add(c);
@@ -27,10 +27,13 @@ namespace FilterExtensions.ConfigNodes
 
         public ConfigNode ToConfigNode()
         {
-            ConfigNode node = new ConfigNode("FILTER");
-            node.AddValue("invert", this.Invert.ToString());
+
+            var node = new ConfigNode("FILTER");
+            node.AddValue("invert", Invert.ToString());
             foreach (CheckNode c in Checks)
+            {
                 node.AddNode(c.ToConfigNode());
+            }
             return node;
         }
 
@@ -53,28 +56,34 @@ namespace FilterExtensions.ConfigNodes
         public static bool CompareFilterLists(List<FilterNode> fLA, List<FilterNode> fLB)
         {
             if (fLA.Count != fLB.Count && fLA.Count != 0)
+            {
                 return false;
+            }
             return fLA.Intersect(fLB).Count() == fLA.Count;
         }
 
         public override bool Equals(object obj)
         {
             if (obj is FilterNode)
+            {
                 return Equals((FilterNode)obj);
+            }
             return false;
         }
 
         public bool Equals(FilterNode f2)
         {
             if (f2 == null)
+            {
                 return false;
+            }
             return Invert == f2.Invert && Checks.Count == f2.Checks.Count && !Checks.Except(f2.Checks).Any();
         }
 
         public override int GetHashCode()
         {
             int hash = 0;
-            foreach (var c in Checks)
+            foreach (CheckNode c in Checks)
             {
                 hash *= c.GetHashCode();
             }
@@ -85,9 +94,9 @@ namespace FilterExtensions.ConfigNodes
 
         public static ConfigNode MakeFilterNode(bool invert, List<ConfigNode> checkNodess)
         {
-            ConfigNode node = new ConfigNode("FILTER");
+            var node = new ConfigNode("FILTER");
             node.AddValue("invert", invert);
-            foreach (var c in checkNodess)
+            foreach (ConfigNode c in checkNodess)
             {
                 node.AddNode(c);
             }

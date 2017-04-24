@@ -122,7 +122,7 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         {
             ConfigNode[] nodes = node.GetNodes("CHECK");
             var checks = new List<CheckNode>();
-            foreach (var n in nodes)
+            foreach (ConfigNode n in nodes)
             {
                 CheckNode c = CheckNodeFactory.MakeCheck(n);
                 if (c != null)
@@ -141,7 +141,7 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         public override ConfigNode ToConfigNode()
         {
             var node = base.ToConfigNode();
-            foreach (var n in Group)
+            foreach (CheckNode n in Group)
             {
                 node.AddNode(n.ToConfigNode());
             }
@@ -151,8 +151,10 @@ namespace FilterExtensions.ConfigNodes.CheckNodes
         public override bool Equals(CheckNode c2)
         {
             if (!(c2 is CheckGroup))
+            {
                 return false;
-            CheckGroup comp = (CheckGroup)c2;
+            }
+            var comp = (CheckGroup)c2;
             return Invert == comp.Invert && Group.Count == comp.Group.Count && !Group.Except(comp.Group).Any();
         }
     }

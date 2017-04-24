@@ -20,7 +20,9 @@ namespace FilterExtensions.ConfigNodes
                     continue;
                 }
                 if (!renames.ContainsKey(split[0]))
+                {
                     renames.Add(split[0], split[1]);
+                }
             }
         }
 
@@ -35,7 +37,9 @@ namespace FilterExtensions.ConfigNodes
                     continue;
                 }
                 if (icons.ContainsKey(split[0]))
+                {
                     icons.Add(split[0], split[1]);
+                }
             }
         }
 
@@ -45,7 +49,9 @@ namespace FilterExtensions.ConfigNodes
             {
                 string str = s.Trim();
                 if (string.IsNullOrEmpty(str))
+                {
                     continue;
+                }
                 deleters.Add(str); // hashset doesn't need duplicate check
             }
         }
