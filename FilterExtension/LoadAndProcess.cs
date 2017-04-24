@@ -545,23 +545,23 @@ namespace FilterExtensions
         /// <param name="o"></param>
         internal static void Log(object o, LogLevel level = LogLevel.Log)
         {
-            if (level == LogLevel.Log)
-            {
-                Debug.LogFormat($"[Filter Extensions {version}]: {o}");
-            }
-            else if (level == LogLevel.Warn)
-            {
-                Debug.LogWarningFormat($"[Filter Extensions {version}]: {o}");
-            }
-            else
-            {
-                Debug.LogErrorFormat($"[Filter Extensions {version}]: {o}");
-            }
+            Log(o.ToString(), level);
         }
 
         internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
         {
-            Log(string.Format(format, o), level);
+            if (level == LogLevel.Log)
+            {
+                Debug.LogFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
+            }
+            else if (level == LogLevel.Warn)
+            {
+                Debug.LogWarningFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
+            }
+            else
+            {
+                Debug.LogErrorFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
+            }
         }
     }
 }
