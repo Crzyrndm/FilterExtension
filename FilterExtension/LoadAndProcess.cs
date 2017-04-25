@@ -213,7 +213,7 @@ namespace FilterExtensions
             }
 
             CategoryNode Cat = CategoryNodes.Find(C => C.CategoryName == "Filter by Resource");
-            if (Cat != null && Cat.Type == CategoryNode.CategoryType.Stock)
+            if (Cat != null && Cat.Type == CategoryNode.CategoryType.STOCK)
             {
                 foreach (string s in resources)
                 {

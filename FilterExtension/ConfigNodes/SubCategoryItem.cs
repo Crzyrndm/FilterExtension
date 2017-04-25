@@ -4,13 +4,8 @@ namespace FilterExtensions.ConfigNodes
 {
     public class SubCategoryItem : IEquatable<SubCategoryItem>
     {
-        public string SubcategoryName { get; set; }
-        public bool ApplyTemplate { get; set; }
-
-        public SubCategoryItem()
-        {
-            ApplyTemplate = true;
-        }
+        public string SubcategoryName { get; }
+        public bool ApplyTemplate { get; }
 
         public SubCategoryItem(string name, bool useTemplate = true)
         {

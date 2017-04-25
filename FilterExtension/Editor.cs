@@ -40,7 +40,7 @@ namespace FilterExtensions
 
             foreach (CategoryInstance c in LoadAndProcess.Categories) // all non mod specific FE categories
             {
-                if ((c.Type == CategoryNode.CategoryType.New || c.Type == CategoryNode.CategoryType.Stock)
+                if ((c.Type == CategoryNode.CategoryType.NEW || c.Type == CategoryNode.CategoryType.STOCK)
                     && (settings.replaceFbM || !string.Equals(c.Name, "Filter by Manufacturer", StringComparison.OrdinalIgnoreCase)))
                 {
                     c.Initialise();
@@ -56,7 +56,7 @@ namespace FilterExtensions
             // this is to be used for altering subcategories in a category added by another mod
             foreach (CategoryInstance c in LoadAndProcess.Categories)
             {
-                if (c.Type == CategoryNode.CategoryType.Mod)
+                if (c.Type == CategoryNode.CategoryType.MOD)
                 {
                     c.Initialise();
                 }

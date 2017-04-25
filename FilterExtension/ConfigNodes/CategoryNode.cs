@@ -11,119 +11,55 @@ namespace FilterExtensions.ConfigNodes
     {
         public enum CategoryType
         {
-            New = 0, // new category
-            Stock, // modification to stock category
-            Mod // modification to a mod cateogry
+            NEW = 0, // new category
+            STOCK, // modification to stock category
+            MOD // modification to a mod cateogry
         }
 
         public enum CategoryBehaviour
         {
-            Add = 1, // only add to existing categories
-            Replace = 2, // wipe existing categories
-            Engines = 4 // generate unique engine types
+            Add = 0, // only add to existing categories
+            Replace, // wipe existing categories
+            Engines // generate unique engine types
         }
 
         public string CategoryName { get; }
         public string IconName { get; }
         public Color Colour { get; }
-        public CategoryType Type { get; }
-        public CategoryBehaviour Behaviour { get; }
-        public bool All { get; } // has an all parts subCategory
-        public List<SubCategoryItem> SubCategories { get; } // array of subcategories
+        public CategoryType Type { get; } = CategoryType.NEW;
+        public CategoryBehaviour Behaviour { get; } = CategoryBehaviour.Add;
+        public bool All { get; } = false; // has an all parts subCategory
+        public List<SubCategoryItem> SubCategories { get; } = new List<SubCategoryItem>(); // array of subcategories
         public List<FilterNode> Templates { get; } // Checks to add to every Filter in a category with the template tag
 
         public CategoryNode(ConfigNode node, LoadAndProcess data)
         {
-            string tmpStr = string.Empty;
-
             CategoryName = node.GetValue("name");
             IconName = node.GetValue("icon");
             Colour = GUIUtils.ConvertToColor(node.GetValue("colour"));
 
             ConfigNode[] filtNodes = node.GetNodes("FILTER");
-            if (filtNodes == null)
+            if (filtNodes != null)
             {
-                return;
-            }
-            Templates = new List<FilterNode>();
-            foreach (ConfigNode n in filtNodes)
-            {
-                Templates.Add(new FilterNode(n));
+                Templates = new List<FilterNode>();
+                foreach (ConfigNode n in filtNodes)
+                {
+                    Templates.Add(new FilterNode(n));
+                }
             }
             if (bool.TryParse(node.GetValue("all"), out bool tmpBool))
             {
                 All = tmpBool;
             }
-
-            ConfigNode[] subcategoryList = node.GetNodes("SUBCATEGORIES");
-            SubCategories = new List<SubCategoryItem>();
-            if (subcategoryList != null)
-            {
-                var unorderedSubCats = new List<SubCategoryItem>();
-                var stringList = new List<string>();
-                for (int i = 0; i < subcategoryList.Length; i++)
-                {
-                    stringList.AddRange(subcategoryList[i].GetValues());
-                }
-                SubCategoryItem[] subs = new SubCategoryItem[1000];
-                for (int i = 0; i < stringList.Count; i++)
-                {
-                    string[] indexAndValue = stringList[i].Split(',').Select(s => s.Trim()).ToArray();
-
-                    var newSubItem = new SubCategoryItem();
-                    if (int.TryParse(indexAndValue[0], out int index)) // has position index
-                    {
-                        if (indexAndValue.Length >= 2)
-                        {
-                            newSubItem.SubcategoryName = indexAndValue[1];
-                        }
-                        if (string.IsNullOrEmpty(newSubItem.SubcategoryName))
-                        {
-                            continue;
-                        }
-                        if (indexAndValue.Length >= 3 && string.Equals(indexAndValue[2], "dont template", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            newSubItem.ApplyTemplate = false;
-                        }
-                        subs[index] = newSubItem;
-                    }
-                    else // no valid position index
-                    {
-                        newSubItem.SubcategoryName = indexAndValue[0];
-                        if (string.IsNullOrEmpty(newSubItem.SubcategoryName))
-                        {
-                            continue;
-                        }
-                        if (indexAndValue.Length >= 2 && string.Equals(indexAndValue[1], "dont template", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            newSubItem.ApplyTemplate = false;
-                        }
-                        unorderedSubCats.Add(newSubItem);
-                    }
-                }
-                SubCategories = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
-                SubCategories.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
-                SubCategories.RemoveAll(s => s == null);
-            }
-
+            LoadSubcategoryItems(node.GetNodes("SUBCATEGORIES"), SubCategories);
+            string tmpStr = string.Empty;
             if (node.TryGetValue("type", ref tmpStr))
             {
-                tmpStr = tmpStr.ToLower();
-            }
-            switch (tmpStr)
-            {
-                case "stock":
-                    Type = CategoryType.Stock;
-                    break;
-
-                case "mod":
-                    Type = CategoryType.Mod;
-                    break;
-
-                case "new":
-                default:
-                    Type = CategoryType.New;
-                    break;
+                try
+                {
+                    Type = (CategoryType)Enum.Parse(typeof(CategoryType), tmpStr.ToUpperInvariant());
+                }
+                catch {} // leave as default
             }
             if (node.TryGetValue("value", ref tmpStr))
             {
@@ -141,16 +77,60 @@ namespace FilterExtensions.ConfigNodes
                         SubCategories.AddUnique(new SubCategoryItem(subcatName));
                     }
                 }
-                else
-                {
-                    Behaviour = CategoryBehaviour.Add;
-                }
             }
         }
 
         public bool HasSubCategories()
         {
             return (SubCategories?.Count ?? 0) > 0;
+        }
+
+        public static void LoadSubcategoryItems(ConfigNode[] nodes, List<SubCategoryItem> loadTo)
+        {
+            if (nodes == null || nodes.Length == 0)
+            {
+                return;
+            }
+            var stringList = new List<string>();
+            foreach (ConfigNode node in nodes)
+            {
+                stringList.AddUniqueRange(node.GetValues());
+            }
+            SubCategoryItem[] subs = new SubCategoryItem[1000];
+            var unorderedSubCats = new List<SubCategoryItem>();
+            foreach (string s in stringList)
+            {
+                int splitIndex = s.IndexOf(',');
+                if (splitIndex == -1 || splitIndex == s.Length) // just the category name
+                {
+                    unorderedSubCats.AddUnique(new SubCategoryItem(s));
+                }
+                else // atleast two items
+                {
+                    string firstSplit = s.Substring(0, splitIndex);
+                    if (!int.TryParse(s.Substring(0, splitIndex), out int index))  // name + "dont template"
+                    {
+                        unorderedSubCats.AddUnique(new SubCategoryItem(s.Substring(0, splitIndex),
+                                !string.Equals(s.Substring(splitIndex, s.Length - splitIndex - 1), "dont template", StringComparison.OrdinalIgnoreCase)));
+                    }
+                    else // has position index
+                    {
+                        int lastSplitIndex = s.LastIndexOf(',');
+                        if (lastSplitIndex == splitIndex) // only 2 items, index + cat name
+                        {
+                            subs[index] = new SubCategoryItem(s.Substring(splitIndex + 1));
+                        }
+                        else // three items, index + name + "dont template"
+                        {
+                            subs[index] = new SubCategoryItem(s.Substring(splitIndex + 1, lastSplitIndex - splitIndex - 1),
+                                !string.Equals(s.Substring(lastSplitIndex + 1), "dont template", StringComparison.OrdinalIgnoreCase));
+                        }
+                    }
+                }
+            }
+            loadTo = subs.Distinct().ToList(); // no duplicates and no gaps in a single line. Yay
+            loadTo.AddUniqueRange(unorderedSubCats); // tack unordered subcats on to the end
+            loadTo.RemoveAll(s => s == null);
         }
 
         public override bool Equals(object obj)
@@ -180,7 +160,6 @@ namespace FilterExtensions.ConfigNodes
             {
                 return true;
             }
-
             return CategoryName.Equals(C.CategoryName);
         }
 

@@ -54,7 +54,7 @@ namespace FilterExtensions
                 return;
             }
             
-            if (Type == CategoryNode.CategoryType.New)
+            if (Type == CategoryNode.CategoryType.NEW)
             {
                 RUI.Icons.Selectable.Icon icon = LoadAndProcess.GetIcon(Icon);
                 PartCategorizer.Category category = PartCategorizer.AddCustomFilter(Name, icon, Colour);
