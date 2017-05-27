@@ -70,6 +70,7 @@
     <Compile Include="ConfigNodes\CheckNodes\CheckNodeNumeric.cs" />
     <Compile Include="ConfigNodes\CheckNodes\CheckNodeSimple.cs" />
     <Compile Include="ConfigNodes\CheckNodes\CheckNode.cs" />
+    <Compile Include="IconLib.cs" />
     <Compile Include="LoadAndProcess.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="ModuleFilter.cs" />

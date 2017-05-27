@@ -55,7 +55,7 @@ namespace FilterExtensions
         {            
             if (Type == CategoryNode.CategoryType.NEW)
             {
-                RUI.Icons.Selectable.Icon icon = LoadAndProcess.GetIcon(Icon);
+                RUI.Icons.Selectable.Icon icon = IconLib.GetIcon(Icon);
                 PartCategorizer.Category category = PartCategorizer.AddCustomFilter(Name, Localizer.Format(Name), icon, Colour);
                 category.displayType = EditorPartList.State.PartsList;
                 category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;

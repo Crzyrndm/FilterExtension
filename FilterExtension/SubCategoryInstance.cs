@@ -48,7 +48,7 @@ namespace FilterExtensions
             {
                 return;
             }
-            RUI.Icons.Selectable.Icon icon = LoadAndProcess.GetIcon(Icon);
+            RUI.Icons.Selectable.Icon icon = IconLib.GetIcon(Icon);
             PartCategorizer.AddCustomSubcategoryFilter(cat, Name, Localizer.Format(Name), icon, p => TestPart(p));
         }
 
