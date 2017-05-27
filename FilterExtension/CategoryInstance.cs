@@ -22,7 +22,12 @@ namespace FilterExtensions
 
         public CategoryInstance(CategoryNode protoC, Dictionary<string, SubcategoryNode> allSubCats)
         {
-            Name = Localization.Format(protoC.CategoryName);
+            Name = Localizer.Format(protoC.CategoryName);
+            if (string.IsNullOrEmpty(Name))
+            {
+                Logger.Log("Category name is blank", Logger.LogLevel.Warn);
+                return;
+            }
             Icon = protoC.IconName;
             Colour = protoC.Colour;
             Type = protoC.Type;
@@ -47,27 +52,21 @@ namespace FilterExtensions
         }
 
         public void Initialise()
-        {
-            if (string.IsNullOrEmpty(Name))
-            {
-                LoadAndProcess.Log("Category name is null or empty", LoadAndProcess.LogLevel.Warn);
-                return;
-            }
-            
+        {            
             if (Type == CategoryNode.CategoryType.NEW)
             {
                 RUI.Icons.Selectable.Icon icon = LoadAndProcess.GetIcon(Icon);
-                PartCategorizer.Category category = PartCategorizer.AddCustomFilter(Name, icon, Colour);
+                PartCategorizer.Category category = PartCategorizer.AddCustomFilter(Name, Localizer.Format(Name), icon, Colour);
                 category.displayType = EditorPartList.State.PartsList;
                 category.exclusionFilter = PartCategorizer.Instance.filterGenericNothing;
                 InstanceSubcategories(category);
             }
             else
             {
-                if (!PartCategorizer.Instance.filters.TryGetValue(c => string.Equals(Localization.Format(c.button.categoryName), Name, StringComparison.OrdinalIgnoreCase),
+                if (!PartCategorizer.Instance.filters.TryGetValue(c => string.Equals(Localizer.Format(c.button.categoryName), Name, StringComparison.OrdinalIgnoreCase),
                     out PartCategorizer.Category category))
                 {
-                    LoadAndProcess.Log("No category of this name was found to manipulate: " + Name, LoadAndProcess.LogLevel.Warn);
+                    Logger.Log($"No category of this name was found to manipulate: {Name}", Logger.LogLevel.Warn);
                     return;
                 }
                 else if (Behaviour == CategoryNode.CategoryBehaviour.Replace)
@@ -97,12 +96,12 @@ namespace FilterExtensions
                 }
                 catch (Exception ex)
                 {
-                    LoadAndProcess.Log($"{sc} failed to initialise"
+                    Logger.Log($"{sc} failed to initialise"
                         + $"\r\nCategory: {Name}"
                         + $"\r\nSubcategory Valid: {sc.Valid}"
                         + $"\r\n{ex.Message}"
                         + $"\r\n{ex.StackTrace}",
-                        LoadAndProcess.LogLevel.Error);
+                        Logger.LogLevel.Error);
                 }
             }
         }

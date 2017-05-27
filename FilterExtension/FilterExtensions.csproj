@@ -14,11 +14,11 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\GameData\000_FilterExtensions\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -27,7 +27,8 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\GameData\000_FilterExtensions\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -70,6 +71,7 @@
     <Compile Include="ConfigNodes\CheckNodes\CheckNodeSimple.cs" />
     <Compile Include="ConfigNodes\CheckNodes\CheckNode.cs" />
     <Compile Include="LoadAndProcess.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="ModuleFilter.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SubCategoryInstance.cs" />

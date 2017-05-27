@@ -32,12 +32,7 @@ namespace FilterExtensions
         public IEnumerator EditorInit()
         {
             Settings settings = HighLogic.CurrentGame.Parameters.CustomParams<Settings>();
-            if (settings.debug)
-            {
-                LoadAndProcess.Log("Starting on Stock Filters", LoadAndProcess.LogLevel.Log);
-                LoadAndProcess.Log("Starting on general categories", LoadAndProcess.LogLevel.Log);
-            }
-
+            Logger.Log("Starting on general categories", Logger.LogLevel.Debug);
             foreach (CategoryInstance c in LoadAndProcess.Categories) // all non mod specific FE categories
             {
                 if ((c.Type == CategoryNode.CategoryType.NEW || c.Type == CategoryNode.CategoryType.STOCK)
@@ -48,11 +43,7 @@ namespace FilterExtensions
             }
 
             yield return null;
-            if (settings.debug)
-            {
-                LoadAndProcess.Log("Starting on late categories", LoadAndProcess.LogLevel.Log);
-            }
-
+            Logger.Log("Starting on late categories", Logger.LogLevel.Debug);
             // this is to be used for altering subcategories in a category added by another mod
             foreach (CategoryInstance c in LoadAndProcess.Categories)
             {
@@ -62,12 +53,9 @@ namespace FilterExtensions
                 }
             }
 
-            // Remove any category with no subCategories (causes major breakages if selected).
             yield return null;
-            if (settings.debug)
-            {
-                LoadAndProcess.Log("Starting on removing categories", LoadAndProcess.LogLevel.Log);
-            }
+            Logger.Log("Starting on removing categories", Logger.LogLevel.Debug);
+            // Remove any category with no subCategories (causes major breakages if selected).
             for (int i = PartCategorizer.Instance.filters.Count - 1; i >= 0; --i)
             {
                 if (PartCategorizer.Instance.filters[i].subcategories.Count == 0)
@@ -83,10 +71,7 @@ namespace FilterExtensions
             }
 
             yield return null;
-            if (HighLogic.CurrentGame.Parameters.CustomParams<Settings>().debug)
-            {
-                LoadAndProcess.Log("Refreshing parts list", LoadAndProcess.LogLevel.Log);
-            }
+            Logger.Log("Refreshing parts list", Logger.LogLevel.Debug);
             SetSelectedCategory();
         }
 
@@ -98,10 +83,9 @@ namespace FilterExtensions
         {
             try
             {
-                PartCategorizer.Category cat;
                 if (HighLogic.CurrentGame.Parameters.CustomParams<Settings>().categoryDefault != string.Empty)
                 {
-                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == HighLogic.CurrentGame.Parameters.CustomParams<Settings>().categoryDefault);
+                    PartCategorizer.Category cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.categoryName == HighLogic.CurrentGame.Parameters.CustomParams<Settings>().categoryDefault);
                     if (cat != null)
                     {
                         cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
@@ -111,28 +95,23 @@ namespace FilterExtensions
                 if (HighLogic.CurrentGame.Parameters.CustomParams<Settings>().subCategoryDefault != string.Empty)
                 {
                     // set the subcategory button
-                    cat = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.Value);
-                    if (cat != null)
-                    {
-                        cat = cat.subcategories.FirstOrDefault(sC => sC.button.categoryName == HighLogic.CurrentGame.Parameters.CustomParams<Settings>().subCategoryDefault);
-                        if (cat != null)
-                        {
-                            cat.button.activeButton.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
-                        }
-                    }
+                    KSP.UI.UIRadioButton but = PartCategorizer.Instance.filters.FirstOrDefault(f => f.button.activeButton.Value)?.subcategories.FirstOrDefault(sC => {
+                        return sC.button.categoryName == HighLogic.CurrentGame.Parameters.CustomParams<Settings>().subCategoryDefault;
+                    })?.button.activeButton;
+                    but.SetState(KSP.UI.UIRadioButton.State.True, KSP.UI.UIRadioButton.CallType.APPLICATION, null, true);
                 }
             }
             catch (Exception e)
             {
-                LoadAndProcess.Log($"Category refresh failed\r\n{e.InnerException}\r\n{e.StackTrace}", LoadAndProcess.LogLevel.Error);
+                Logger.Log($"Category refresh failed\r\n{e.InnerException}\r\n{e.StackTrace}", Logger.LogLevel.Error);
             }
         }
 
         private bool CheckPartVisible(AvailablePart part, PartCategorizer.Category category)
         {
-            for (int i = 0; i < category.subcategories.Count; ++i)
+            foreach (PartCategorizer.Category subcat in category.subcategories)
             {
-                if (category.subcategories[i].exclusionFilter.FilterCriteria.Invoke(part))
+                if (subcat.exclusionFilter.FilterCriteria(part))
                 {
                     return true;
                 }

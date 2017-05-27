@@ -15,7 +15,7 @@ namespace FilterExtensions.Utility
         {
             if (depth > 10)
             {
-                LoadAndProcess.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", LoadAndProcess.LogLevel.Error);
+                Logger.Log("subcategory check depth limit (10) exceeded. Check terminated on suspicion of circular subcategory checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", Logger.LogLevel.Error);
                 return false;
             }
             foreach (string s in value)
@@ -529,7 +529,7 @@ namespace FilterExtensions.Utility
             {
                 if (values.Length > 1)
                 {
-                    LoadAndProcess.Log("Size comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", values));
+                    Logger.Log($"Size comparisons against multiple values when not using Equals only use the first value. Value list is: {string.Join(", ", values)}", Logger.LogLevel.Warn);
                 }
 
                 if (int.TryParse(values[0], out int i))
@@ -567,7 +567,7 @@ namespace FilterExtensions.Utility
             {
                 if (value.Length > 1)
                 {
-                    LoadAndProcess.Log("Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
+                    Logger.Log($"Crew comparisons against multiple values when not using Equals only use the first value. Value list is: {string.Join(", ", value)}", Logger.LogLevel.Warn);
                 }
 
                 if (double.TryParse(value[0], out double d))
@@ -603,7 +603,7 @@ namespace FilterExtensions.Utility
             {
                 if (value.Length > 1)
                 {
-                    LoadAndProcess.Log("Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
+                    Logger.Log($"Mass comparisons against multiple values when not using Equals only use the first value. Value list is: {string.Join(", ", value)}", Logger.LogLevel.Warn);
                 }
 
                 if (double.TryParse(value[0], out double d))
@@ -634,7 +634,7 @@ namespace FilterExtensions.Utility
             {
                 if (value.Length > 1)
                 {
-                    LoadAndProcess.Log("Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
+                    Logger.Log($"Cost comparisons against multiple values when not using Equals only use the first value. Value list is: {string.Join(", ", value)}", Logger.LogLevel.Warn);
                 }
 
                 if (double.TryParse(value[0], out double d))
@@ -670,7 +670,7 @@ namespace FilterExtensions.Utility
             {
                 if (value.Length > 1)
                 {
-                    LoadAndProcess.Log("Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
+                    Logger.Log($"Crash tolerance comparisons against multiple values when not using Equals only use the first value. Value list is: {string.Join(", ", value)}", Logger.LogLevel.Warn);
                 }
 
                 if (float.TryParse(value[0], out float f))
@@ -706,7 +706,7 @@ namespace FilterExtensions.Utility
             {
                 if (value.Length > 1)
                 {
-                    LoadAndProcess.Log("Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {0}", LoadAndProcess.LogLevel.Warn, string.Join(", ", value));
+                    Logger.Log($"Temperature comparisons against multiple values when not using Equals only use the first value. Value list is: {string.Join(", ", value)}", Logger.LogLevel.Warn);
                 }
                 if (double.TryParse(value[0], out double d))
                 {
@@ -903,7 +903,7 @@ namespace FilterExtensions.Utility
             }
             foreach (PartModule pm in part.partPrefab.Modules)
             {
-                if (baseType.IsAssignableFrom(LoadAndProcess.Loaded_Modules[pm.moduleName]))
+                if (!string.IsNullOrEmpty(pm.moduleName) && baseType.IsAssignableFrom(LoadAndProcess.Loaded_Modules[pm.moduleName]))
                 {
                     BaseField f = pm.Fields[parameters[1]];
                     if (f == null)

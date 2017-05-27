@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System;
+using KSP.Localization;
 
 namespace FilterExtensions
 {
@@ -12,10 +13,6 @@ namespace FilterExtensions
             , gameMode = GameParameters.GameMode.CAREER
             , toolTip = "Hide any parts that have been researched but not yet purchased")]
         public bool hideUnpurchased = true;
-
-        [GameParameters.CustomParameterUI("Enable debug logging"
-            , toolTip = "If you encounter a bug, please attempt to reproduce with this setting enabled")]
-        public bool debug = false;
 
         [GameParameters.CustomParameterUI("Default to advanced display"
             , toolTip = "Enable to display both levels of the part categories on entering the editor")]
@@ -77,9 +74,8 @@ namespace FilterExtensions
 
         public override string DisplaySection
         {
-            get
-            {
-                return string.Empty;
+            get {
+                return Localizer.Format(Section);
             }
         }
 
@@ -96,7 +92,6 @@ namespace FilterExtensions
         public override void SetDifficultyPreset(GameParameters.Preset preset)
         {
             hideUnpurchased = true;
-            debug = false;
             setAdvanced = true;
             replaceFbM = true;
         }
@@ -105,7 +100,7 @@ namespace FilterExtensions
         {
             if (member.Name == "categoryDefault")
             {
-                List<string> categories = new List<string>() { string.Empty };
+                var categories = new List<string>() { string.Empty };
                 foreach (CategoryInstance C in LoadAndProcess.Categories)
                 {
                     categories.Add(C.Name);
@@ -114,7 +109,7 @@ namespace FilterExtensions
             }
             if (member.Name == "subCategoryDefault")
             {
-                List<string> subcategories = new List<string>() { string.Empty };
+                var subcategories = new List<string>() { string.Empty };
                 if (LoadAndProcess.Categories.TryGetValue(C => C.Name == categoryDefault, out CategoryInstance cat))
                 {
                     foreach (SubCategoryInstance sc in cat.Subcategories)

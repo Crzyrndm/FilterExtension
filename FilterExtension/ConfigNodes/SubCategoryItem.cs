@@ -9,7 +9,7 @@ namespace FilterExtensions.ConfigNodes
 
         public SubCategoryItem(string name, bool useTemplate = true)
         {
-            SubcategoryName = name;
+            SubcategoryName = name.Trim();
             ApplyTemplate = useTemplate;
         }
 

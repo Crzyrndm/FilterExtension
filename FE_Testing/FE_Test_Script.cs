@@ -23,7 +23,10 @@ namespace FE_Testing
             Debug.Log("[FE_Testing Testing] Test subcat created");
             PartCategorizer.AddCustomSubcategoryFilter(
                 PartCategorizer.Instance.filters.Find(c => string.Equals(c.button.categoryName, "Filter by Function", StringComparison.OrdinalIgnoreCase))
-                , "testing", new RUI.Icons.Selectable.Icon("abc", null, null, true), p => allowedParts.Contains(p.name));
+                , "testing"
+                , Localizer.Format("testing")
+                , new RUI.Icons.Selectable.Icon("abc", null, null, true)
+                , p => allowedParts.Contains(p.name));
         }
     }
 
@@ -73,7 +76,7 @@ namespace FE_Testing
         {
             yield return new WaitForSeconds(5); // wait for the editor to complete startup
 
-            PartCategorizer.Category testCat = PartCategorizer.Instance.filters.FirstOrDefault(C => string.Equals(Localization.Format(C.button.categoryName), testCatName));
+            PartCategorizer.Category testCat = PartCategorizer.Instance.filters.FirstOrDefault(C => string.Equals(Localizer.Format(C.button.categoryName), testCatName));
             if (testCat == null)
             {
                 LogTestResult($"Category named \"{testCatName}\" found", false);

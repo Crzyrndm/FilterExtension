@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace FilterExtensions.ConfigNodes
 {
+    using System.Diagnostics;
     using FilterExtensions.ConfigNodes.CheckNodes;
 
     public class SubcategoryNode : IEquatable<SubcategoryNode>
@@ -42,6 +43,7 @@ namespace FilterExtensions.ConfigNodes
 
         public SubcategoryNode(SubcategoryNode cloneFrom, CategoryNode category)
         {
+            Debug.Assert(cloneFrom != null, "subcategory cloned from null");
             SubCategoryTitle = cloneFrom.SubCategoryTitle;
             IconName = cloneFrom.IconName;
             Filters = cloneFrom.Filters;
@@ -115,7 +117,6 @@ namespace FilterExtensions.ConfigNodes
                     return false;
                 }
             }
-
             return CheckFilters(part, depth);
         }
 
@@ -129,7 +130,7 @@ namespace FilterExtensions.ConfigNodes
         /// <returns></returns>
         private bool CheckFilters(AvailablePart ap, int depth = 0)
         {
-            if (Filters.Count == 0 && (Category == null || Category.Templates.Count == 0))
+            if (Filters == null || Filters.Count == 0)
             {
                 return true;
             }
@@ -149,11 +150,11 @@ namespace FilterExtensions.ConfigNodes
 
         private bool CheckCategoryFilter(AvailablePart ap, int depth = 0)
         {
-            if (Category == null)
+            if (Category == null || Category.Templates.Count == 0)
             {
                 return true;
             }
-            foreach (FilterNode f in Filters)
+            foreach (FilterNode f in Category.Templates)
             {
                 if (f.FilterResult(ap, depth))
                 {

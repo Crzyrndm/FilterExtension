@@ -14,8 +14,6 @@ namespace FilterExtensions
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class LoadAndProcess : MonoBehaviour
     {
-        public static readonly Version version = new Version(2, 9, 0, 0);
-
         // storing categories loaded at Main Menu for creation when entering SPH/VAB
         public List<CategoryNode> CategoryNodes = new List<CategoryNode>();
 
@@ -40,16 +38,16 @@ namespace FilterExtensions
         public List<string> resources = new List<string>();
 
         // url for each part by internal name
-        public static Dictionary<string, string> partPathDict = new Dictionary<string, string>();
+        public static Dictionary<string, string> partPathDict = new Dictionary<string, string>(); // set null after processing completed
 
         // Dictionary of icons created on entering the main menu
-        public static Dictionary<string, RUI.Icons.Selectable.Icon> IconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
+        public static Dictionary<string, RUI.Icons.Selectable.Icon> IconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>(); // do not set null ever
         // storing all subCategory definitions for categories to reference during compilation to instances
-        public static Dictionary<string, SubcategoryNode> subCategoriesDict = new Dictionary<string, SubcategoryNode>();
+        public static Dictionary<string, SubcategoryNode> subCategoriesDict = new Dictionary<string, SubcategoryNode>(); // set null after processing completed
         /// <summary>
         /// provides a typed check for stock modules which then allows for inheritance checking to work using isAssignableFrom
         /// </summary>
-        private static Dictionary<string, Type> loaded_modules;
+        private static Dictionary<string, Type> loaded_modules; // set null after processing completed
 
         public static Dictionary<string, Type> Loaded_Modules
         {
@@ -81,9 +79,7 @@ namespace FilterExtensions
 
         private IEnumerator Start()
         {
-            Log(string.Empty, LogLevel.Warn);
-
-            yield return null;
+            Logger.Log(string.Empty, Logger.LogLevel.Warn);
             yield return null;
             yield return null;
 
@@ -137,7 +133,7 @@ namespace FilterExtensions
                 }
                 else if (string.Equals(p.TechRequired, "Unresearchable", StringComparison.OrdinalIgnoreCase))
                 {
-                    Log($"part {p.name} is noted as unreasearchable and will not be visible", LogLevel.Warn);
+                    Logger.Log($"part {p.name} is noted as unreasearchable and will not be visible", Logger.LogLevel.Debug);
                     Editor.blackListedParts.Add(p.name);
                     continue;
                 }
@@ -158,7 +154,7 @@ namespace FilterExtensions
                     }
                     else
                     {
-                        Log(p.name + " duplicated part key in part path dictionary", LogLevel.Warn);
+                        Logger.Log(p.name + " duplicated part key in part path dictionary", Logger.LogLevel.Debug);
                     }
                 }
                 if (PartType.IsEngine(p))
@@ -187,7 +183,7 @@ namespace FilterExtensions
                 var C = new CategoryNode(node, this);
                 if (C.SubCategories == null)
                 {
-                    Log($"no subcategories present in {C.CategoryName}", LogLevel.Error);
+                    Logger.Log($"no subcategories present in {C.CategoryName}", Logger.LogLevel.Error);
                     continue;
                 }
                 CategoryNodes.AddUnique(C);
@@ -198,12 +194,12 @@ namespace FilterExtensions
                 var sC = new SubcategoryNode(node);
                 if (!sC.HasFilters || string.IsNullOrEmpty(sC.SubCategoryTitle))
                 {
-                    Log($"subcategory format error: {sC.SubCategoryTitle}", LogLevel.Error);
+                    Logger.Log($"subcategory format error: {sC.SubCategoryTitle}", Logger.LogLevel.Error);
                     continue;
                 }
                 else if (subCategoriesDict.ContainsKey(sC.SubCategoryTitle)) // if something does have the same title
                 {
-                    Log($"subcategory name duplicated: {sC.SubCategoryTitle}", LogLevel.Error);
+                    Logger.Log($"subcategory name duplicated: {sC.SubCategoryTitle}", Logger.LogLevel.Error);
                     continue;
                 }
                 else // if nothing else has the same title
@@ -221,7 +217,7 @@ namespace FilterExtensions
                     string name = System.Text.RegularExpressions.Regex.Replace(s, @"\B([A-Z])", " $1");
                     if (subCategoriesDict.ContainsKey(name))
                     {
-                        Log($"resource name already exists, abandoning generation for {name}", LogLevel.Warn);
+                        Logger.Log($"resource name already exists, abandoning generation for {name}", Logger.LogLevel.Debug);
                         continue;
                     }
                     else if (!string.IsNullOrEmpty(name))
@@ -348,6 +344,7 @@ namespace FilterExtensions
             filterByManufacturer.AddValue("value", "replace");
             filterByManufacturer.AddNode(manufacturerSubs);
             FilterByManufacturer = new CategoryNode(filterByManufacturer, this);
+            CategoryNodes.Add(FilterByManufacturer);
         }
 
         /// <summary>
@@ -453,7 +450,7 @@ namespace FilterExtensions
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.Message, LogLevel.Warn);
+                    Logger.Log(ex.Message, Logger.LogLevel.Warn);
                 }
             }
         }
@@ -529,38 +526,6 @@ namespace FilterExtensions
             if (setIcon.TryGetValue(name, out tmp))
             {
                 icon = tmp;
-            }
-        }
-
-        public enum LogLevel
-        {
-            Log,
-            Warn,
-            Error
-        }
-
-        /// <summary>
-        /// Debug.Log with FE id/version inserted
-        /// </summary>
-        /// <param name="o"></param>
-        internal static void Log(object o, LogLevel level = LogLevel.Log)
-        {
-            Log(o.ToString(), level);
-        }
-
-        internal static void Log(string format, LogLevel level = LogLevel.Log, params object[] o)
-        {
-            if (level == LogLevel.Log)
-            {
-                Debug.LogFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
-            }
-            else if (level == LogLevel.Warn)
-            {
-                Debug.LogWarningFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
-            }
-            else
-            {
-                Debug.LogErrorFormat($"[Filter Extensions {version}]: {string.Format(format, o)}");
             }
         }
     }

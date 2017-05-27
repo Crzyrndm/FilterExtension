@@ -54,7 +54,7 @@
                 case CheckCost.ID:
                     return new CheckCost(node);
                 default:
-                    LoadAndProcess.Log($"unknown check type {checkID}", LoadAndProcess.LogLevel.Error);
+                Logger.Log($"unknown check type {checkID}", Logger.LogLevel.Error);
                     return null;
             }
         }
