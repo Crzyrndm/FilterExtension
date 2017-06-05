@@ -12,6 +12,7 @@ namespace FilterExtensions
     {
         // Dictionary of icons created on entering the main menu
         public static Dictionary<string, RUI.Icons.Selectable.Icon> IconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
+        // 
         // if the icon isn't present, use this one
         private const string fallbackIcon = "stockIcon_fallback";
 
@@ -57,40 +58,16 @@ namespace FilterExtensions
         /// <returns>the icon if it is found, or the fallback icon if it is not</returns>
         public static RUI.Icons.Selectable.Icon GetIcon(string name)
         {
-            if (string.IsNullOrEmpty(name))
+            if (!string.IsNullOrEmpty(name))
             {
-                return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
-            }
-            if (IconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon) || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
-            {
-                return icon;
+                name = name.Trim();
+                if (IconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon)
+                    || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
+                {
+                    return icon;
+                }
             }
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
-        }
-
-        /// <summary>
-        /// get icon following the TryGet* syntax
-        /// </summary>
-        /// <param name="name">the icon name</param>
-        /// <param name="icon">the icon that matches the name, or the fallback if no matches were found</param>
-        /// <returns>true if a matching icon was found, false if fallback was required</returns>
-        public static bool TryGetIcon(string name, out RUI.Icons.Selectable.Icon icon)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                icon = PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
-                return false;
-            }
-            if (IconDict.TryGetValue(name, out icon))
-            {
-                return true;
-            }
-            if (PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
-            {
-                return true;
-            }
-            icon = PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
-            return false;
         }
     }
 }

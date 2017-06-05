@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq; // Majority of Core only runs once.
+using System.Linq;
+using UnityEngine;
 
 namespace FilterExtensions
 {
     using ConfigNodes;
     using ConfigNodes.CheckNodes;
-    using KSP.UI.Screens;
-    using UnityEngine;
     using Utility;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
@@ -185,7 +184,7 @@ namespace FilterExtensions
             //load all subCategory configs
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("SUBCATEGORY"))
             {
-                var sC = new SubcategoryNode(node);
+                var sC = new SubcategoryNode(node, this);
                 if (!sC.HasFilters || string.IsNullOrEmpty(sC.SubCategoryTitle))
                 {
                     Logger.Log($"subcategory format error: {sC.SubCategoryTitle}", Logger.LogLevel.Error);
@@ -219,7 +218,7 @@ namespace FilterExtensions
                         ConfigNode checkNode = CheckNodeFactory.MakeCheckNode(CheckResource.ID, s);
                         ConfigNode filtNode = FilterNode.MakeFilterNode(false, new List<ConfigNode>(){ checkNode });
                         ConfigNode subcatNode = SubcategoryNode.MakeSubcategoryNode(name, name, false, new List<ConfigNode>() { filtNode });
-                        subCategoriesDict.Add(name, new SubcategoryNode(subcatNode));
+                        subCategoriesDict.Add(name, new SubcategoryNode(subcatNode, this));
                         Cat.SubCategories.AddUnique(new SubCategoryItem(name));
                     }
                 }
@@ -247,7 +246,7 @@ namespace FilterExtensions
                 {
                     filternodes.Add(f.ToConfigNode());
                 }
-                var newSub = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, false, filternodes));
+                var newSub = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode("All parts in " + C.CategoryName, C.IconName, false, filternodes), this);
                 subCategoriesDict.Add(newSub.SubCategoryTitle, newSub);
                 C.SubCategories.Insert(0, new SubCategoryItem(newSub.SubCategoryTitle));
             }
@@ -292,7 +291,7 @@ namespace FilterExtensions
                 {
                     var checks = new List<ConfigNode>() { CheckNodeFactory.MakeCheckNode(CheckPropellant.ID, propList, exact: true) };
                     var filters = new List<ConfigNode>() { FilterNode.MakeFilterNode(false, checks) };
-                    var sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
+                    var sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters), this);
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -321,7 +320,7 @@ namespace FilterExtensions
                     subCatNames.Add(name);
                     var checks = new List<ConfigNode>() { CheckNodeFactory.MakeCheckNode(CheckFolder.ID, name) };
                     var filters = new List<ConfigNode>() { FilterNode.MakeFilterNode(false, checks) };
-                    var sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters));
+                    var sC = new SubcategoryNode(SubcategoryNode.MakeSubcategoryNode(name, icon, false, filters), this);
                     subCategoriesDict.Add(name, sC);
                 }
             }
@@ -339,6 +338,7 @@ namespace FilterExtensions
             filterByManufacturer.AddNode(manufacturerSubs);
             FilterByManufacturer = new CategoryNode(filterByManufacturer, this);
             CategoryNodes.Add(FilterByManufacturer);
+            Logger.Log("Filter by manufacturer");
         }
 
         /// <summary>
@@ -412,7 +412,7 @@ namespace FilterExtensions
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log(ex.Message, Logger.LogLevel.Warn);
+                    Logger.Log($"{cn.CategoryName}: {ex.Message}", Logger.LogLevel.Error);
                 }
             }
         }

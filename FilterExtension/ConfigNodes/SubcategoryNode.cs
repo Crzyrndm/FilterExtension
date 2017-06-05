@@ -16,14 +16,24 @@ namespace FilterExtensions.ConfigNodes
 
         public bool HasFilters { get => (Filters?.Count ?? 0) > 0; }
 
-        public SubcategoryNode(ConfigNode node)
+        public SubcategoryNode(ConfigNode node, LoadAndProcess data)
         {
-            SubCategoryTitle = node.GetValue("name");
+            string nameTemp = node.GetValue("name");
+            if (!string.IsNullOrEmpty(nameTemp) && data.Rename.ContainsKey(nameTemp))
+            {
+                nameTemp = data.Rename[nameTemp];
+            }
+            SubCategoryTitle = nameTemp;
             if (SubCategoryTitle == string.Empty)
             {
                 SubCategoryTitle = node.GetValue("categoryName"); // for playing nice with stock generated subcats
             }
-            IconName = node.GetValue("icon");
+            string iconTemp = IconName = node.GetValue("icon");
+            if (!string.IsNullOrEmpty(SubCategoryTitle) && data.setIcon.ContainsKey(SubCategoryTitle))
+            {
+                iconTemp = data.setIcon[SubCategoryTitle];
+            }
+            IconName = iconTemp;
 
             bool.TryParse(node.GetValue("showUnpurchased"), out bool tmp);
             UnPurchasedOverride = tmp;
