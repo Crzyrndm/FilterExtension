@@ -24,9 +24,6 @@ namespace FilterExtensions
         // renaming categories
         public Dictionary<string, string> Rename = new Dictionary<string, string>();
 
-        // icons for categories
-        public Dictionary<string, string> setIcon = new Dictionary<string, string>();
-
         // removing categories
         public HashSet<string> removeSubCategory = new HashSet<string>();
 
@@ -98,15 +95,25 @@ namespace FilterExtensions
         {
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRename"))
             {
-                SubcategoryNodeModifier.MakeRenamers(node, Rename);
+                foreach (KeyValuePair<string, string> kvp in SubcategoryNodeModifier.MakeRenamers(node))
+                {
+                    Rename.TryAdd(kvp.Key, kvp.Value);
+                }
             }
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterSetIcon"))
             {
-                SubcategoryNodeModifier.MakeRenamers(node, setIcon);
+                foreach (KeyValuePair<string, string> kvp in SubcategoryNodeModifier.MakeIconChangers(node))
+                {
+                    IconLib.Icon_Alias.TryAdd(kvp.Key, kvp.Value);
+                }
             }
+            Logger.Dev(IconLib.Icon_Alias.Count);
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRemove"))
             {
-                SubcategoryNodeModifier.MakeDeleters(node, removeSubCategory);
+                foreach (string s in SubcategoryNodeModifier.MakeDeleters(node))
+                {
+                    removeSubCategory.Add(s);
+                }
             }
         }
 
@@ -285,7 +292,7 @@ namespace FilterExtensions
                 string propList = string.Join(",", ls.ToArray());
                 string name = propList;
                 string icon = propList;
-                SetNameAndIcon(ref name, ref icon);
+                SetName(ref name);
 
                 if (!string.IsNullOrEmpty(name) && !subCategoriesDict.ContainsKey(name))
                 {
@@ -313,7 +320,7 @@ namespace FilterExtensions
                     name = "mod_" + name;
                 }
                 string icon = name;
-                SetNameAndIcon(ref name, ref icon);
+                SetName(ref name);
 
                 if (!subCategoriesDict.ContainsKey(name))
                 {
@@ -338,7 +345,6 @@ namespace FilterExtensions
             filterByManufacturer.AddNode(manufacturerSubs);
             FilterByManufacturer = new CategoryNode(filterByManufacturer, this);
             CategoryNodes.Add(FilterByManufacturer);
-            Logger.Log("Filter by manufacturer");
         }
 
         /// <summary>
@@ -436,15 +442,11 @@ namespace FilterExtensions
         /// </summary>
         /// <param name="name"></param>
         /// <param name="icon"></param>
-        public void SetNameAndIcon(ref string name, ref string icon)
+        public void SetName(ref string name)
         {
             if (Rename.TryGetValue(name, out string tmp))
             {
                 name = tmp;
-            }
-            if (setIcon.TryGetValue(name, out tmp))
-            {
-                icon = tmp;
             }
         }
     }

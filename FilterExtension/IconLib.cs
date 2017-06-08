@@ -12,7 +12,8 @@ namespace FilterExtensions
     {
         // Dictionary of icons created on entering the main menu
         public static Dictionary<string, RUI.Icons.Selectable.Icon> IconDict = new Dictionary<string, RUI.Icons.Selectable.Icon>();
-        // 
+        // if the name sent to get_icon is a key, switch with the linked name
+        public static Dictionary<string, string> Icon_Alias = new Dictionary<string, string>();
         // if the icon isn't present, use this one
         private const string fallbackIcon = "stockIcon_fallback";
 
@@ -61,6 +62,10 @@ namespace FilterExtensions
             if (!string.IsNullOrEmpty(name))
             {
                 name = name.Trim();
+                if (Icon_Alias.ContainsKey(name))
+                {
+                    name = Icon_Alias[name];
+                }
                 if (IconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon)
                     || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 {

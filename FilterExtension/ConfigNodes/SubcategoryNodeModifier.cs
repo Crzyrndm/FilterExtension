@@ -9,9 +9,9 @@ namespace FilterExtensions.ConfigNodes
     public static class SubcategoryNodeModifier
     {
         static readonly string[] splitter = new string[] { "=>" };
-        public static void MakeRenamers(ConfigNode node, Dictionary<string, string> renames)
+        public static Dictionary<string, string> MakeRenamers(ConfigNode node)
         {
-            Debug.Assert(renames != null, $"{nameof(renames)} dictionary is assumed to never be null");
+            var renames = new Dictionary<string, string>();
             foreach (string s in node.GetValues("name"))
             {
                 string[] split = s.Split(splitter, StringSplitOptions.RemoveEmptyEntries)
@@ -26,11 +26,12 @@ namespace FilterExtensions.ConfigNodes
                     renames.Add(split[0], split[1]);
                 }
             }
+            return renames;
         }
 
-        public static void MakeIconChangers(ConfigNode node, Dictionary<string, string> icons)
+        public static Dictionary<string, string> MakeIconChangers(ConfigNode node)
         {
-            Debug.Assert(icons != null, $"{nameof(icons)} dictionary is assumed to never be null");
+            var icons = new Dictionary<string, string>();
             foreach (string s in node.GetValues("icon"))
             {
                 string[] split = s.Split(splitter, StringSplitOptions.RemoveEmptyEntries).Select(str => str.Trim()).ToArray();
@@ -39,16 +40,17 @@ namespace FilterExtensions.ConfigNodes
                     Logger.Log($"bad length in set icon string {s}", Logger.LogLevel.Error);
                     continue;
                 }
-                if (icons.ContainsKey(split[0]))
+                if (!icons.ContainsKey(split[0]))
                 {
                     icons.Add(split[0], split[1]);
                 }
             }
+            return icons;
         }
 
-        public static void MakeDeleters(ConfigNode node, HashSet<string> deleters)
+        public static HashSet<string> MakeDeleters(ConfigNode node)
         {
-            Debug.Assert(deleters != null, $"{nameof(deleters)} hashset is assumed to never be null");
+            HashSet<string> deleters = new HashSet<string>();
             foreach (string s in node.GetValues("remove"))
             {
                 string str = s.Trim();
@@ -58,6 +60,7 @@ namespace FilterExtensions.ConfigNodes
                 }
                 deleters.Add(str); // hashset doesn't need duplicate check
             }
+            return deleters;
         }
     }
 }

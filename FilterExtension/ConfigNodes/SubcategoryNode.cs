@@ -12,7 +12,7 @@ namespace FilterExtensions.ConfigNodes
         public string IconName { get; } // default icon to use
         public List<FilterNode> Filters { get; } // Filters are OR'd together (pass if it meets this filter, or this filter)
         public bool UnPurchasedOverride { get; } // allow unpurchased parts to be visible even if the global setting hides them
-        CategoryNode Category { get; } = null;
+        CategoryNode Category { get; } = null; // set when subcats are cloned from the group during category instatiation
 
         public bool HasFilters { get => (Filters?.Count ?? 0) > 0; }
 
@@ -24,16 +24,15 @@ namespace FilterExtensions.ConfigNodes
                 nameTemp = data.Rename[nameTemp];
             }
             SubCategoryTitle = nameTemp;
-            if (SubCategoryTitle == string.Empty)
+            if (string.IsNullOrEmpty(SubCategoryTitle))
             {
                 SubCategoryTitle = node.GetValue("categoryName"); // for playing nice with stock generated subcats
             }
-            string iconTemp = IconName = node.GetValue("icon");
-            if (!string.IsNullOrEmpty(SubCategoryTitle) && data.setIcon.ContainsKey(SubCategoryTitle))
+            IconName = node.GetValue("icon");
+            if (string.IsNullOrEmpty(IconName))
             {
-                iconTemp = data.setIcon[SubCategoryTitle];
+                IconName = SubCategoryTitle;
             }
-            IconName = iconTemp;
 
             bool.TryParse(node.GetValue("showUnpurchased"), out bool tmp);
             UnPurchasedOverride = tmp;

@@ -36,6 +36,10 @@ namespace FilterExtensions.ConfigNodes
         {
             CategoryName = node.GetValue("name").Trim();
             IconName = node.GetValue("icon");
+            if (string.IsNullOrEmpty(IconName))
+            {
+                IconName = CategoryName;
+            }
             Colour = GUIUtils.ConvertToColor(node.GetValue("colour"));
 
             ConfigNode[] filtNodes = node.GetNodes("FILTER");
@@ -74,7 +78,7 @@ namespace FilterExtensions.ConfigNodes
                     foreach (List<string> combo in data.propellantCombos)
                     {
                         string dummy = string.Empty, subcatName = string.Join(",", combo.ToArray());
-                        data.SetNameAndIcon(ref subcatName, ref dummy);
+                        data.SetName(ref subcatName);
                         SubCategories.AddUnique(new SubCategoryItem(subcatName));
                     }
                 }
