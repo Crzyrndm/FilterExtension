@@ -36,6 +36,11 @@ namespace FilterExtensions
 
             foreach (KeyValuePair<string, GameDatabase.TextureInfo> kvp in texDict)
             {
+                if (kvp.Value.name.Contains("_selected"))
+                {
+                    continue;
+                }
+
                 if (texDict.TryGetValue(kvp.Value.name + "_selected", out texInfo))
                 {
                     selectedTex = texInfo.texture;
@@ -62,10 +67,6 @@ namespace FilterExtensions
             if (!string.IsNullOrEmpty(name))
             {
                 name = name.Trim();
-                if (Icon_Alias.ContainsKey(name))
-                {
-                    name = Icon_Alias[name];
-                }
                 if (IconDict.TryGetValue(name, out RUI.Icons.Selectable.Icon icon)
                     || PartCategorizer.Instance.iconLoader.iconDictionary.TryGetValue(name, out icon))
                 {
@@ -74,5 +75,25 @@ namespace FilterExtensions
             }
             return PartCategorizer.Instance.iconLoader.iconDictionary[fallbackIcon];
         }
+
+        public static RUI.Icons.Selectable.Icon GetIcon(SubCategoryInstance subcat)
+        {
+            if (Icon_Alias.ContainsKey(subcat.Name))
+            {
+                return GetIcon(Icon_Alias[subcat.Name]);
+            }
+            return GetIcon(subcat.Icon);
+        }
+
+        public static RUI.Icons.Selectable.Icon GetIcon(CategoryInstance cat)
+        {
+            if (Icon_Alias.ContainsKey(cat.Name))
+            {
+                return GetIcon(Icon_Alias[cat.Name]);
+            }
+            return GetIcon(cat.Icon);
+        }
     }
+
+    
 }

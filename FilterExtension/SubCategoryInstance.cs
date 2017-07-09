@@ -10,7 +10,7 @@ namespace FilterExtensions
     public class SubCategoryInstance
     {
         public string Name { get; }
-        string Icon { get; }
+        public string Icon { get; }
         bool UnpurchasedVisible { get; }
         HashSet<AvailablePart> Parts { get; } = new HashSet<AvailablePart>();
 
@@ -48,7 +48,7 @@ namespace FilterExtensions
             {
                 return;
             }
-            RUI.Icons.Selectable.Icon icon = IconLib.GetIcon(Icon);
+            RUI.Icons.Selectable.Icon icon = IconLib.GetIcon(this);
             PartCategorizer.AddCustomSubcategoryFilter(cat, Name, Localizer.Format(Name), icon, p => TestPart(p));
         }
 

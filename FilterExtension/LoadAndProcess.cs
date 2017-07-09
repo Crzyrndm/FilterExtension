@@ -107,7 +107,6 @@ namespace FilterExtensions
                     IconLib.Icon_Alias.TryAdd(kvp.Key, kvp.Value);
                 }
             }
-            Logger.Dev(IconLib.Icon_Alias.Count);
             foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("FilterRemove"))
             {
                 foreach (string s in SubcategoryNodeModifier.MakeDeleters(node))
